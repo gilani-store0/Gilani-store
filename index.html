@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متجري الإلكتروني | الطلب عبر واتساب</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.css">
+</head>
+<body>
+    <!-- شريط التنقل -->
+    <nav>
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-store"></i>
+                <h1>متجري الإلكتروني</h1>
+            </div>
+            <div class="nav-links">
+                <a href="#products" class="nav-link">المنتجات</a>
+                <a href="#admin-panel" class="nav-link admin-btn" id="adminToggle">
+                    <i class="fas fa-cog"></i> لوحة التحكم
+                </a>
+                <a href="https://wa.me/9665XXXXXXXXX" target="_blank" class="whatsapp-btn">
+                    <i class="fab fa-whatsapp"></i> تواصل معنا
+                </a>
+            </div>
+            <button class="menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- القائمة الجانبية للجوّال -->
+    <div class="mobile-menu" id="mobileMenu">
+        <button class="close-menu" id="closeMenu">&times;</button>
+        <a href="#products" class="mobile-nav-link">المنتجات</a>
+        <a href="#admin-panel" class="mobile-nav-link">لوحة التحكم</a>
+        <a href="https://wa.me/9665XXXXXXXXX" target="_blank" class="mobile-nav-link whatsapp-btn">
+            <i class="fab fa-whatsapp"></i> تواصل معنا
+        </a>
+    </div>
+
+    <!-- الهيدر الرئيسي -->
+    <header class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h2>تسوق بسهولة .. اطلب عبر واتساب</h2>
+                <p>تصفح منتجاتنا واطلب بضغطة زر عبر واتساب بزنس</p>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <i class="fas fa-box"></i>
+                        <span id="productCount">0</span>
+                        <p>منتج متوفر</p>
+                    </div>
+                    <div class="stat">
+                        <i class="fas fa-shipping-fast"></i>
+                        <span>24-48</span>
+                        <p>ساعة للتوصيل</p>
+                    </div>
+                    <div class="stat">
+                        <i class="fas fa-headset"></i>
+                        <span>24/7</span>
+                        <p>دعم فني</p>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-image">
+                <img src="https://cdn.pixabay.com/photo/2016/11/23/14/45/iphone-1852901_1280.jpg" alt="تسوق عبر الواتساب">
+            </div>
+        </div>
+    </header>
+
+    <!-- لوحة التحكم (مخفي افتراضيًا) -->
+    <section id="admin-panel" class="admin-panel hidden">
+        <div class="container">
+            <div class="admin-header">
+                <h2><i class="fas fa-cog"></i> لوحة تحكم المتجر</h2>
+                <button class="btn secondary" id="closeAdminPanel">
+                    <i class="fas fa-times"></i> إغلاق اللوحة
+                </button>
+            </div>
+            
+            <div class="admin-content">
+                <!-- نموذج إضافة/تعديل منتج -->
+                <div class="admin-card">
+                    <h3><i class="fas fa-plus-circle"></i> إضافة / تعديل منتج</h3>
+                    <form id="productForm">
+                        <input type="hidden" id="productId">
+                        
+                        <div class="form-group">
+                            <label for="productName"><i class="fas fa-tag"></i> اسم المنتج</label>
+                            <input type="text" id="productName" required placeholder="أدخل اسم المنتج">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="productDescription"><i class="fas fa-align-left"></i> وصف المنتج</label>
+                            <textarea id="productDescription" rows="3" placeholder="أدخل وصف المنتج"></textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="productPrice"><i class="fas fa-money-bill"></i> السعر (ريال)</label>
+                                <input type="number" id="productPrice" required min="0" step="0.01" placeholder="السعر">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="productCategory"><i class="fas fa-list"></i> التصنيف</label>
+                                <select id="productCategory">
+                                    <option value="عام">عام</option>
+                                    <option value="إلكترونيات">إلكترونيات</option>
+                                    <option value="ملابس">ملابس</option>
+                                    <option value="أجهزة">أجهزة</option>
+                                    <option value="أخرى">أخرى</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="productImage"><i class="fas fa-image"></i> رابط صورة المنتج</label>
+                            <input type="url" id="productImage" placeholder="https://example.com/image.jpg">
+                            <small>يمكنك استخدام روابط من مواقع مثل: unsplash.com, pixabay.com</small>
+                            <div class="image-preview" id="imagePreview">
+                                <p>معاينة الصورة ستظهر هنا</p>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn primary" id="submitBtn">
+                                <i class="fas fa-save"></i> حفظ المنتج
+                            </button>
+                            <button type="button" class="btn secondary" id="clearForm">
+                                <i class="fas fa-times"></i> مسح النموذج
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- قائمة المنتجات الحالية -->
+                <div class="admin-card">
+                    <h3><i class="fas fa-boxes"></i> المنتجات الحالية <span class="badge" id="productsListCount">0</span></h3>
+                    <div class="search-box">
+                        <input type="text" id="productSearch" placeholder="ابحث عن منتج...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="products-list" id="adminProductsList">
+                        <!-- المنتجات ستظهر هنا -->
+                        <p class="empty-state" id="noProductsMessage">لا توجد منتجات بعد. أضف منتجك الأول!</p>
+                    </div>
+                </div>
+                
+                <!-- إجراءات النظام -->
+                <div class="admin-card">
+                    <h3><i class="fas fa-tools"></i> إجراءات النظام</h3>
+                    <div class="system-actions">
+                        <button class="btn secondary" id="exportData">
+                            <i class="fas fa-download"></i> تصدير المنتجات
+                        </button>
+                        <button class="btn secondary" id="importData">
+                            <i class="fas fa-upload"></i> استيراد منتجات
+                        </button>
+                        <button class="btn danger" id="clearAllData" onclick="return confirm('هل أنت متأكد؟ هذه العملية لا يمكن التراجع عنها!')">
+                            <i class="fas fa-trash"></i> حذف جميع المنتجات
+                        </button>
+                    </div>
+                    <div class="backup-section hidden" id="importSection">
+                        <label for="importFile">رفع ملف المنتجات (JSON)</label>
+                        <input type="file" id="importFile" accept=".json">
+                        <button class="btn small" id="processImport">استيراد</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- قسم المنتجات -->
+    <main class="container">
+        <section id="products" class="products-section">
+            <div class="section-header">
+                <h2 class="section-title">منتجاتنا المميزة</h2>
+                <div class="filters">
+                    <select id="categoryFilter">
+                        <option value="all">جميع التصنيفات</option>
+                        <option value="عام">عام</option>
+                        <option value="إلكترونيات">إلكترونيات</option>
+                        <option value="ملابس">ملابس</option>
+                        <option value="أجهزة">أجهزة</option>
+                    </select>
+                    <select id="sortFilter">
+                        <option value="newest">الأحدث أولاً</option>
+                        <option value="oldest">الأقدم أولاً</option>
+                        <option value="priceLow">السعر: منخفض إلى مرتفع</option>
+                        <option value="priceHigh">السعر: مرتفع إلى منخفض</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="products-grid" id="products-container">
+                <!-- المنتجات سيتم إضافتها بواسطة JavaScript -->
+                <div class="loading" id="loadingIndicator">
+                    <i class="fas fa-spinner fa-spin"></i> جاري تحميل المنتجات...
+                </div>
+            </div>
+            
+            <div class="empty-state hidden" id="noProductsPublic">
+                <i class="fas fa-box-open"></i>
+                <h3>لا توجد منتجات حالياً</h3>
+                <p>يمكنك إضافة منتجات من خلال لوحة التحكم</p>
+                <button class="btn primary" id="openAdminFromEmpty">
+                    <i class="fas fa-cog"></i> فتح لوحة التحكم
+                </button>
+            </div>
+        </section>
+
+        <!-- كيفية الطلب -->
+        <section class="how-to-order">
+            <h2 class="section-title">كيفية الطلب</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <i class="fas fa-search step-icon"></i>
+                    <h3>تصفح المنتجات</h3>
+                    <p>اختر المنتج الذي يعجبك</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <i class="fab fa-whatsapp step-icon"></i>
+                    <h3>اضغط على زر الطلب</h3>
+                    <p>اضغط زر "اطلب عبر واتساب"</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <i class="fas fa-comments step-icon"></i>
+                    <h3>تواصل معنا</h3>
+                    <p>أكمل تفاصيل الطلب عبر واتساب</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <i class="fas fa-shipping-fast step-icon"></i>
+                    <h3>استلم طلبك</h3>
+                    <p>نقوم بالتوصيل خلال 24-48 ساعة</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- إحصائيات -->
+        <section class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <i class="fas fa-fire"></i>
+                    <h3>الأكثر طلباً</h3>
+                    <p id="mostOrderedProduct">-</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <h3>متوسط السعر</h3>
+                    <p id="averagePrice">0 ريال</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-layer-group"></i>
+                    <h3>عدد التصنيفات</h3>
+                    <p id="categoryCount">0</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- الفوتر -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>معلومات المتجر</h3>
+                    <p>متجر إلكتروني متخصص في بيع المنتجات المميزة</p>
+                    <p>الطلب والتواصل عبر واتساب بزنس</p>
+                </div>
+                <div class="footer-section">
+                    <h3>طرق التواصل</h3>
+                    <p><i class="fab fa-whatsapp"></i> واتساب: +966 5X XXX XXXX</p>
+                    <p><i class="fas fa-clock"></i> أوقات العمل: 9 صباحاً - 10 مساءً</p>
+                </div>
+                <div class="footer-section">
+                    <h3>سياسات المتجر</h3>
+                    <p>الدفع عند الاستلام</p>
+                    <p>الشحن خلال 24-48 ساعة</p>
+                    <p>إمكانية الاستبدال والاسترجاع</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© <span id="currentYear">2023</span> متجري الإلكتروني. جميع الحقوق محفوظة.</p>
+                <div class="footer-links">
+                    <a href="#" id="exportProductsLink">تصدير المنتجات</a>
+                    <span class="separator">|</span>
+                    <a href="#" id="printProducts">طباعة القائمة</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- زر واتساب عائم -->
+    <a href="https://wa.me/9665XXXXXXXXX" target="_blank" class="whatsapp-float">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <!-- نافذة تفاصيل المنتج -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div id="modal-product-details">
+                <!-- سيتم ملؤها بواسطة JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
