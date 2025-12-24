@@ -44,12 +44,30 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
     checkInitialAuth();
     setupFullscreenMobile();
-    
-    // إضافة تأثيرات تحميل أولية
-    setTimeout(() => {
-        document.querySelector('.auth-container').classList.add('loaded');
-    }, 100);
+    setupSimpleAuthUI(); // تهيئة واجهة تسجيل الدخول الجديدة
 });
+
+// تهيئة واجهة تسجيل الدخول الجديدة
+function setupSimpleAuthUI() {
+    const showEmailBtn = document.getElementById('showEmailFormBtn');
+    const backBtn = document.getElementById('backToOptions');
+    const emailSection = document.getElementById('emailAuthSection');
+    const authOptions = document.getElementById('authOptions');
+
+    if (showEmailBtn) {
+        showEmailBtn.addEventListener('click', () => {
+            if (authOptions) authOptions.classList.add('hidden');
+            if (emailSection) emailSection.classList.remove('hidden');
+        });
+    }
+
+    if (backBtn) {
+        backBtn.addEventListener('click', () => {
+            if (emailSection) emailSection.classList.add('hidden');
+            if (authOptions) authOptions.classList.remove('hidden');
+        });
+    }
+}
 
 // إعداد مصادقة Firebase
 function setupFirebaseAuth() {
@@ -57,7 +75,22 @@ function setupFirebaseAuth() {
         if (user) {
             currentUser = user;
             await checkUserAdminStatus(user);
-            showMainApp();
+
+            // -- التعديل المطلوب: التوجيه حسب نوع المستخدم --
+            if (isAdmin) {
+                // إذا كان المستخدم مسؤولاً، افتح لوحة التحكم
+                const shouldRedirect = localStorage.getItem('redirectToAdmin') !== 'false';
+                if (shouldRedirect) {
+                    openAdminPanel();
+                } else {
+                    showMainApp(); // اسمح للمسؤول برؤية الموقع الرئيسي إذا أراد
+                }
+            } else {
+                // إذا كان المستخدم عميلاً، افتح الموقع الرئيسي
+                showMainApp();
+            }
+            // -- نهاية التعديل --
+
             loadStoreData();
             updateUserUI();
             
