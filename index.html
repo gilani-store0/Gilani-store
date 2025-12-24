@@ -236,10 +236,10 @@
                     <input type="number" id="editPStock" class="auth-input" min="0">
                 </div>
 
-	                <div class="form-group">
-	                    <label>العلامة (اختياري)</label>
-	                    <input type="text" id="editPBadge" class="auth-input" placeholder="مثال: جديد، مميز، عرض">
-	                </div>
+                <div class="form-group">
+                    <label>العلامة (اختياري)</label>
+                    <input type="text" id="editPBadge" class="auth-input" placeholder="مثال: جديد، مميز، عرض">
+                </div>
                 <div class="form-group">
                     <label>الوصف</label>
                     <textarea id="editPDesc" class="auth-input" rows="3"></textarea>
@@ -276,17 +276,17 @@
             </div>
             <div class="admin-body">
                 <!-- قائمة المنتجات -->
-<div id="tab-products-list" class="admin-tab-content">
-	                    <h4 style="margin-bottom: 15px; color: var(--secondary-color);"><i class="fas fa-list"></i> قائمة المنتجات</h4>
-	                    <div id="adminProductList">
-	                        <!-- قائمة المنتجات تظهر هنا -->
-	                    </div>
-	                </div>
+                <div id="tab-products-list" class="admin-tab-content">
+                    <h4 style="margin-bottom: 15px; color: var(--secondary-color);"><i class="fas fa-list"></i> قائمة المنتجات</h4>
+                    <div id="adminProductList">
+                        <!-- قائمة المنتجات تظهر هنا -->
+                    </div>
+                </div>
                 
                 <!-- إضافة منتج -->
-<div id="tab-add-product" class="admin-tab-content hidden">
-	                    <h4 style="margin-bottom: 15px; color: var(--secondary-color);"><i class="fas fa-plus-circle"></i> إضافة منتج جديد</h4>
-	                    <form id="productForm">
+                <div id="tab-add-product" class="admin-tab-content hidden">
+                    <h4 style="margin-bottom: 15px; color: var(--secondary-color);"><i class="fas fa-plus-circle"></i> إضافة منتج جديد</h4>
+                    <form id="productForm">
                         <div class="form-group">
                             <label>اسم المنتج</label>
                             <input type="text" id="pName" class="auth-input" required>
@@ -308,7 +308,7 @@
                             <label>الكمية المتوفرة</label>
                             <input type="number" id="pStock" class="auth-input" value="10" min="0">
                         </div>
-                                 <div class="form-group">
+                        <div class="form-group">
                             <label>صورة المنتج</label>
                             <div class="image-upload-container">
                                 <input type="file" id="pImageFile" class="auth-input" accept="image/*" style="display: none;">
@@ -316,13 +316,13 @@
                                 <div class="upload-placeholder" onclick="document.getElementById('pImageFile').click()">
                                     <i class="fas fa-cloud-upload-alt"></i>
                                     <span>اضغط لرفع صورة</span>
+                                    <p class="image-upload-hint">(يُفضل صورة مربعة 1:1)</p>
                                 </div>
                                 <div id="imagePreview" class="image-preview hidden">
                                     <img src="" alt="Preview">
                                     <button type="button" class="remove-img" onclick="removeSelectedImage()"><i class="fas fa-times"></i></button>
                                 </div>
                             </div>
-</div>
                         </div>
                         <div class="form-group">
                             <label>العلامة (اختياري)</label>
@@ -337,9 +337,9 @@
                 </div>
                 
                 <!-- الإعدادات -->
-<div id="tab-settings" class="admin-tab-content hidden">
-	                    <h4 style="margin-bottom: 15px; color: var(--secondary-color);"><i class="fas fa-sliders-h"></i> إعدادات المتجر</h4>
-	                    <form id="settingsForm">
+                <div id="tab-settings" class="admin-tab-content hidden">
+                    <h4 style="margin-bottom: 15px; color: var(--secondary-color);"><i class="fas fa-sliders-h"></i> إعدادات المتجر</h4>
+                    <form id="settingsForm">
                         <div class="form-group">
                             <label>اسم المتجر</label>
                             <input type="text" id="sName" class="auth-input">
@@ -365,9 +365,9 @@
                 </div>
                 
                 <!-- النسخ الاحتياطي -->
-<div id="tab-backup" class="admin-tab-content hidden">
-	                    <h4 style="margin-bottom: 15px; color: var(--secondary-color);"><i class="fas fa-database"></i> النسخ الاحتياطي والاستعادة</h4>
-	                    <div class="backup-actions">
+                <div id="tab-backup" class="admin-tab-content hidden">
+                    <h4 style="margin-bottom: 15px; color: var(--secondary-color);"><i class="fas fa-database"></i> النسخ الاحتياطي والاستعادة</h4>
+                    <div class="backup-actions">
                         <button class="btn primary-btn" onclick="exportData()" style="width: 100%; margin-bottom: 10px;">
                             <i class="fas fa-download"></i> تصدير البيانات
                         </button>
