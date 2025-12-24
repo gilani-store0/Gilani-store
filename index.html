@@ -27,6 +27,58 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💄</text></svg>">
 </head>
 <body>
+    <!-- صفحة تسجيل الدخول الإجبارية -->
+    <div id="authScreen" class="auth-screen">
+        <div class="auth-container">
+            <div class="auth-logo">
+                <i class="fas fa-spa"></i>
+                <h1 class="store-name-text">جمالك</h1>
+                <p>تسوق العطور والجمال بجودة عالمية</p>
+            </div>
+            
+            <div class="auth-options">
+                <h2>مرحباً بك في متجر جمالك</h2>
+                <p class="auth-subtitle">سجل الدخول للمتابعة</p>
+                
+                <button id="googleSignInBtn" class="auth-btn google-btn">
+                    <i class="fab fa-google"></i>
+                    تسجيل الدخول بواسطة جوجل
+                </button>
+                
+                <div class="auth-divider">
+                    <span>أو</span>
+                </div>
+                
+                <div id="emailAuthSection">
+                    <div class="form-group">
+                        <input type="email" id="emailInput" class="auth-input" placeholder="البريد الإلكتروني">
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="passwordInput" class="auth-input" placeholder="كلمة المرور">
+                    </div>
+                    <button id="signInWithEmailBtn" class="auth-btn email-btn">
+                        <i class="fas fa-envelope"></i>
+                        تسجيل الدخول بالبريد
+                    </button>
+                    <button id="signUpWithEmailBtn" class="auth-btn outline-btn">
+                        إنشاء حساب جديد
+                    </button>
+                </div>
+                
+                <div class="auth-divider">
+                    <span>أو</span>
+                </div>
+                
+                <button id="guestSignInBtn" class="auth-btn guest-btn">
+                    <i class="fas fa-user"></i>
+                    الدخول كضيف
+                </button>
+                
+                <p class="auth-note">سيتم حفظ تفضيلاتك وتاريخ طلباتك عند تسجيل الدخول</p>
+            </div>
+        </div>
+    </div>
+
     <!-- شريط التنقل -->
     <nav class="navbar">
         <div class="container">
@@ -50,9 +102,13 @@
                     <i class="fab fa-whatsapp"></i>
                     <span>اطلب الآن</span>
                 </a>
-                <button class="admin-btn" id="adminToggle">
+                <button class="admin-btn hidden" id="adminToggle">
                     <i class="fas fa-user-shield"></i>
                     <span>الإدارة</span>
+                </button>
+                <button class="user-btn" id="userToggle">
+                    <i class="fas fa-user"></i>
+                    <span id="userNameDisplay">حسابي</span>
                 </button>
             </div>
 
@@ -78,10 +134,16 @@
             <a href="#products" class="sidebar-link"><i class="fas fa-store"></i> المنتجات</a>
             <a href="#categories" class="sidebar-link"><i class="fas fa-list"></i> الأقسام</a>
             <a href="#contact" class="sidebar-link"><i class="fas fa-phone"></i> اتصل بنا</a>
-            <div class="sidebar-contact">
+            <div class="sidebar-actions">
                 <a href="#" id="mobileWhatsappLink" target="_blank" class="whatsapp-sidebar-btn">
                     <i class="fab fa-whatsapp"></i> تواصل معنا عبر واتساب
                 </a>
+                <button class="admin-sidebar-btn hidden" id="mobileAdminToggle">
+                    <i class="fas fa-user-shield"></i> لوحة التحكم
+                </button>
+                <button class="user-sidebar-btn" id="mobileUserToggle">
+                    <i class="fas fa-user"></i> حسابي
+                </button>
             </div>
         </div>
     </div>
@@ -249,137 +311,168 @@
         </div>
     </div>
 
-    <!-- لوحة التحكم -->
-    <div class="admin-sidebar" id="adminSidebar">
-        <div id="adminAuthSection" class="auth-container">
-            <div class="auth-icon"><i class="fas fa-lock"></i></div>
-            <h2>لوحة التحكم</h2>
-            <p>الرجاء إدخال رمز الحماية للمتابعة</p>
-            <input type="password" id="adminPinInput" class="auth-input" placeholder="****" maxlength="4" inputmode="numeric">
-            <button class="btn primary-btn" id="loginBtn" style="width: 100%;">دخول</button>
-            <button class="btn outline-btn" id="closeAdminBtn" style="width: 100%; margin-top: 10px;">إغلاق</button>
-            <p style="margin-top: 20px; font-size: 0.9rem; color: #666;">
-                <i class="fas fa-info-circle"></i> الرمز الافتراضي: 1234
-            </p>
-        </div>
-
-        <div id="adminMainContent" class="hidden">
-            <div class="admin-header">
-                <h3><i class="fas fa-cogs"></i> إدارة المتجر</h3>
-                <button id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> خروج</button>
+    <!-- نافذة حساب المستخدم -->
+    <div id="userProfileModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>حسابي</h3>
+                <button onclick="closeUserProfile()" class="close-modal"><i class="fas fa-times"></i></button>
             </div>
-            <div class="admin-tabs">
-                <button class="admin-tab-btn active" data-tab="products-list">المنتجات</button>
-                <button class="admin-tab-btn" data-tab="add-product">إضافة منتج</button>
-                <button class="admin-tab-btn" data-tab="settings">الإعدادات</button>
-                <button class="admin-tab-btn" data-tab="backup">النسخ الاحتياطي</button>
-            </div>
-            <div class="admin-body">
-                <!-- قائمة المنتجات -->
-                <div id="tab-products-list" class="admin-tab-content">
-                    <h4 style="margin-bottom: 15px; color: var(--secondary-color);"><i class="fas fa-list"></i> قائمة المنتجات</h4>
-                    <div id="adminProductList">
-                        <!-- قائمة المنتجات تظهر هنا -->
+            <div class="modal-body">
+                <div class="user-info">
+                    <img id="userPhoto" src="" alt="صورة المستخدم" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23FF6B8B%22/><text x=%2250%22 y=%2260%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2230%22>👤</text></svg>'">
+                    <div>
+                        <h4 id="userDisplayName">مستخدم</h4>
+                        <p id="userEmail">email@example.com</p>
+                        <span id="userRole" class="role-badge">مستخدم عادي</span>
                     </div>
                 </div>
                 
-                <!-- إضافة منتج -->
-                <div id="tab-add-product" class="admin-tab-content hidden">
-                    <h4 style="margin-bottom: 15px; color: var(--secondary-color);"><i class="fas fa-plus-circle"></i> إضافة منتج جديد</h4>
-                    <form id="productForm">
-                        <div class="form-group">
-                            <label>اسم المنتج</label>
-                            <input type="text" id="pName" class="auth-input" required>
+                <div class="user-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-shopping-bag"></i>
+                        <div>
+                            <h4>طلباتي</h4>
+                            <p id="userOrdersCount">0</p>
                         </div>
-                        <div class="form-group">
-                            <label>السعر (ج.س)</label>
-                            <input type="number" id="pPrice" class="auth-input" required min="100" step="100">
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-heart"></i>
+                        <div>
+                            <h4>المفضلة</h4>
+                            <p id="userFavoritesCount">0</p>
                         </div>
-                        <div class="form-group">
-                            <label>الفئة</label>
-                            <select id="pCategory" class="auth-input">
-                                <option value="featured">المميز</option>
-                                <option value="new">الجديد</option>
-                                <option value="sale">العروض</option>
-                                <option value="best">الأكثر مبيعاً</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>الكمية المتوفرة</label>
-                            <input type="number" id="pStock" class="auth-input" value="10" min="0">
-                        </div>
-                        <div class="form-group">
-                            <label>صورة المنتج</label>
-                            <div class="image-upload-container">
-                                <input type="file" id="pImageFile" class="auth-input" accept="image/*" style="display: none;">
-                                <input type="hidden" id="pImageBase64">
-                                <div class="upload-placeholder" onclick="document.getElementById('pImageFile').click()">
-                                    <i class="fas fa-cloud-upload-alt"></i>
-                                    <span>اضغط لرفع صورة</span>
-                                    <p class="image-upload-hint">(يُفضل صورة مربعة 1:1)</p>
-                                </div>
-                                <div id="imagePreview" class="image-preview hidden">
-                                    <img src="" alt="Preview">
-                                    <button type="button" class="remove-img" onclick="removeSelectedImage()"><i class="fas fa-times"></i></button>
-                                </div>
+                    </div>
+                </div>
+                
+                <div class="user-actions">
+                    <button id="profileLogoutBtn" class="btn outline-btn" style="width: 100%;">
+                        <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- لوحة التحكم -->
+    <div class="admin-sidebar" id="adminSidebar">
+        <div class="admin-header">
+            <h3><i class="fas fa-cogs"></i> إدارة المتجر</h3>
+            <button id="adminLogoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> خروج</button>
+        </div>
+        <div class="admin-tabs">
+            <button class="admin-tab-btn active" data-tab="products-list">المنتجات</button>
+            <button class="admin-tab-btn" data-tab="add-product">إضافة منتج</button>
+            <button class="admin-tab-btn" data-tab="settings">الإعدادات</button>
+            <button class="admin-tab-btn" data-tab="users">المستخدمين</button>
+            <button class="admin-tab-btn" data-tab="backup">النسخ الاحتياطي</button>
+        </div>
+        <div class="admin-body">
+            <!-- قائمة المنتجات -->
+            <div id="tab-products-list" class="admin-tab-content">
+                <h4 style="margin-bottom: 15px; color: var(--secondary-color);"><i class="fas fa-list"></i> قائمة المنتجات</h4>
+                <div id="adminProductList">
+                    <!-- قائمة المنتجات تظهر هنا -->
+                </div>
+            </div>
+            
+            <!-- إضافة منتج -->
+            <div id="tab-add-product" class="admin-tab-content hidden">
+                <h4 style="margin-bottom: 15px; color: var(--secondary-color);"><i class="fas fa-plus-circle"></i> إضافة منتج جديد</h4>
+                <form id="productForm">
+                    <div class="form-group">
+                        <label>اسم المنتج</label>
+                        <input type="text" id="pName" class="auth-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label>السعر (ج.س)</label>
+                        <input type="number" id="pPrice" class="auth-input" required min="100" step="100">
+                    </div>
+                    <div class="form-group">
+                        <label>الفئة</label>
+                        <select id="pCategory" class="auth-input">
+                            <option value="featured">المميز</option>
+                            <option value="new">الجديد</option>
+                            <option value="sale">العروض</option>
+                            <option value="best">الأكثر مبيعاً</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>الكمية المتوفرة</label>
+                        <input type="number" id="pStock" class="auth-input" value="10" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>صورة المنتج</label>
+                        <div class="image-upload-container">
+                            <input type="file" id="pImageFile" class="auth-input" accept="image/*" style="display: none;">
+                            <input type="hidden" id="pImageBase64">
+                            <div class="upload-placeholder" onclick="document.getElementById('pImageFile').click()">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>اضغط لرفع صورة</span>
+                                <p class="image-upload-hint">(يُفضل صورة مربعة 1:1)</p>
+                            </div>
+                            <div id="imagePreview" class="image-preview hidden">
+                                <img src="" alt="Preview">
+                                <button type="button" class="remove-img" onclick="removeSelectedImage()"><i class="fas fa-times"></i></button>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label>العلامة (اختياري)</label>
-                            <input type="text" id="pBadge" class="auth-input" placeholder="مثال: جديد، مميز، عرض">
-                        </div>
-                        <div class="form-group">
-                            <label>الوصف</label>
-                            <textarea id="pDesc" class="auth-input" rows="3" placeholder="وصف المنتج..."></textarea>
-                        </div>
-                        <button type="submit" class="btn primary-btn" style="width: 100%;">حفظ المنتج</button>
-                    </form>
+                    </div>
+                    <div class="form-group">
+                        <label>العلامة (اختياري)</label>
+                        <input type="text" id="pBadge" class="auth-input" placeholder="مثال: جديد، مميز، عرض">
+                    </div>
+                    <div class="form-group">
+                        <label>الوصف</label>
+                        <textarea id="pDesc" class="auth-input" rows="3" placeholder="وصف المنتج..."></textarea>
+                    </div>
+                    <button type="submit" class="btn primary-btn" style="width: 100%;">حفظ المنتج</button>
+                </form>
+            </div>
+            
+            <!-- الإعدادات -->
+            <div id="tab-settings" class="admin-tab-content hidden">
+                <h4 style="margin-bottom: 15px; color: var(--secondary-color);"><i class="fas fa-sliders-h"></i> إعدادات المتجر</h4>
+                <form id="settingsForm">
+                    <div class="form-group">
+                        <label>اسم المتجر</label>
+                        <input type="text" id="sName" class="auth-input">
+                    </div>
+                    <div class="form-group">
+                        <label>رقم الواتساب</label>
+                        <input type="text" id="sWhatsapp" class="auth-input" placeholder="249123456789">
+                    </div>
+                    <div class="form-group">
+                        <label>وصف المتجر</label>
+                        <textarea id="sDescription" class="auth-input" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>رقم الهاتف للعرض</label>
+                        <input type="text" id="sPhone" class="auth-input" placeholder="+249 123 456 789">
+                    </div>
+                    <button type="submit" class="btn primary-btn" style="width: 100%;">تحديث الإعدادات</button>
+                </form>
+            </div>
+            
+            <!-- إدارة المستخدمين -->
+            <div id="tab-users" class="admin-tab-content hidden">
+                <h4 style="margin-bottom: 15px; color: var(--secondary-color);"><i class="fas fa-users"></i> إدارة المستخدمين</h4>
+                <div class="admin-users-list" id="adminUsersList">
+                    <!-- قائمة المستخدمين تظهر هنا -->
                 </div>
-                
-                <!-- الإعدادات -->
-                <div id="tab-settings" class="admin-tab-content hidden">
-                    <h4 style="margin-bottom: 15px; color: var(--secondary-color);"><i class="fas fa-sliders-h"></i> إعدادات المتجر</h4>
-                    <form id="settingsForm">
-                        <div class="form-group">
-                            <label>اسم المتجر</label>
-                            <input type="text" id="sName" class="auth-input">
-                        </div>
-                        <div class="form-group">
-                            <label>رقم الواتساب</label>
-                            <input type="text" id="sWhatsapp" class="auth-input" placeholder="249123456789">
-                        </div>
-                        <div class="form-group">
-                            <label>وصف المتجر</label>
-                            <textarea id="sDescription" class="auth-input" rows="3"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>رقم الهاتف للعرض</label>
-                            <input type="text" id="sPhone" class="auth-input" placeholder="+249 123 456 789">
-                        </div>
-                        <div class="form-group">
-                            <label>رمز الحماية الجديد</label>
-                            <input type="password" id="sPin" class="auth-input" maxlength="4" placeholder="أتركه فارغاً لحفظ الرمز الحالي">
-                        </div>
-                        <button type="submit" class="btn primary-btn" style="width: 100%;">تحديث الإعدادات</button>
-                    </form>
-                </div>
-                
-                <!-- النسخ الاحتياطي -->
-                <div id="tab-backup" class="admin-tab-content hidden">
-                    <h4 style="margin-bottom: 15px; color: var(--secondary-color);"><i class="fas fa-database"></i> النسخ الاحتياطي والاستعادة</h4>
-                    <div class="backup-actions">
-                        <button class="btn primary-btn" onclick="exportData()" style="width: 100%; margin-bottom: 10px;">
-                            <i class="fas fa-download"></i> تصدير البيانات
-                        </button>
-                        <button class="btn outline-btn" onclick="importData()" style="width: 100%; margin-bottom: 10px;">
-                            <i class="fas fa-upload"></i> استيراد البيانات
-                        </button>
-                        <button class="btn" onclick="resetData()" style="width: 100%; margin-bottom: 10px; background: #ff4757; color: white;">
-                            <i class="fas fa-trash"></i> إعادة التعيين
-                        </button>
-                        <div id="dataStatus" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px; text-align: center;">
-                            <p id="storageStatus">جاري التحقق من حالة التخزين...</p>
-                        </div>
+            </div>
+            
+            <!-- النسخ الاحتياطي -->
+            <div id="tab-backup" class="admin-tab-content hidden">
+                <h4 style="margin-bottom: 15px; color: var(--secondary-color);"><i class="fas fa-database"></i> النسخ الاحتياطي والاستعادة</h4>
+                <div class="backup-actions">
+                    <button class="btn primary-btn" onclick="exportData()" style="width: 100%; margin-bottom: 10px;">
+                        <i class="fas fa-download"></i> تصدير البيانات
+                    </button>
+                    <button class="btn outline-btn" onclick="importData()" style="width: 100%; margin-bottom: 10px;">
+                        <i class="fas fa-upload"></i> استيراد البيانات
+                    </button>
+                    <div id="dataStatus" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px; text-align: center;">
+                        <p id="storageStatus">جاري التحقق من حالة التخزين...</p>
                     </div>
                 </div>
             </div>
@@ -409,6 +502,10 @@
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.js"></script>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="js/script.js"></script>
 </body>
 </html>
