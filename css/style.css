@@ -46,6 +46,141 @@ body {
     display: none !important;
 }
 
+/* صفحة المصادقة */
+.auth-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--light-pink) 0%, var(--light-purple) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 20px;
+}
+
+.auth-container {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 450px;
+    width: 100%;
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+    animation: slideUp 0.5s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.auth-logo i {
+    font-size: 3rem;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    display: block;
+}
+
+.auth-logo h1 {
+    margin-bottom: 10px;
+    color: var(--dark-color);
+}
+
+.auth-logo p {
+    color: var(--gray-color);
+    margin-bottom: 30px;
+}
+
+.auth-options h2 {
+    margin-bottom: 10px;
+    color: var(--dark-color);
+}
+
+.auth-subtitle {
+    color: var(--gray-color);
+    margin-bottom: 30px;
+    font-size: 0.95rem;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+    color: var(--gray-color);
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-color);
+}
+
+.auth-divider span {
+    padding: 0 15px;
+    font-size: 0.9rem;
+}
+
+.auth-btn {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 10px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Cairo', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: var(--transition);
+    font-size: 1rem;
+}
+
+.google-btn {
+    background: #4285F4;
+    color: white;
+}
+
+.google-btn:hover {
+    background: #357ae8;
+    transform: translateY(-2px);
+}
+
+.email-btn {
+    background: var(--primary-color);
+    color: white;
+}
+
+.email-btn:hover {
+    background: #ff5a7d;
+    transform: translateY(-2px);
+}
+
+.guest-btn {
+    background: transparent;
+    color: var(--dark-color);
+    border: 2px solid var(--border-color);
+}
+
+.guest-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.auth-note {
+    color: var(--gray-color);
+    font-size: 0.85rem;
+    margin-top: 20px;
+    line-height: 1.5;
+}
+
 /* شريط التنقل */
 .navbar {
     background: white;
@@ -114,7 +249,8 @@ body {
 }
 
 .admin-btn,
-.whatsapp-nav-btn {
+.whatsapp-nav-btn,
+.user-btn {
     padding: 8px 15px;
     border-radius: 20px;
     border: none;
@@ -124,6 +260,7 @@ body {
     align-items: center;
     gap: 8px;
     transition: var(--transition);
+    text-decoration: none;
 }
 
 .admin-btn {
@@ -134,7 +271,11 @@ body {
 .whatsapp-nav-btn {
     background: #25D366;
     color: white;
-    text-decoration: none;
+}
+
+.user-btn {
+    background: var(--light-gray);
+    color: var(--dark-color);
 }
 
 .admin-btn:hover {
@@ -144,6 +285,10 @@ body {
 
 .whatsapp-nav-btn:hover {
     background: #20ba5a;
+}
+
+.user-btn:hover {
+    background: var(--border-color);
 }
 
 /* زر القائمة للجوال */
@@ -209,6 +354,8 @@ body {
 .sidebar-content {
     padding: 20px;
     flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .sidebar-link {
@@ -229,22 +376,57 @@ body {
     color: var(--primary-color);
 }
 
-.sidebar-contact {
-    padding: 20px;
+.sidebar-actions {
+    margin-top: auto;
+    padding-top: 20px;
     border-top: 1px solid var(--border-color);
 }
 
-.whatsapp-sidebar-btn {
+.whatsapp-sidebar-btn,
+.admin-sidebar-btn,
+.user-sidebar-btn {
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 10px;
     padding: 12px;
+    margin-bottom: 10px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    text-align: right;
+    font-family: 'Cairo', sans-serif;
+    transition: var(--transition);
+}
+
+.whatsapp-sidebar-btn {
     background: #25D366;
     color: white;
     text-decoration: none;
-    border-radius: 8px;
-    font-weight: 600;
+}
+
+.admin-sidebar-btn {
+    background: var(--light-purple);
+    color: var(--secondary-color);
+}
+
+.user-sidebar-btn {
+    background: var(--light-gray);
+    color: var(--dark-color);
+}
+
+.whatsapp-sidebar-btn:hover {
+    background: #20ba5a;
+}
+
+.admin-sidebar-btn:hover {
+    background: var(--secondary-color);
+    color: white;
+}
+
+.user-sidebar-btn:hover {
+    background: var(--border-color);
 }
 
 /* القسم الرئيسي */
@@ -292,6 +474,7 @@ body {
     gap: 8px;
     transition: var(--transition);
     text-decoration: none;
+    font-family: 'Cairo', sans-serif;
 }
 
 .primary-btn {
@@ -420,6 +603,7 @@ body {
     border: 2px solid var(--border-color);
     border-radius: 25px;
     font-size: 1rem;
+    font-family: 'Cairo', sans-serif;
 }
 
 .search-bar i {
@@ -450,6 +634,7 @@ body {
     font-weight: 600;
     white-space: nowrap;
     transition: var(--transition);
+    font-family: 'Cairo', sans-serif;
 }
 
 .filter-btn.active {
@@ -464,6 +649,7 @@ body {
     background: white;
     font-family: 'Cairo', sans-serif;
     min-width: 180px;
+    cursor: pointer;
 }
 
 /* شبكة المنتجات */
@@ -585,6 +771,7 @@ body {
     justify-content: center;
     color: var(--dark-color);
     transition: var(--transition);
+    font-family: 'Cairo', sans-serif;
 }
 
 .product-quantity-selector button:hover {
@@ -619,6 +806,7 @@ body {
     justify-content: center;
     gap: 8px;
     transition: var(--transition);
+    font-family: 'Cairo', sans-serif;
 }
 
 .buy-btn:hover {
@@ -684,26 +872,150 @@ body {
     transform: translateY(-2px);
 }
 
+/* نافذة حساب المستخدم */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 4000;
+    padding: 20px;
+}
+
+.modal-content {
+    background: white;
+    width: 100%;
+    max-width: 450px;
+    border-radius: 15px;
+    overflow: hidden;
+    animation: modalSlideUp 0.3s ease;
+}
+
+@keyframes modalSlideUp {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+    padding: 20px;
+    background: var(--light-gray);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: var(--gray-color);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.user-info img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--light-pink);
+}
+
+.user-info h4 {
+    margin-bottom: 5px;
+    font-size: 1.2rem;
+}
+
+.user-info p {
+    color: var(--gray-color);
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: var(--light-purple);
+    color: var(--secondary-color);
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.role-badge.admin {
+    background: var(--accent-color);
+    color: #000;
+}
+
+.user-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.stat-item {
+    background: var(--light-gray);
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    transition: var(--transition);
+}
+
+.stat-item:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-sm);
+}
+
+.stat-item i {
+    font-size: 1.8rem;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+}
+
+.stat-item h4 {
+    font-size: 0.9rem;
+    color: var(--gray-color);
+    margin-bottom: 5px;
+}
+
+.stat-item p {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--secondary-color);
+}
+
 /* لوحة التحكم */
 .admin-sidebar {
     position: fixed;
     top: 0;
     left: -100%;
     width: 100%;
-    max-width: 500px; /* القيمة الافتراضية لسطح المكتب */
+    max-width: 500px;
     height: 100%;
     background: white;
     z-index: 3000;
     transition: 0.3s ease;
     display: flex;
     flex-direction: column;
-}
-
-/* تعديل إضافي لضمان عرض كامل على الأجهزة الصغيرة */
-@media (max-width: 768px) {
-    .admin-sidebar {
-        max-width: 100%; /* تملأ الشاشة بالكامل على الجوال */
-    }
 }
 
 .admin-sidebar.active {
@@ -745,6 +1057,7 @@ body {
     display: flex;
     align-items: center;
     gap: 5px;
+    font-family: 'Cairo', sans-serif;
 }
 
 .admin-tabs {
@@ -752,6 +1065,7 @@ body {
     background: var(--light-gray);
     padding: 10px;
     gap: 5px;
+    overflow-x: auto;
 }
 
 .admin-tab-btn {
@@ -763,6 +1077,9 @@ body {
     cursor: pointer;
     font-weight: 600;
     color: var(--gray-color);
+    font-family: 'Cairo', sans-serif;
+    min-width: 120px;
+    white-space: nowrap;
 }
 
 .admin-tab-btn.active {
@@ -816,21 +1133,25 @@ body {
     margin: 10px 0;
     font-family: 'Cairo', sans-serif;
     font-size: 1rem;
+    transition: var(--transition);
 }
 
 .auth-input:focus {
     outline: none;
     border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(255, 107, 139, 0.1);
 }
 
 .form-group {
     margin-bottom: 15px;
+    text-align: right;
 }
 
 .form-group label {
     display: block;
     margin-bottom: 5px;
     font-weight: 600;
+    color: var(--dark-color);
 }
 
 /* تحسينات رفع الصور */
@@ -842,6 +1163,7 @@ body {
     text-align: center;
     transition: var(--transition);
     background: var(--light-gray);
+    cursor: pointer;
 }
 
 .image-upload-container:hover {
@@ -911,6 +1233,12 @@ body {
     margin-bottom: 10px;
     border-radius: 8px;
     border-right: 5px solid var(--primary-color);
+    transition: var(--transition);
+}
+
+.admin-product-item:hover {
+    transform: translateX(-5px);
+    box-shadow: var(--shadow-sm);
 }
 
 .product-info-small {
@@ -926,6 +1254,7 @@ body {
     border-radius: 8px;
     overflow: hidden;
     flex-shrink: 0;
+    background: white;
 }
 
 .admin-product-image-container img {
@@ -937,11 +1266,18 @@ body {
 .product-details h4 {
     margin-bottom: 5px;
     font-size: 1rem;
+    color: var(--dark-color);
 }
 
 .product-details p {
     color: var(--secondary-color);
     font-weight: 700;
+    margin-bottom: 3px;
+}
+
+.product-details small {
+    color: var(--gray-color);
+    font-size: 0.8rem;
 }
 
 .delete-btn {
@@ -955,6 +1291,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: var(--transition);
 }
 
 .edit-btn {
@@ -968,6 +1305,17 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: var(--transition);
+}
+
+.delete-btn:hover {
+    background: #ff2e43;
+    transform: scale(1.1);
+}
+
+.edit-btn:hover {
+    background: #8a2be2;
+    transform: scale(1.1);
 }
 
 .product-actions-small {
@@ -975,55 +1323,90 @@ body {
     gap: 5px;
 }
 
-/* النافذة المنبثقة (Modal) */
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 4000;
-    padding: 20px;
-}
-
-.modal-content {
-    background: white;
-    width: 100%;
-    max-width: 500px;
-    border-radius: 15px;
-    overflow: hidden;
-    animation: modalSlideUp 0.3s ease;
-}
-
-@keyframes modalSlideUp {
-    from { transform: translateY(50px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
-
-.modal-header {
-    padding: 20px;
-    background: var(--light-gray);
+/* إدارة المستخدمين */
+.admin-user-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--border-color);
+    padding: 15px;
+    background: var(--light-gray);
+    margin-bottom: 10px;
+    border-radius: 8px;
+    border-right: 5px solid var(--accent-color);
 }
 
-.close-modal {
-    background: none;
+.user-info-small {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+}
+
+.admin-user-image-container {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: white;
+    border: 2px solid var(--light-pink);
+}
+
+.admin-user-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.user-details h4 {
+    margin-bottom: 3px;
+    font-size: 0.95rem;
+}
+
+.user-details p {
+    color: var(--gray-color);
+    font-size: 0.85rem;
+    margin-bottom: 3px;
+}
+
+.user-details small {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--light-purple);
+    color: var(--secondary-color);
+    border-radius: 10px;
+    font-size: 0.75rem;
+}
+
+.user-actions-small {
+    display: flex;
+    gap: 10px;
+}
+
+.role-btn {
+    padding: 6px 12px;
     border: none;
-    font-size: 1.2rem;
+    border-radius: 6px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
     cursor: pointer;
+    transition: var(--transition);
 }
 
-#editProductForm {
-    padding: 20px;
-    max-height: 80vh;
-    overflow-y: auto;
+.admin-btn {
+    background: var(--accent-color);
+    color: #000;
+}
+
+.user-btn {
+    background: var(--light-purple);
+    color: var(--secondary-color);
+}
+
+.role-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
 }
 
 /* رسالة فارغة */
@@ -1068,6 +1451,7 @@ body {
 .floating-whatsapp:hover {
     transform: scale(1.1);
     background: #20ba5a;
+    box-shadow: 0 6px 15px rgba(37, 211, 102, 0.4);
 }
 
 /* الفوتر */
@@ -1092,6 +1476,7 @@ footer {
     color: #bbb;
     max-width: 600px;
     margin: 0 auto;
+    line-height: 1.6;
 }
 
 .footer-bottom {
@@ -1125,10 +1510,12 @@ footer {
     
     .hero-buttons .btn {
         width: 100%;
+        justify-content: center;
     }
     
     .nav-actions .admin-btn span,
-    .nav-actions .whatsapp-nav-btn span {
+    .nav-actions .whatsapp-nav-btn span,
+    .nav-actions .user-btn span {
         display: none;
     }
     
@@ -1154,6 +1541,28 @@ footer {
     .modal-content {
         max-width: 95%;
         margin: 10px;
+    }
+    
+    .admin-sidebar {
+        max-width: 100%;
+    }
+    
+    .admin-tabs {
+        flex-wrap: wrap;
+    }
+    
+    .admin-tab-btn {
+        min-width: calc(50% - 10px);
+        font-size: 0.85rem;
+        padding: 8px;
+    }
+    
+    .auth-container {
+        padding: 30px 20px;
+    }
+    
+    .user-stats {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -1183,21 +1592,32 @@ footer {
         grid-template-columns: 1fr;
     }
     
-    .admin-tabs {
-        flex-wrap: wrap;
-    }
-    
-    .admin-tab-btn {
-        min-width: calc(50% - 10px);
-        font-size: 0.85rem;
-    }
-
     .floating-whatsapp {
         width: 50px;
         height: 50px;
         font-size: 1.5rem;
         bottom: 15px;
         left: 15px;
+    }
+    
+    .nav-actions {
+        gap: 5px;
+    }
+    
+    .nav-actions .admin-btn,
+    .nav-actions .whatsapp-nav-btn,
+    .nav-actions .user-btn {
+        padding: 8px;
+    }
+    
+    .user-info {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .user-info img {
+        width: 100px;
+        height: 100px;
     }
 }
 
