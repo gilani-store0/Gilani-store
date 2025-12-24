@@ -56,7 +56,7 @@ export function showMainApp() {
             mainApp.style.transition = 'all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
             mainApp.style.opacity = '1';
             mainApp.style.transform = 'translateY(0)';
-        }, 50); // تأخير بسيط لضمان تطبيق الانتقال
+        }, 50);
     }
 }
 
@@ -136,9 +136,6 @@ export function openAdminPanel() {
         showCustomToast("ليس لديك صلاحية للوصول إلى لوحة التحكم", "error");
         return;
     }
-    
-    // يجب أن يتم التحقق من الصلاحية على مستوى Firebase Security Rules
-    // الكود هنا فقط لعرض الواجهة
     
     const adminSidebar = document.getElementById('adminSidebar');
     const adminOverlay = document.getElementById('adminOverlay');
@@ -304,25 +301,50 @@ export function setupEventListeners() {
     document.getElementById('sidebarOverlay')?.addEventListener('click', closeMobileSidebar);
     
     // 5. المنتجات والبحث
-    document.getElementById('productSearchHeader')?.addEventListener('input', handleProductSearch);
-    document.getElementById('productSearch')?.addEventListener('input', handleProductSearch);
+    const searchHeader = document.getElementById('productSearchHeader');
+    const searchMain = document.getElementById('productSearch');
+    
+    if (searchHeader) {
+        searchHeader.addEventListener('input', handleProductSearch);
+        searchHeader.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') handleProductSearch(e);
+        });
+    }
+    
+    if (searchMain) {
+        searchMain.addEventListener('input', handleProductSearch);
+        searchMain.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') handleProductSearch(e);
+        });
+    }
+    
     document.getElementById('productSort')?.addEventListener('change', handleSortChange);
     
-    // توحيد منطق التصفية
-    document.querySelectorAll('.filter-tabs .filter-btn').forEach(btn => {
-        btn.addEventListener('click', handleFilterChange);
+    // 6. التصفية
+    document.querySelectorAll('.filter-tabs .filter-btn, .categories-nav .cat-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            // منع السلوك الافتراضي
+            e.preventDefault();
+            e.stopPropagation();
+            handleFilterChange(e);
+        });
     });
     
-    document.querySelectorAll('.categories-nav .cat-btn').forEach(btn => {
-        btn.addEventListener('click', handleFilterChange);
-    });
+    // 7. إعدادات المتجر
+    const settingsForm = document.getElementById('settingsForm');
+    if (settingsForm) {
+        settingsForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            handleSettingsSubmit(e);
+        });
+    }
     
-    // 6. إعدادات المتجر
-    document.getElementById('settingsForm')?.addEventListener('submit', handleSettingsSubmit);
-    
-    // 7. التنقل في لوحة التحكم
+    // 8. التنقل في لوحة التحكم
     document.querySelectorAll('.admin-nav-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
             const targetId = this.getAttribute('data-target');
             
             // إزالة النشاط من جميع الأزرار
@@ -339,21 +361,50 @@ export function setupEventListeners() {
             });
             
             // إظهار القسم المطلوب
-            document.getElementById(targetId)?.classList.add('active');
+            const targetSection = document.getElementById(targetId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
         });
     });
     
-    // 8. وظائف إضافية
-    createBackgroundParticles();
-    
     // 9. مستمعي الأحداث للجوال
-    document.getElementById('mobileUserToggle')?.addEventListener('click', () => {
+    document.getElementById('mobileUserToggle')?.addEventListener('click', (e) => {
+        e.preventDefault();
         closeMobileSidebar();
-        openUserProfile();
+        setTimeout(() => openUserProfile(), 100);
     });
     
-    document.getElementById('mobileAdminToggle')?.addEventListener('click', () => {
+    document.getElementById('mobileAdminToggle')?.addEventListener('click', (e) => {
+        e.preventDefault();
         closeMobileSidebar();
-        openAdminPanel();
+        setTimeout(() => openAdminPanel(), 100);
     });
+    
+    // 10. أزرار المنتجات
+    document.addEventListener('click', function(e) {
+        // أزرار إضافة إلى السلة
+        if (e.target.closest('.add-to-cart-btn')) {
+            const productId = e.target.closest('.add-to-cart-btn').dataset.id;
+            showCustomToast(`تمت إضافة المنتج ${productId} إلى السلة`, "success");
+        }
+        
+        // أزرار المفضلة
+        if (e.target.closest('.wishlist-btn')) {
+            const btn = e.target.closest('.wishlist-btn');
+            const icon = btn.querySelector('i');
+            if (icon.classList.contains('far')) {
+                icon.classList.remove('far');
+                icon.classList.add('fas');
+                showCustomToast("تمت إضافة المنتج إلى المفضلة", "success");
+            } else {
+                icon.classList.remove('fas');
+                icon.classList.add('far');
+                showCustomToast("تمت إزالة المنتج من المفضلة", "info");
+            }
+        }
+    });
+    
+    // إنشاء جزيئات الخلفية
+    createBackgroundParticles();
 }

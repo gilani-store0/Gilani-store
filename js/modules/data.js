@@ -77,7 +77,7 @@ function loadDefaultProducts() {
             id: 'p1', 
             name: 'عطر الورد الجوري', 
             price: 150, 
-            image: 'https://via.placeholder.com/300x300?text=Perfume+1', 
+            image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=300&h=300&fit=crop', 
             isSale: true, 
             isNew: false, 
             isBest: true,
@@ -86,9 +86,9 @@ function loadDefaultProducts() {
         },
         { 
             id: 'p2', 
-            name: 'أحمر شفاه مطفي', 
+            name: 'أحمر شفاه ناعم', 
             price: 50, 
-            image: 'https://via.placeholder.com/300x300?text=Lipstick+2', 
+            image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=300&h=300&fit=crop', 
             isSale: false, 
             isNew: true, 
             isBest: false,
@@ -99,12 +99,23 @@ function loadDefaultProducts() {
             id: 'p3', 
             name: 'كريم أساس طبيعي', 
             price: 200, 
-            image: 'https://via.placeholder.com/300x300?text=Foundation+3', 
+            image: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?q=80&w=300&h=300&fit=crop', 
             isSale: true, 
             isNew: false, 
             isBest: false,
             isFeatured: false,
             category: 'sale'
+        },
+        { 
+            id: 'p4', 
+            name: 'عطر فلورال متميز', 
+            price: 180, 
+            image: 'https://images.unsplash.com/photo-1590736969953-79c5acda2e9f?q=80&w=300&h=300&fit=crop', 
+            isSale: false, 
+            isNew: false, 
+            isBest: true,
+            isFeatured: true,
+            category: 'best'
         },
     ];
     updateStoreUI();
@@ -182,10 +193,11 @@ export function renderProducts() {
     grid.innerHTML = filteredProducts.map(product => `
         <div class="product-card" data-id="${product.id}">
             <div class="product-image-container">
-                <img src="${product.image || 'https://via.placeholder.com/300x300?text=No+Image'}" 
+                <img src="${product.image || 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=300&h=300&fit=crop'}" 
                      alt="${product.name || 'منتج'}" 
                      class="product-image"
-                     onerror="this.src='https://via.placeholder.com/300x300?text=No+Image'">
+                     loading="lazy"
+                     onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=300&h=300&fit=crop'">
                 ${product.isSale ? '<span class="badge sale-badge">عرض</span>' : ''}
                 ${product.isNew ? '<span class="badge new-badge">جديد</span>' : ''}
                 <button class="wishlist-btn"><i class="far fa-heart"></i></button>
@@ -246,14 +258,18 @@ export function handleProductSearch(e) {
 
 // معالجة التصفية
 export function handleFilterChange(e) {
-    if (!e || !e.target) return;
+    if (!e) return;
     
-    const newFilter = e.target.dataset.filter;
+    // الحصول على الزر المطلوب باستخدام closest
+    const button = e.target.closest('.cat-btn, .filter-btn');
+    if (!button) return;
+    
+    const newFilter = button.dataset.filter;
     if (!newFilter || newFilter === currentFilter) return;
     
     currentFilter = newFilter;
     
-    // تحديث حالة الأزرار
+    // تحديث حالة الأزرار في كلا المكانين
     document.querySelectorAll('.cat-btn, .filter-btn').forEach(btn => {
         btn.classList.remove('active');
         if (btn.dataset.filter === newFilter) {
