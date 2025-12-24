@@ -10,7 +10,12 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = firebase.initializeApp(firebaseConfig);
+let app;
+if (!firebase.apps.length) {
+    app = firebase.initializeApp(firebaseConfig);
+} else {
+    app = firebase.app();
+}
 const auth = firebase.auth();
 const db = firebase.firestore();
 
@@ -54,18 +59,24 @@ function setupSimpleAuthUI() {
     const emailSection = document.getElementById('emailAuthSection');
     const authOptions = document.getElementById('authOptions');
 
-    if (showEmailBtn) {
+    if (showEmailBtn && authOptions && emailSection) {
         showEmailBtn.addEventListener('click', () => {
-            if (authOptions) authOptions.classList.add('hidden');
-            if (emailSection) emailSection.classList.remove('hidden');
+            authOptions.classList.add('hidden');
+            emailSection.classList.remove('hidden');
         });
     }
 
-    if (backBtn) {
+    if (backBtn && authOptions && emailSection) {
         backBtn.addEventListener('click', () => {
-            if (emailSection) emailSection.classList.add('hidden');
-            if (authOptions) authOptions.classList.remove('hidden');
+            emailSection.classList.add('hidden');
+            authOptions.classList.remove('hidden');
         });
+    }
+
+    // إضافة مستمع لتبديل عرض كلمة المرور
+    const togglePasswordBtn = document.getElementById('togglePassword');
+    if (togglePasswordBtn) {
+        togglePasswordBtn.addEventListener('click', togglePasswordVisibility);
     }
 }
 
@@ -76,22 +87,19 @@ function setupFirebaseAuth() {
             currentUser = user;
             await checkUserAdminStatus(user);
 
-            // -- التعديل المطلوب: التوجيه حسب نوع المستخدم --
+            // التوجيه حسب نوع المستخدم
             if (isAdmin) {
-                // إذا كان المستخدم مسؤولاً، افتح لوحة التحكم
                 const shouldRedirect = localStorage.getItem('redirectToAdmin') !== 'false';
                 if (shouldRedirect) {
                     openAdminPanel();
                 } else {
-                    showMainApp(); // اسمح للمسؤول برؤية الموقع الرئيسي إذا أراد
+                    showMainApp();
                 }
             } else {
-                // إذا كان المستخدم عميلاً، افتح الموقع الرئيسي
                 showMainApp();
             }
-            // -- نهاية التعديل --
-
-            loadStoreData();
+            
+            await loadStoreData();
             updateUserUI();
             
             // تحديث آخر دخول للمستخدم
@@ -101,7 +109,6 @@ function setupFirebaseAuth() {
                 }).catch(() => {});
             }
         } else {
-            // لا يوجد مستخدم مسجل
             showAuthScreen();
         }
     });
@@ -148,7 +155,6 @@ function showError(message, elementId = null) {
         generalError.textContent = message;
         generalError.classList.add('show');
         
-        // إخفاء الرسالة بعد 5 ثواني
         setTimeout(() => {
             generalError.classList.remove('show');
         }, 5000);
@@ -182,38 +188,44 @@ function showError(message, elementId = null) {
 }
 
 // عرض مؤشر التحميل
-function showLoading(element) {
-    const button = element || document.getElementById('signInWithEmailBtn');
+function showLoading(element = null) {
+    let button;
+    if (element) {
+        button = element;
+    } else {
+        button = document.getElementById('signInWithEmailBtn');
+    }
+    
     if (button) {
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري المعالجة...';
-        
-        // إضافة طبقة تحميل للنموذج
-        const formSection = document.querySelector('.auth-form-section');
-        let loadingOverlay = formSection.querySelector('.loading-overlay');
-        
-        if (!loadingOverlay) {
-            loadingOverlay = document.createElement('div');
-            loadingOverlay.className = 'loading-overlay';
-            loadingOverlay.innerHTML = '<div class="spinner"></div>';
-            formSection.appendChild(loadingOverlay);
-        }
-        
-        loadingOverlay.classList.add('active');
     }
+    
+    // إضافة طبقة تحميل عامة
+    const loadingOverlay = document.createElement('div');
+    loadingOverlay.className = 'loading-overlay';
+    loadingOverlay.innerHTML = '<div class="spinner"></div>';
+    loadingOverlay.id = 'globalLoading';
+    document.body.appendChild(loadingOverlay);
 }
 
 // إخفاء مؤشر التحميل
-function hideLoading(element) {
-    const button = element || document.getElementById('signInWithEmailBtn');
+function hideLoading(element = null) {
+    let button;
+    if (element) {
+        button = element;
+    } else {
+        button = document.getElementById('signInWithEmailBtn');
+    }
+    
     if (button) {
         button.disabled = false;
         button.innerHTML = '<i class="fas fa-sign-in-alt"></i> تسجيل الدخول';
-        
-        const loadingOverlay = document.querySelector('.loading-overlay');
-        if (loadingOverlay) {
-            loadingOverlay.classList.remove('active');
-        }
+    }
+    
+    const loadingOverlay = document.getElementById('globalLoading');
+    if (loadingOverlay) {
+        loadingOverlay.remove();
     }
 }
 
@@ -254,10 +266,8 @@ function showCustomToast(message, type = 'info') {
     
     document.body.appendChild(toast);
     
-    // إظهار الإشعار
     setTimeout(() => toast.classList.add('show'), 100);
     
-    // إخفاء الإشعار بعد 5 ثواني
     setTimeout(() => {
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 400);
@@ -293,7 +303,6 @@ async function checkUserAdminStatus(user) {
                     await signOut();
                     return;
                 } else {
-                    // إزالة الحظر إذا انتهت المدة
                     await db.collection('users').doc(user.uid).update({
                         isBlocked: false,
                         blockedUntil: null
@@ -303,21 +312,18 @@ async function checkUserAdminStatus(user) {
             
             isAdmin = userData.isAdmin === true;
             
-            // تخزين في ذاكرة التخزين المؤقت (صالحة لمدة ساعة)
+            // تخزين في ذاكرة التخزين المؤقت
             if (isAdmin) {
                 localStorage.setItem(`admin_${user.uid}`, 'true');
                 localStorage.setItem(`admin_time_${user.uid}`, now.getTime().toString());
             }
             
-            // تحديث الواجهة
             updateAdminUI(isAdmin);
             
-            // تسجيل الدخول في سجل الأدمن
             if (isAdmin) {
                 await logAdminLogin(user.uid);
                 showCustomToast("مرحباً بك مسؤول المتجر", "success");
                 
-                // التحقق مما إذا كان يجب توجيه الأدمن للوحة التحكم
                 const shouldRedirect = localStorage.getItem('redirectToAdmin') === 'true';
                 if (shouldRedirect) {
                     setTimeout(() => openAdminPanel(), 1000);
@@ -325,13 +331,11 @@ async function checkUserAdminStatus(user) {
                 }
             }
         } else {
-            // إنشاء سجل مستخدم جديد
             await createUserRecord(user);
             isAdmin = false;
             updateAdminUI(false);
         }
         
-        // التحقق من مدة صلاحية ذاكرة التخزين المؤقت كل ساعة
         setTimeout(() => {
             localStorage.removeItem(`admin_${user.uid}`);
             localStorage.removeItem(`admin_time_${user.uid}`);
@@ -464,7 +468,6 @@ function showMainApp() {
     authScreen.classList.add('hidden');
     mainApp.classList.remove('hidden');
     
-    // إضافة تأثير ظهور تدريجي
     mainApp.style.opacity = '0';
     setTimeout(() => {
         mainApp.style.transition = 'opacity 0.5s ease';
@@ -496,6 +499,8 @@ function updateUserUI() {
     
     if (userPhoto && currentUser.photoURL) {
         userPhoto.src = currentUser.photoURL;
+    } else if (userPhoto) {
+        userPhoto.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%23FF6B8B"/><text x="50" y="60" text-anchor="middle" fill="white" font-size="30">👤</text></svg>';
     }
     
     if (userRole) {
@@ -532,7 +537,6 @@ async function createUserRecord(user) {
 async function signInWithGoogle() {
     try {
         const provider = new firebase.auth.GoogleAuthProvider();
-        // إضافة نطاقات إضافية إذا لزم الأمر
         provider.addScope('profile');
         provider.addScope('email');
         
@@ -641,7 +645,6 @@ async function resetPassword(email) {
 // تسجيل الخروج
 async function signOut() {
     try {
-        // تسجيل خروج الأدمن
         if (isAdmin) {
             await logAdminAction('LOGOUT');
         }
@@ -651,7 +654,6 @@ async function signOut() {
         currentUser = null;
         isAdmin = false;
         
-        // إزالة ذاكرة التخزين المؤقت
         if (currentUser) {
             localStorage.removeItem(`admin_${currentUser.uid}`);
             localStorage.removeItem(`admin_time_${currentUser.uid}`);
@@ -683,17 +685,14 @@ async function handleEmailSignIn(e) {
         return;
     }
     
-    // إظهار مؤشر التحميل
     showLoading();
     
     try {
         const user = await signInWithEmail(email, password);
         if (user) {
-            // تسجيل محاولة الدخول الناجحة
             await logLoginAttempt(user.uid, true);
         }
     } catch (error) {
-        // تسجيل محاولة الدخول الفاشلة
         await logLoginAttempt(null, false, email);
     } finally {
         hideLoading();
@@ -724,7 +723,6 @@ async function handleEmailSignUp() {
         return;
     }
     
-    // إضافة تأثير تحميل
     showLoading(document.getElementById('signUpWithEmailBtn'));
     
     try {
@@ -748,12 +746,10 @@ async function handleForgotPassword() {
     const confirmReset = confirm(`هل تريد إرسال رابط إعادة تعيين كلمة المرور إلى ${email}؟`);
     if (!confirmReset) return;
     
-    // إضافة تأثير تحميل
     showLoading(document.getElementById('forgotPasswordBtn'));
     
     await resetPassword(email);
     
-    // استعادة الحالة الأصلية
     hideLoading(document.getElementById('forgotPasswordBtn'));
 }
 
@@ -766,8 +762,6 @@ async function openAdminPanel() {
     // التحقق من الصلاحية أولاً
     if (!currentUser || !isAdmin) {
         showCustomToast("ليس لديك صلاحية للوصول إلى لوحة التحكم", "error");
-        
-        // تسجيل محاولة الوصول غير المصرح بها
         await logUnauthorizedAccess();
         return;
     }
@@ -779,7 +773,6 @@ async function openAdminPanel() {
         return;
     }
     
-    // تسجيل الدخول إلى لوحة التحكم
     await logAdminAction('ADMIN_PANEL_ACCESS');
     
     const adminSidebar = document.getElementById('adminSidebar');
@@ -788,7 +781,6 @@ async function openAdminPanel() {
     if (adminSidebar) adminSidebar.classList.add('active');
     if (adminOverlay) adminOverlay.classList.add('active');
     
-    // إضافة طبقة حماية
     document.addEventListener('click', handleAdminPanelClick);
     
     loadAdminProducts();
@@ -806,7 +798,6 @@ async function shouldReauthenticate() {
     const now = new Date().getTime();
     const hoursSinceLastAuth = (now - parseInt(lastAuthTime)) / (1000 * 60 * 60);
     
-    // إذا مرت أكثر من 12 ساعة منذ آخر مصادقة
     return hoursSinceLastAuth > 12;
 }
 
@@ -818,12 +809,10 @@ function handleAdminPanelClick(e) {
         return;
     }
     
-    // منع إغلاق لوحة التحكم عن طريق الخطأ
     if (!adminSidebar.contains(e.target) && !e.target.closest('.admin-btn')) {
         e.preventDefault();
         e.stopPropagation();
         
-        // عرض تأكيد للإغلاق
         if (confirm('هل تريد إغلاق لوحة التحكم؟')) {
             closeAdminPanel();
         }
@@ -832,7 +821,6 @@ function handleAdminPanelClick(e) {
 
 // إغلاق لوحة التحكم
 function closeAdminPanel() {
-    // تسجيل خروج الأدمن من اللوحة
     if (isAdmin) {
         logAdminAction('ADMIN_PANEL_CLOSE');
     }
@@ -845,117 +833,6 @@ function closeAdminPanel() {
     
     document.removeEventListener('click', handleAdminPanelClick);
     document.body.style.overflow = 'auto';
-}
-
-// منع الوصول إلى صفحات الإدارة مباشرة
-function protectAdminRoutes() {
-    const path = window.location.hash;
-    if (path.includes('admin') && (!currentUser || !isAdmin)) {
-        showCustomToast("الوصوع غير مصرح به", "error");
-        window.location.hash = '#home';
-        
-        // تسجيل محاولة الوصول
-        logUnauthorizedAccess();
-    }
-}
-
-// =====================================
-// وظائف الأدمن المتقدمة
-// =====================================
-
-// تحميل إحصائيات الأدمن
-async function loadAdminStatistics() {
-    try {
-        // جلب الإحصائيات
-        const [usersCount, productsCount, ordersCount, recentLogs] = await Promise.all([
-            db.collection('users').count().get(),
-            db.collection('products').count().get(),
-            db.collection('orders').count().get(),
-            db.collection('adminLogs').orderBy('timestamp', 'desc').limit(10).get()
-        ]);
-        
-        const statsHTML = `
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px;">
-                <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px;">
-                    <h5 style="margin: 0 0 10px 0; font-size: 0.9rem;">المستخدمين</h5>
-                    <p style="font-size: 2rem; font-weight: bold; margin: 0;">${usersCount.data().count}</p>
-                </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 12px;">
-                    <h5 style="margin: 0 0 10px 0; font-size: 0.9rem;">المنتجات</h5>
-                    <p style="font-size: 2rem; font-weight: bold; margin: 0;">${productsCount.data().count}</p>
-                </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 20px; border-radius: 12px;">
-                    <h5 style="margin: 0 0 10px 0; font-size: 0.9rem;">الطلبات</h5>
-                    <p style="font-size: 2rem; font-weight: bold; margin: 0;">${ordersCount.data().count}</p>
-                </div>
-            </div>
-            
-            <div style="background: white; padding: 20px; border-radius: 12px; margin-top: 20px;">
-                <h5 style="margin: 0 0 15px 0; color: var(--secondary-color);">
-                    <i class="fas fa-history"></i> آخر نشاطات المسؤولين
-                </h5>
-                <div style="max-height: 300px; overflow-y: auto;">
-                    ${recentLogs.docs.map(doc => {
-                        const log = doc.data();
-                        return `
-                        <div style="padding: 10px; border-bottom: 1px solid #eee;">
-                            <div style="display: flex; justify-content: space-between;">
-                                <span style="font-weight: bold;">${log.action}</span>
-                                <small style="color: #666;">${log.timestamp?.toDate().toLocaleString('ar-SA')}</small>
-                            </div>
-                            <small style="color: #888;">${log.ip}</small>
-                        </div>
-                        `;
-                    }).join('')}
-                </div>
-            </div>
-        `;
-        
-        document.getElementById('statsContent').innerHTML = statsHTML;
-    } catch (error) {
-        console.error('خطأ في تحميل الإحصائيات:', error);
-        document.getElementById('statsContent').innerHTML = `
-            <div style="text-align: center; padding: 40px; color: #666;">
-                <i class="fas fa-exclamation-triangle" style="font-size: 2rem;"></i>
-                <p>خطأ في تحميل الإحصائيات</p>
-            </div>
-        `;
-    }
-}
-
-// حظر/إلغاء حظر المستخدم
-async function toggleUserBlock(userId, isCurrentlyBlocked) {
-    if (!confirm(`هل تريد ${isCurrentlyBlocked ? 'إلغاء حظر' : 'حظر'} هذا المستخدم؟`)) return;
-    
-    try {
-        const action = isCurrentlyBlocked ? 'UNBLOCK_USER' : 'BLOCK_USER';
-        await logAdminAction(action, { userId });
-        
-        if (isCurrentlyBlocked) {
-            await db.collection('users').doc(userId).update({
-                isBlocked: false,
-                blockedUntil: null
-            });
-            showCustomToast("تم إلغاء حظر المستخدم", "success");
-        } else {
-            const blockDuration = prompt("مدة الحظر بالأيام:", "1");
-            const days = parseInt(blockDuration) || 1;
-            const blockedUntil = new Date();
-            blockedUntil.setDate(blockedUntil.getDate() + days);
-            
-            await db.collection('users').doc(userId).update({
-                isBlocked: true,
-                blockedUntil: firebase.firestore.Timestamp.fromDate(blockedUntil),
-                blockReason: "حظر بواسطة المسؤول"
-            });
-            showCustomToast(`تم حظر المستخدم لمدة ${days} أيام`, "warning");
-        }
-        
-        loadAdminUsers();
-    } catch (error) {
-        console.error('خطأ في تحديث حالة الحظر:', error);
-        showCustomToast("حدث خطأ في تحديث حالة المستخدم", "error");
-    }
 }
 
 // =====================================
@@ -976,12 +853,10 @@ async function getClientIP() {
 // دعم العرض بشاشة كاملة على الجوال
 function setupFullscreenMobile() {
     if ('standalone' in navigator || window.matchMedia('(display-mode: standalone)').matches) {
-        // التطبيق يعمل في وضع PWA
         document.documentElement.style.setProperty('--safe-area-top', 'env(safe-area-inset-top)');
         document.documentElement.style.setProperty('--safe-area-bottom', 'env(safe-area-inset-bottom)');
     }
     
-    // إضافة دعم لحجم العرض المتغير
     let vh = window.innerHeight * 0.01;
     document.documentElement.style.setProperty('--vh', `${vh}px`);
     
@@ -990,10 +865,6 @@ function setupFullscreenMobile() {
         document.documentElement.style.setProperty('--vh', `${vh}px`);
     });
 }
-
-// =====================================
-// بقية الوظائف (تم الاحتفاظ بها مع التعديلات البسيطة)
-// =====================================
 
 // تبديل عرض كلمة المرور
 function togglePasswordVisibility() {
@@ -1037,7 +908,6 @@ async function loadStoreData() {
         
         console.log('تم تحميل البيانات:', storeData.products.length, 'منتج');
         
-        // تحديث الواجهة
         updateStoreUI();
         renderProducts();
         updateCategoryCounts();
@@ -1070,7 +940,7 @@ function updateStoreUI() {
     // تحديث روابط الواتساب
     const waLink = `https://wa.me/${storeData.settings.whatsapp}?text=مرحباً%20${encodeURIComponent(storeData.settings.storeName)}%20،%20أود%20الاستفسار%20عن%20المنتجات`;
     
-    ['whatsappNavLink', 'mobileWhatsappLink', 'floatingWhatsapp', 'contactWhatsappLink'].forEach(id => {
+    ['whatsappNavLink', 'mobileWhatsappLink', 'floatingWhatsapp', 'contactWhatsappBtn'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.href = waLink;
     });
@@ -1160,14 +1030,15 @@ function setupEventListeners() {
     document.getElementById('signUpWithEmailBtn')?.addEventListener('click', handleEmailSignUp);
     document.getElementById('guestSignInBtn')?.addEventListener('click', () => signInAsGuest());
     document.getElementById('forgotPasswordBtn')?.addEventListener('click', handleForgotPassword);
-    document.getElementById('adminLoginBtn')?.addEventListener('click', () => {
-        document.getElementById('emailInput').value = '';
-        document.getElementById('passwordInput').value = '';
-        showCustomToast("الرجاء استخدام بيانات مسؤول المتجر", "info");
-    });
     
-    // تبديل عرض كلمة المرور
-    document.getElementById('togglePassword')?.addEventListener('click', togglePasswordVisibility);
+    // البحث في الهيدر
+    const productSearchHeader = document.getElementById('productSearchHeader');
+    if (productSearchHeader) {
+        productSearchHeader.addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            renderProducts();
+        });
+    }
     
     // تسجيل الخروج
     document.getElementById('profileLogoutBtn')?.addEventListener('click', () => signOut());
@@ -1197,10 +1068,6 @@ function setupEventListeners() {
         localStorage.setItem('redirectToAdmin', 'true');
     }
 }
-
-// =====================================
-// بقية الوظائف الأساسية (بدون تغييرات جوهرية)
-// =====================================
 
 // القائمة الجانبية للجوال
 function setupMobileMenu() {
@@ -1344,6 +1211,7 @@ function openUserProfile() {
     if (userProfileModal) {
         userProfileModal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
+        updateUserUI();
     }
 }
 
@@ -1361,7 +1229,6 @@ function setupCategoryCards() {
         card.addEventListener('click', function() {
             const category = this.dataset.category;
             
-            // تحديث أزرار الفلترة
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.classList.remove('active');
                 if (btn.dataset.filter === category) {
@@ -1369,11 +1236,9 @@ function setupCategoryCards() {
                 }
             });
             
-            // تطبيق الفلترة
             currentFilter = category;
             renderProducts();
             
-            // التمرير إلى قسم المنتجات
             document.getElementById('products').scrollIntoView({ behavior: 'smooth' });
         });
     });
@@ -1409,43 +1274,12 @@ function setupOtherListeners() {
             closeEditModal();
         }
     });
-    
-    // حماية مسارات الأدمن
-    window.addEventListener('hashchange', protectAdminRoutes);
 }
 
 // تحديث السنة الحالية
 function updateCurrentYear() {
     document.getElementById('currentYear').textContent = new Date().getFullYear();
 }
-
-// ... بقية الوظائف الموجودة في الكود الأصلي (renderProducts, formatPrice, loadStoreData, etc.)
-// مع التأكد من استبدال showToast بـ showCustomToast في جميع الأماكن
-
-// إضافة تأثيرات CSS إضافية
-document.addEventListener('DOMContentLoaded', function() {
-    // إضافة تأثيرات للعناصر عند التحميل
-    const style = document.createElement('style');
-    style.textContent = `
-        .feature-item, .social-auth-btn, .auth-input {
-            transform: translateY(0);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        
-        .feature-item:hover, .social-auth-btn:hover {
-            transform: translateY(-3px);
-        }
-        
-        .auth-input:focus {
-            transform: translateY(-1px);
-        }
-    `;
-    document.head.appendChild(style);
-});
-
-// =====================================
-// الوظائف المتبقية من الكود الأصلي (مع التعديلات البسيطة)
-// =====================================
 
 // تحديث عدد المنتجات في الفئات
 function updateCategoryCounts() {
@@ -1535,10 +1369,8 @@ async function deleteProduct(id) {
     try {
         await db.collection('products').doc(id).delete();
         
-        // تحديث القائمة المحلية
         storeData.products = storeData.products.filter(p => p.id !== id);
         
-        // تحديث الواجهات
         loadAdminProducts();
         renderProducts();
         updateCategoryCounts();
@@ -1562,7 +1394,6 @@ async function handleAddProduct(e) {
     const description = document.getElementById('pDesc').value.trim();
     const stock = parseInt(document.getElementById('pStock').value) || 0;
     
-    // التحقق من البيانات
     if (!name || !price || !imageBase64) {
         showCustomToast("الرجاء ملء جميع الحقول المطلوبة (بما في ذلك الصورة)", "error");
         return;
@@ -1574,7 +1405,6 @@ async function handleAddProduct(e) {
     }
     
     try {
-        // إنشاء المنتج الجديد في Firestore
         const newProduct = {
             name: name,
             price: price,
@@ -1589,22 +1419,17 @@ async function handleAddProduct(e) {
         
         const docRef = await db.collection('products').add(newProduct);
         
-        // إضافة المعرف المحلي
         newProduct.id = docRef.id;
         
-        // تحديث القائمة المحلية
         storeData.products.unshift(newProduct);
         
-        // إعادة تعيين النموذج
         e.target.reset();
         removeSelectedImage();
         
-        // تحديث الواجهات
         renderProducts();
         loadAdminProducts();
         updateCategoryCounts();
         
-        // الانتقال إلى قائمة المنتجات
         const productsTab = document.querySelector('.admin-tab-btn[data-tab="products-list"]');
         if (productsTab) productsTab.click();
         
@@ -1723,10 +1548,103 @@ async function toggleUserRole(userId, isCurrentlyAdmin) {
     }
 }
 
+// حظر/إلغاء حظر المستخدم
+async function toggleUserBlock(userId, isCurrentlyBlocked) {
+    if (!confirm(`هل تريد ${isCurrentlyBlocked ? 'إلغاء حظر' : 'حظر'} هذا المستخدم؟`)) return;
+    
+    try {
+        const action = isCurrentlyBlocked ? 'UNBLOCK_USER' : 'BLOCK_USER';
+        await logAdminAction(action, { userId });
+        
+        if (isCurrentlyBlocked) {
+            await db.collection('users').doc(userId).update({
+                isBlocked: false,
+                blockedUntil: null
+            });
+            showCustomToast("تم إلغاء حظر المستخدم", "success");
+        } else {
+            const blockDuration = prompt("مدة الحظر بالأيام:", "1");
+            const days = parseInt(blockDuration) || 1;
+            const blockedUntil = new Date();
+            blockedUntil.setDate(blockedUntil.getDate() + days);
+            
+            await db.collection('users').doc(userId).update({
+                isBlocked: true,
+                blockedUntil: firebase.firestore.Timestamp.fromDate(blockedUntil),
+                blockReason: "حظر بواسطة المسؤول"
+            });
+            showCustomToast(`تم حظر المستخدم لمدة ${days} أيام`, "warning");
+        }
+        
+        loadAdminUsers();
+    } catch (error) {
+        console.error('خطأ في تحديث حالة الحظر:', error);
+        showCustomToast("حدث خطأ في تحديث حالة المستخدم", "error");
+    }
+}
+
+// تحميل إحصائيات الأدمن
+async function loadAdminStatistics() {
+    try {
+        const [usersCount, productsCount, ordersCount, recentLogs] = await Promise.all([
+            db.collection('users').count().get(),
+            db.collection('products').count().get(),
+            db.collection('orders').count().get(),
+            db.collection('adminLogs').orderBy('timestamp', 'desc').limit(10).get()
+        ]);
+        
+        const statsHTML = `
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px;">
+                    <h5 style="margin: 0 0 10px 0; font-size: 0.9rem;">المستخدمين</h5>
+                    <p style="font-size: 2rem; font-weight: bold; margin: 0;">${usersCount.data().count}</p>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 12px;">
+                    <h5 style="margin: 0 0 10px 0; font-size: 0.9rem;">المنتجات</h5>
+                    <p style="font-size: 2rem; font-weight: bold; margin: 0;">${productsCount.data().count}</p>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 20px; border-radius: 12px;">
+                    <h5 style="margin: 0 0 10px 0; font-size: 0.9rem;">الطلبات</h5>
+                    <p style="font-size: 2rem; font-weight: bold; margin: 0;">${ordersCount.data().count}</p>
+                </div>
+            </div>
+            
+            <div style="background: white; padding: 20px; border-radius: 12px; margin-top: 20px;">
+                <h5 style="margin: 0 0 15px 0; color: var(--secondary-color);">
+                    <i class="fas fa-history"></i> آخر نشاطات المسؤولين
+                </h5>
+                <div style="max-height: 300px; overflow-y: auto;">
+                    ${recentLogs.docs.map(doc => {
+                        const log = doc.data();
+                        return `
+                        <div style="padding: 10px; border-bottom: 1px solid #eee;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="font-weight: bold;">${log.action}</span>
+                                <small style="color: #666;">${log.timestamp?.toDate().toLocaleString('ar-SA')}</small>
+                            </div>
+                            <small style="color: #888;">${log.ip}</small>
+                        </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('statsContent').innerHTML = statsHTML;
+    } catch (error) {
+        console.error('خطأ في تحميل الإحصائيات:', error);
+        document.getElementById('statsContent').innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #666;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 2rem;"></i>
+                <p>خطأ في تحميل الإحصائيات</p>
+            </div>
+        `;
+    }
+}
+
 // تصدير البيانات
 async function exportData() {
     try {
-        // جلب جميع البيانات
         const [productsSnapshot, settingsDoc] = await Promise.all([
             db.collection('products').get(),
             db.collection('settings').doc('store').get()
@@ -1782,23 +1700,18 @@ function importData() {
             try {
                 const importedData = JSON.parse(e.target.result);
                 
-                // التحقق من صحة البيانات
                 if (importedData.settings && Array.isArray(importedData.products)) {
                     if (confirm('هل تريد استيراد البيانات الجديدة؟ سيتم استبدال البيانات الحالية.')) {
-                        // استيراد الإعدادات
                         await db.collection('settings').doc('store').set(importedData.settings);
                         
-                        // استيراد المنتجات
                         const batch = db.batch();
                         const productsRef = db.collection('products');
                         
-                        // حذف المنتجات القديمة أولاً
                         const oldProducts = await productsRef.get();
                         oldProducts.forEach(doc => {
                             batch.delete(doc.ref);
                         });
                         
-                        // إضافة المنتجات الجديدة
                         importedData.products.forEach(product => {
                             const { id, ...productData } = product;
                             const newRef = productsRef.doc();
@@ -1811,7 +1724,6 @@ function importData() {
                         
                         await batch.commit();
                         
-                        // إعادة تحميل البيانات
                         await loadStoreData();
                         showCustomToast("تم استيراد البيانات بنجاح", "success");
                     }
@@ -1838,7 +1750,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const file = e.target.files[0];
             if (!file) return;
 
-            // التحقق من حجم الملف (أقصى حد 2 ميجابايت)
             if (file.size > 2 * 1024 * 1024) {
                 showCustomToast("حجم الصورة كبير جداً (الحد الأقصى 2 ميجابايت)", "error");
                 this.value = '';
@@ -1872,7 +1783,8 @@ function removeSelectedImage() {
     if (imageBase64Input) imageBase64Input.value = '';
     if (preview) {
         preview.classList.add('hidden');
-        preview.querySelector('img').src = '';
+        const img = preview.querySelector('img');
+        if (img) img.src = '';
     }
     if (placeholder) placeholder.classList.remove('hidden');
 }
@@ -1915,7 +1827,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const description = document.getElementById('editPDesc').value.trim();
 
             try {
-                // تحديث في Firestore
                 await db.collection('products').doc(id).update({
                     name,
                     price,
@@ -1926,7 +1837,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
-                // تحديث المحلي
                 const index = storeData.products.findIndex(p => p.id === id);
                 if (index !== -1) {
                     storeData.products[index] = {
@@ -1940,7 +1850,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     };
                 }
                 
-                // تحديث الواجهات
                 renderProducts();
                 loadAdminProducts();
                 updateCategoryCounts();
@@ -1984,6 +1893,9 @@ function loadDefaultProducts() {
             createdAt: new Date().toISOString()
         }
     ];
+    
+    renderProducts();
+    updateCategoryCounts();
 }
 
 // إعداد التطبيق بعد تحميل الصفحة
@@ -1992,3 +1904,30 @@ setTimeout(() => {
         showAuthScreen();
     }
 }, 100);
+
+// إضافة تأثيرات CSS إضافية
+document.addEventListener('DOMContentLoaded', function() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .feature-item, .social-auth-btn, .auth-input {
+            transform: translateY(0);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .feature-item:hover, .social-auth-btn:hover {
+            transform: translateY(-3px);
+        }
+        
+        .auth-input:focus {
+            transform: translateY(-1px);
+        }
+    `;
+    document.head.appendChild(style);
+});
+
+// إضافة حدث لمعالجة الأخطاء العامة
+window.addEventListener('error', function(e) {
+    console.error('حدث خطأ:', e.error);
+    showCustomToast(`حدث خطأ: ${e.error.message}`, 'error');
+});
+
