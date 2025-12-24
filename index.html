@@ -74,6 +74,14 @@
             <!-- نموذج تسجيل الدخول -->
             <div class="auth-form-section">
                 <div class="auth-form-container">
+                    <!-- رسائل الخطأ العامة -->
+                    <div id="generalError" class="error-message"></div>
+                    
+                    <!-- رسائل التحميل -->
+                    <div class="loading-overlay">
+                        <div class="spinner"></div>
+                    </div>
+                    
                     <div class="auth-form-header">
                         <h2>مرحباً بك في <span class="highlight">جمالك</span></h2>
                         <p>سجل الدخول لتجربة تسوق فريدة</p>
@@ -97,45 +105,54 @@
                         <span>أو سجل باستخدام البريد</span>
                     </div>
                     
+                    <!-- تلميح تسجيل دخول الأدمن -->
+                    <div class="admin-login-hint" style="text-align: center; margin-bottom: 15px;">
+                        <button id="adminLoginBtn" class="text-link" style="color: var(--accent-color); font-weight: bold;">
+                            <i class="fas fa-user-shield"></i> تسجيل دخول المسؤولين
+                        </button>
+                    </div>
+                    
                     <!-- نموذج البريد الإلكتروني -->
                     <div class="email-auth-form" id="emailAuthSection">
-                        <div class="form-group">
-                            <label for="emailInput">البريد الإلكتروني</label>
-                            <div class="input-with-icon">
-                                <i class="fas fa-envelope"></i>
-                                <input type="email" id="emailInput" class="auth-input" placeholder="example@email.com" autocomplete="email">
+                        <form id="emailAuthForm">
+                            <div class="form-group">
+                                <label for="emailInput">البريد الإلكتروني</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-envelope"></i>
+                                    <input type="email" id="emailInput" class="auth-input" placeholder="example@email.com" autocomplete="email" required>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <div class="password-header">
-                                <label for="passwordInput">كلمة المرور</label>
-                                <button type="button" id="togglePassword" class="toggle-password-btn">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                            <div class="input-with-icon">
-                                <i class="fas fa-lock"></i>
-                                <input type="password" id="passwordInput" class="auth-input" placeholder="كلمة المرور" autocomplete="current-password">
-                            </div>
-                        </div>
-                        
-                        <div class="form-actions">
-                            <button id="signInWithEmailBtn" class="auth-btn primary-btn">
-                                <i class="fas fa-sign-in-alt"></i>
-                                تسجيل الدخول
-                            </button>
                             
-                            <div class="auth-links">
-                                <button id="signUpWithEmailBtn" class="text-link">
-                                    إنشاء حساب جديد
-                                </button>
-                                <span class="divider">|</span>
-                                <button id="forgotPasswordBtn" class="text-link">
-                                    نسيت كلمة المرور؟
-                                </button>
+                            <div class="form-group">
+                                <div class="password-header">
+                                    <label for="passwordInput">كلمة المرور</label>
+                                    <button type="button" id="togglePassword" class="toggle-password-btn">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-lock"></i>
+                                    <input type="password" id="passwordInput" class="auth-input" placeholder="كلمة المرور" autocomplete="current-password" required>
+                                </div>
                             </div>
-                        </div>
+                            
+                            <div class="form-actions">
+                                <button id="signInWithEmailBtn" class="auth-btn primary-btn" type="submit">
+                                    <i class="fas fa-sign-in-alt"></i>
+                                    تسجيل الدخول
+                                </button>
+                                
+                                <div class="auth-links">
+                                    <button id="signUpWithEmailBtn" class="text-link" type="button">
+                                        إنشاء حساب جديد
+                                    </button>
+                                    <span class="divider">|</span>
+                                    <button id="forgotPasswordBtn" class="text-link" type="button">
+                                        نسيت كلمة المرور؟
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                     
                     <!-- شروط الخدمة -->
@@ -433,6 +450,7 @@
             <div class="admin-tabs">
                 <button class="admin-tab-btn active" data-tab="products-list">المنتجات</button>
                 <button class="admin-tab-btn" data-tab="add-product">إضافة منتج</button>
+                <button class="admin-tab-btn" data-tab="statistics">الإحصائيات</button>
                 <button class="admin-tab-btn" data-tab="settings">الإعدادات</button>
                 <button class="admin-tab-btn" data-tab="users">المستخدمين</button>
                 <button class="admin-tab-btn" data-tab="backup">النسخ الاحتياطي</button>
@@ -497,6 +515,18 @@
                         </div>
                         <button type="submit" class="btn primary-btn" style="width: 100%;">حفظ المنتج</button>
                     </form>
+                </div>
+                
+                <!-- الإحصائيات -->
+                <div id="tab-statistics" class="admin-tab-content hidden">
+                    <h4 style="margin-bottom: 15px; color: var(--secondary-color);">
+                        <i class="fas fa-chart-bar"></i> إحصائيات المتجر
+                    </h4>
+                    <div id="statsContent">
+                        <div class="loading-stats">
+                            <i class="fas fa-spinner fa-spin"></i> جاري تحميل الإحصائيات...
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- الإعدادات -->
