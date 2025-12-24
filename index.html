@@ -8,30 +8,9 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.css">
 </head>
 <body>
-    <!-- الشريط العلوي -->
-    <div class="top-bar">
-        <div class="container">
-            <div class="top-bar-content">
-                <div class="offer">
-                    <i class="fas fa-gift"></i>
-                    <span>شحن مجاني للطلبات فوق 500 جنيه</span>
-                </div>
-                <div class="top-links">
-                    <a href="https://wa.me/249933002015" target="_blank">
-                        <i class="fab fa-whatsapp"></i> 249933002015
-                    </a>
-                    <a href="#">
-                        <i class="fas fa-clock"></i> 8 صباحاً - 6 مساءً
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- شريط التنقل -->
     <nav class="navbar">
         <div class="container">
@@ -54,17 +33,17 @@
 
             <!-- أزرار التنفيذ -->
             <div class="nav-actions">
-                <!-- زر لوحة التحكم -->
-                <button class="admin-btn" id="adminToggle">
-                    <i class="fas fa-cogs"></i>
-                    لوحة التحكم
-                </button>
-
                 <!-- زر واتساب -->
-                <a href="https://wa.me/249933002015" target="_blank" class="whatsapp-nav-btn">
+                <a href="#" id="whatsappNavLink" target="_blank" class="whatsapp-nav-btn">
                     <i class="fab fa-whatsapp"></i>
                     <span>اطلب الآن</span>
                 </a>
+                
+                <!-- زر لوحة التحكم -->
+                <button class="admin-btn" id="adminToggle">
+                    <i class="fas fa-cogs"></i>
+                    <span>الإدارة</span>
+                </button>
             </div>
 
             <!-- زر القائمة للجوال -->
@@ -104,96 +83,84 @@
                 <span>اتصل بنا</span>
             </a>
             
-            <div class="sidebar-contact">
-                <div class="contact-item">
-                    <i class="fab fa-whatsapp"></i>
-                    <div>
-                        <strong>واتساب</strong>
-                        <p>249933002015</p>
-                    </div>
-                </div>
-                <div class="contact-item">
-                    <i class="fas fa-clock"></i>
-                    <div>
-                        <strong>مواعيد العمل</strong>
-                        <p>8 ص - 6 م</p>
-                    </div>
-                </div>
-            </div>
-            
-            <a href="https://wa.me/249933002015" target="_blank" class="whatsapp-sidebar-btn">
-                <i class="fab fa-whatsapp"></i>
-                <span>تواصل معنا</span>
+            <a href="#" class="sidebar-link open-control-panel">
+                <i class="fas fa-cogs"></i>
+                <span>لوحة التحكم</span>
             </a>
+            
+            <div class="sidebar-contact">
+                <a href="#" id="mobileWhatsappLink" target="_blank" class="whatsapp-sidebar-btn">
+                    <i class="fab fa-whatsapp"></i>
+                    <span>تواصل معنا عبر واتساب</span>
+                </a>
+            </div>
         </div>
     </div>
 
-    <!-- القسم الرئيسي -->
+    <!-- القسم الرئيسي بدون صورة -->
     <section class="hero-section" id="home">
         <div class="container">
             <div class="hero-content">
                 <div class="hero-text">
-                    <h1 class="hero-title">تسوق العطور ومستحضرات التجميل <span class="highlight">بأناقة وجودة عالية</span></h1>
+                    <h1 class="hero-title">تسوق <span class="highlight">العطور</span> و<span class="highlight">مستحضرات التجميل</span> بجودة عالية</h1>
                     <p class="hero-description">
-                        اكتشف مجموعتنا الحصرية من العطور العالمية ومستحضرات التجميل الأصلية
+                        اكتشف تشكيلتنا الحصرية من أفضل العطور العالمية ومستحضرات التجميل الأصلية. 
+                        نحن نقدم منتجات عالية الجودة مع خدمة توصيل سريعة لكافة أنحاء السودان.
                     </p>
                     <div class="hero-buttons">
                         <a href="#products" class="btn primary-btn">
                             <i class="fas fa-shopping-bag"></i>
                             تصفح المنتجات
                         </a>
-                        <a href="https://wa.me/249933002015" target="_blank" class="btn whatsapp-btn">
+                        <a href="#contact" class="btn whatsapp-btn">
                             <i class="fab fa-whatsapp"></i>
-                            تواصل معنا
+                            تواصل معنا الآن
                         </a>
                     </div>
-                </div>
-                <div class="hero-image">
-                    <img src="https://images.unsplash.com/photo-1541643600914-78b084683601?w=800&auto=format&fit=crop" alt="متجر مستحضرات تجميل وعطور">
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- قسم التصنيفات -->
+    <!-- قسم التصنيفات المعدل -->
     <section class="categories-section" id="categories">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title"><i class="fas fa-list"></i> أقسام المتجر</h2>
-                <p class="section-subtitle">اختر القسم الذي تريد</p>
+                <h2 class="section-title"><i class="fas fa-tags"></i> تصفح حسب الفئة</h2>
+                <p class="section-subtitle">اختر الفئة التي تناسبك</p>
             </div>
             <div class="categories-grid">
-                <div class="category-card" data-category="perfumes">
+                <div class="category-card" data-category="featured">
                     <div class="category-icon">
-                        <i class="fas fa-wind"></i>
+                        <i class="fas fa-star"></i>
                     </div>
-                    <h3>العطور</h3>
-                    <p>عطور عالمية فاخرة</p>
-                    <span class="category-count" id="perfumesCount">0 منتج</span>
+                    <h3>المميز</h3>
+                    <p>أفضل المنتجات المختارة بعناية</p>
+                    <span class="category-tag" id="featuredCount">0 منتج</span>
                 </div>
-                <div class="category-card" data-category="makeup">
+                <div class="category-card" data-category="new">
                     <div class="category-icon">
-                        <i class="fas fa-palette"></i>
+                        <i class="fas fa-bolt"></i>
                     </div>
-                    <h3>المكياج</h3>
-                    <p>مستحضرات مكياج احترافية</p>
-                    <span class="category-count" id="makeupCount">0 منتج</span>
+                    <h3>الجديد</h3>
+                    <p>أحدث المنتجات المضافة</p>
+                    <span class="category-tag" id="newCount">0 منتج</span>
                 </div>
-                <div class="category-card" data-category="skincare">
+                <div class="category-card" data-category="sale">
                     <div class="category-icon">
-                        <i class="fas fa-spa"></i>
+                        <i class="fas fa-percentage"></i>
                     </div>
-                    <h3>العناية بالبشرة</h3>
-                    <p>منتجات العناية والجمال</p>
-                    <span class="category-count" id="skincareCount">0 منتج</span>
+                    <h3>العروض</h3>
+                    <p>منتجات بتخفيضات مميزة</p>
+                    <span class="category-tag" id="saleCount">0 منتج</span>
                 </div>
-                <div class="category-card" data-category="haircare">
+                <div class="category-card" data-category="best">
                     <div class="category-icon">
-                        <i class="fas fa-fan"></i>
+                        <i class="fas fa-fire"></i>
                     </div>
-                    <h3>العناية بالشعر</h3>
-                    <p>علاجات ومستحضرات للشعر</p>
-                    <span class="category-count" id="haircareCount">0 منتج</span>
+                    <h3>الأكثر مبيعاً</h3>
+                    <p>المنتجات الأكثر طلباً</p>
+                    <span class="category-tag" id="bestCount">0 منتج</span>
                 </div>
             </div>
         </div>
@@ -203,14 +170,18 @@
     <section class="products-section" id="products">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title"><i class="fas fa-box"></i> منتجاتنا</h2>
+                <h2 class="section-title"><i class="fas fa-box-open"></i> منتجاتنا</h2>
                 <div class="section-controls">
+                    <div class="search-bar">
+                        <input type="text" id="productSearch" placeholder="ابحث عن منتج...">
+                        <i class="fas fa-search"></i>
+                    </div>
                     <div class="filter-tabs" id="filterTabs">
                         <button class="filter-btn active" data-filter="all">الكل</button>
-                        <button class="filter-btn" data-filter="perfumes">العطور</button>
-                        <button class="filter-btn" data-filter="makeup">المكياج</button>
-                        <button class="filter-btn" data-filter="skincare">العناية</button>
-                        <button class="filter-btn" data-filter="haircare">الشعر</button>
+                        <button class="filter-btn" data-filter="featured">المميز</button>
+                        <button class="filter-btn" data-filter="new">الجديد</button>
+                        <button class="filter-btn" data-filter="sale">العروض</button>
+                        <button class="filter-btn" data-filter="best">الأكثر مبيعاً</button>
                     </div>
                     <select class="sort-select" id="productSort">
                         <option value="newest">الأحدث أولاً</option>
@@ -226,7 +197,7 @@
                     <i class="fas fa-box-open"></i>
                     <h3>لا توجد منتجات حالياً</h3>
                     <p>يمكنك إضافة منتجات من خلال لوحة التحكم</p>
-                    <button class="btn primary-btn" id="addFirstProduct">
+                    <button class="btn primary-btn open-control-panel">
                         <i class="fas fa-plus"></i> أضف منتجك الأول
                     </button>
                 </div>
@@ -238,174 +209,87 @@
     <section class="contact-section" id="contact">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title"><i class="fas fa-phone"></i> تواصل معنا</h2>
-                <p class="section-subtitle">نحن هنا لخدمتك</p>
+                <h2 class="section-title"><i class="fas fa-headset"></i> تواصل معنا</h2>
+                <p class="section-subtitle">نحن هنا لخدمتك على مدار الساعة</p>
             </div>
             <div class="contact-content">
                 <div class="contact-card">
                     <div class="contact-icon">
                         <i class="fab fa-whatsapp"></i>
                     </div>
-                    <h3>واتساب بزنس</h3>
-                    <p class="contact-detail">+249 93 300 2015</p>
-                    <a href="https://wa.me/249933002015" target="_blank" class="contact-link">
+                    <h3>واتساب</h3>
+                    <p class="contact-detail">التواصل المباشر</p>
+                    <p class="contact-time">رد فوري خلال دقائق</p>
+                    <a href="#" id="whatsappContactLink" target="_blank" class="contact-link">
                         <i class="fab fa-whatsapp"></i>
                         ابدأ المحادثة الآن
                     </a>
                 </div>
                 <div class="contact-card">
                     <div class="contact-icon">
-                        <i class="fas fa-clock"></i>
+                        <i class="fab fa-instagram"></i>
                     </div>
-                    <h3>مواعيد العمل</h3>
-                    <p class="contact-detail">الأحد - الخميس</p>
-                    <p class="contact-time">8:00 صباحاً - 6:00 مساءً</p>
+                    <h3>انستغرام</h3>
+                    <p class="contact-detail">تابع آخر العروض</p>
+                    <p class="contact-time">صور ومنشورات حصرية</p>
+                    <a href="#" id="instagramContactLink" target="_blank" class="contact-link">
+                        <i class="fab fa-instagram"></i>
+                        تابعنا على انستغرام
+                    </a>
                 </div>
                 <div class="contact-card">
                     <div class="contact-icon">
-                        <i class="fas fa-shipping-fast"></i>
+                        <i class="fab fa-facebook"></i>
                     </div>
-                    <h3>التوصيل</h3>
-                    <p class="contact-detail">توصيل سريع</p>
-                    <p class="contact-time">خلال 24-48 ساعة</p>
+                    <h3>فيسبوك</h3>
+                    <p class="contact-detail">تفاعل مع مجتمعنا</p>
+                    <p class="contact-time">عروض وتخفيضات خاصة</p>
+                    <a href="#" id="facebookContactLink" target="_blank" class="contact-link">
+                        <i class="fab fa-facebook"></i>
+                        تابعنا على فيسبوك
+                    </a>
                 </div>
+            </div>
+            
+            <div class="delivery-info">
+                <h3><i class="fas fa-shipping-fast"></i> التوصيل خلال 12-24 ساعة</h3>
+                <p>خدمة توصيل سريعة لكافة مناطق السودان</p>
             </div>
         </div>
     </section>
 
-    <!-- لوحة التحكم -->
-    <div class="control-panel-overlay hidden" id="controlPanelOverlay"></div>
-    <div class="control-panel hidden" id="controlPanel">
-        <div class="panel-header">
-            <h2>
+    <!-- الشريط الجانبي للوحة التحكم -->
+    <div class="admin-sidebar" id="adminSidebar">
+        <div class="admin-sidebar-header">
+            <h3>
                 <i class="fas fa-sliders-h"></i>
                 لوحة تحكم المتجر
-            </h2>
-            <button class="close-panel" id="closePanel">
+            </h3>
+            <button class="close-admin-sidebar" id="closeAdminSidebar">
                 <i class="fas fa-times"></i>
             </button>
         </div>
 
-        <div class="panel-tabs">
-            <button class="panel-tab active" data-tab="products-tab">
-                <i class="fas fa-box"></i>
-                المنتجات
-            </button>
-            <button class="panel-tab" data-tab="settings-tab">
-                <i class="fas fa-cog"></i>
-                الإعدادات
-            </button>
-        </div>
-
-        <div class="panel-content">
-            <!-- تبويب المنتجات -->
-            <div class="tab-content active" id="products-tab">
-                <div class="tab-header">
-                    <h3><i class="fas fa-plus-circle"></i> إدارة المنتجات</h3>
-                    <button class="btn small-btn" id="addProductBtn">
-                        <i class="fas fa-plus"></i>
-                        إضافة منتج جديد
-                    </button>
-                </div>
-
-                <!-- نموذج المنتج -->
-                <div class="product-form-container hidden" id="productFormContainer">
-                    <div style="position: relative;">
-                        <button type="button" class="close-form-btn" id="closeFormBtn" 
-                                style="position: absolute; top: 10px; left: 10px; background: #f44336; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; z-index: 10;">
-                            <i class="fas fa-times"></i>
-                        </button>
-                        <form id="productForm" class="admin-form">
-                            <input type="hidden" id="editProductId">
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="productName">
-                                        <i class="fas fa-tag"></i>
-                                        اسم المنتج *
-                                    </label>
-                                    <input type="text" id="productName" required placeholder="أدخل اسم المنتج">
-                                </div>
-                                <div class="form-group">
-                                    <label for="productCategory">
-                                        <i class="fas fa-list"></i>
-                                        القسم *
-                                    </label>
-                                    <select id="productCategory" required>
-                                        <option value="">اختر القسم</option>
-                                        <option value="perfumes">عطور</option>
-                                        <option value="makeup">مكياج</option>
-                                        <option value="skincare">العناية بالبشرة</option>
-                                        <option value="haircare">العناية بالشعر</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="productPrice">
-                                        <i class="fas fa-money-bill"></i>
-                                        السعر (جنيه) *
-                                    </label>
-                                    <input type="number" id="productPrice" required min="0" step="0.01" placeholder="السعر">
-                                </div>
-                                <div class="form-group">
-                                    <label for="productStock">
-                                        <i class="fas fa-cubes"></i>
-                                        الكمية المتاحة
-                                    </label>
-                                    <input type="number" id="productStock" min="0" value="1" placeholder="الكمية">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="productDescription">
-                                    <i class="fas fa-align-left"></i>
-                                    وصف المنتج
-                                </label>
-                                <textarea id="productDescription" rows="3" placeholder="أدخل وصف المنتج"></textarea>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="productImage">
-                                    <i class="fas fa-image"></i>
-                                    رابط صورة المنتج *
-                                </label>
-                                <input type="url" id="productImage" required 
-                                       placeholder="https://example.com/image.jpg">
-                                <small class="help-text">استخدم روابط صور واضحة من مواقع مثل Unsplash.com</small>
-                                <div class="image-preview" id="imagePreview">
-                                    <i class="fas fa-image"></i>
-                                    <p>معاينة الصورة ستظهر هنا</p>
-                                </div>
-                            </div>
-
-                            <div class="form-actions">
-                                <button type="submit" class="btn primary-btn">
-                                    <i class="fas fa-save"></i>
-                                    حفظ المنتج
-                                </button>
-                                <button type="button" class="btn secondary-btn" id="cancelProductBtn">
-                                    <i class="fas fa-times"></i>
-                                    إلغاء
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- قائمة المنتجات -->
+        <div class="admin-sidebar-content">
+            <!-- قسم إدارة المنتجات -->
+            <div class="admin-section" id="productsListSection">
+                <h4><i class="fas fa-box"></i> إدارة المنتجات</h4>
+                <button class="btn primary-btn" id="addProductBtn" style="width: 100%; margin-bottom: 20px;">
+                    <i class="fas fa-plus"></i>
+                    إضافة منتج جديد
+                </button>
+                
+                <button class="btn secondary-btn" id="showSettingsBtn" style="width: 100%; margin-bottom: 20px;">
+                    <i class="fas fa-cog"></i>
+                    إعدادات المتجر
+                </button>
+                
                 <div class="products-list-container">
-                    <div class="search-bar">
-                        <input type="text" id="adminSearch" placeholder="ابحث في المنتجات...">
-                        <i class="fas fa-search"></i>
-                    </div>
-
-                    <div class="products-table" id="adminProductsTable">
-                        <div class="empty-table" id="emptyAdminTable">
+                    <div class="products-table" id="adminProductsList">
+                        <div class="empty-table" id="emptyAdminList">
                             <i class="fas fa-box-open"></i>
                             <p>لا توجد منتجات بعد</p>
-                            <button class="btn small-btn primary-btn" id="addFirstProductAdmin">
+                            <button class="btn small-btn primary-btn" id="addFirstProductAdmin" style="margin-top: 15px;">
                                 <i class="fas fa-plus"></i> أضف منتجك الأول
                             </button>
                         </div>
@@ -413,59 +297,150 @@
                 </div>
             </div>
 
-            <!-- تبويب الإعدادات -->
-            <div class="tab-content" id="settings-tab">
-                <div class="tab-header">
-                    <h3><i class="fas fa-cogs"></i> إعدادات المتجر</h3>
-                </div>
-
-                <form id="storeSettingsForm" class="admin-form">
+            <!-- نموذج المنتج -->
+            <div class="admin-section hidden" id="productFormSection">
+                <h4><i class="fas fa-edit"></i> إدارة المنتج</h4>
+                <form id="sidebarProductForm" class="admin-form sidebar-form">
+                    <input type="hidden" id="editProductId">
+                    
                     <div class="form-group">
-                        <label for="storeName">
-                            <i class="fas fa-store"></i>
-                            اسم المتجر *
+                        <label for="sidebarProductName">
+                            <i class="fas fa-tag"></i>
+                            اسم المنتج *
                         </label>
-                        <input type="text" id="storeName" required value="جمالك">
+                        <input type="text" id="sidebarProductName" required placeholder="أدخل اسم المنتج">
                     </div>
-
+                    
                     <div class="form-group">
-                        <label for="whatsappNumber">
-                            <i class="fab fa-whatsapp"></i>
-                            رقم واتساب *
+                        <label for="sidebarProductCategory">
+                            <i class="fas fa-list"></i>
+                            القسم *
                         </label>
-                        <input type="tel" id="whatsappNumber" required value="249933002015">
-                    </div>
-
-                    <!-- حقل وصف المتجر المضاف -->
-                    <div class="form-group">
-                        <label for="storeDescription">
-                            <i class="fas fa-align-left"></i>
-                            وصف المتجر *
-                        </label>
-                        <textarea id="storeDescription" rows="3" required>متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية</textarea>
+                        <select id="sidebarProductCategory" required>
+                            <option value="">اختر القسم</option>
+                            <option value="featured">المميز</option>
+                            <option value="new">الجديد</option>
+                            <option value="sale">العروض</option>
+                            <option value="best">الأكثر مبيعاً</option>
+                        </select>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="openingTime">
-                                <i class="fas fa-clock"></i>
-                                وقت الفتح *
+                            <label for="sidebarProductPrice">
+                                <i class="fas fa-money-bill"></i>
+                                السعر (ج.س) *
                             </label>
-                            <input type="time" id="openingTime" required value="08:00">
+                            <input type="number" id="sidebarProductPrice" required min="0" placeholder="السعر">
                         </div>
                         <div class="form-group">
-                            <label for="closingTime">
-                                <i class="fas fa-clock"></i>
-                                وقت الإغلاق *
+                            <label for="sidebarProductStock">
+                                <i class="fas fa-cubes"></i>
+                                المخزون
                             </label>
-                            <input type="time" id="closingTime" required value="18:00">
+                            <input type="number" id="sidebarProductStock" min="0" value="10" placeholder="الكمية">
                         </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sidebarProductBadge">
+                            <i class="fas fa-certificate"></i>
+                            شارة المنتج
+                        </label>
+                        <select id="sidebarProductBadge">
+                            <option value="">بدون شارة</option>
+                            <option value="الأكثر طلباً">الأكثر طلباً</option>
+                            <option value="جديد">جديد</option>
+                            <option value="عرض خاص">عرض خاص</option>
+                            <option value="الأكثر مبيعاً">الأكثر مبيعاً</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sidebarProductDescription">
+                            <i class="fas fa-align-left"></i>
+                            وصف المنتج
+                        </label>
+                        <textarea id="sidebarProductDescription" rows="3" placeholder="أدخل وصف المنتج"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sidebarProductImage">
+                            <i class="fas fa-image"></i>
+                            رابط صورة المنتج *
+                        </label>
+                        <input type="url" id="sidebarProductImage" required 
+                               placeholder="https://images.unsplash.com/photo-...">
+                        <small style="display: block; margin-top: 5px; color: rgba(255, 255, 255, 0.6); font-size: 0.85rem;">
+                            نوصي باستخدام روابط من موقع unsplash.com للحصول على صور عالية الجودة
+                        </small>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn primary-btn">
+                            <i class="fas fa-save"></i>
+                            حفظ المنتج
+                        </button>
+                        <button type="button" class="btn secondary-btn" id="cancelProductBtn">
+                            <i class="fas fa-times"></i>
+                            إلغاء
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- قسم الإعدادات -->
+            <div class="admin-section hidden" id="settingsSection">
+                <h4><i class="fas fa-cogs"></i> إعدادات المتجر</h4>
+                <form id="sidebarSettingsForm" class="admin-form sidebar-form">
+                    <div class="form-group">
+                        <label for="sidebarStoreName">
+                            <i class="fas fa-store"></i>
+                            اسم المتجر *
+                        </label>
+                        <input type="text" id="sidebarStoreName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sidebarWhatsapp">
+                            <i class="fab fa-whatsapp"></i>
+                            رقم واتساب *
+                        </label>
+                        <input type="tel" id="sidebarWhatsapp" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sidebarInstagram">
+                            <i class="fab fa-instagram"></i>
+                            رابط انستغرام
+                        </label>
+                        <input type="url" id="sidebarInstagram" placeholder="https://instagram.com/...">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sidebarFacebook">
+                            <i class="fab fa-facebook"></i>
+                            رابط فيسبوك
+                        </label>
+                        <input type="url" id="sidebarFacebook" placeholder="https://facebook.com/...">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sidebarDescription">
+                            <i class="fas fa-align-left"></i>
+                            وصف المتجر
+                        </label>
+                        <textarea id="sidebarDescription" rows="3"></textarea>
                     </div>
 
                     <div class="form-actions">
                         <button type="submit" class="btn primary-btn">
                             <i class="fas fa-save"></i>
                             حفظ الإعدادات
+                        </button>
+                        <button type="button" class="btn secondary-btn" id="showProductsBtn">
+                            <i class="fas fa-arrow-right"></i>
+                            العودة للمنتجات
                         </button>
                     </div>
                 </form>
@@ -485,23 +460,37 @@
                     <p class="footer-description" id="footerStoreDescription">
                         متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية
                     </p>
+                    <div class="social-links">
+                        <a href="#" id="footerWhatsapp" target="_blank" class="social-link">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                        <a href="#" id="footerInstagram" target="_blank" class="social-link">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" id="footerFacebook" target="_blank" class="social-link">
+                            <i class="fab fa-facebook"></i>
+                        </a>
+                    </div>
                 </div>
 
                 <div class="footer-section">
                     <h4>روابط سريعة</h4>
                     <ul class="footer-links">
-                        <li><a href="#home">الرئيسية</a></li>
-                        <li><a href="#products">المنتجات</a></li>
-                        <li><a href="#categories">الأقسام</a></li>
-                        <li><a href="#contact">اتصل بنا</a></li>
+                        <li><a href="#home"><i class="fas fa-home"></i> الرئيسية</a></li>
+                        <li><a href="#products"><i class="fas fa-store"></i> المنتجات</a></li>
+                        <li><a href="#categories"><i class="fas fa-list"></i> الأقسام</a></li>
+                        <li><a href="#contact"><i class="fas fa-phone"></i> اتصل بنا</a></li>
+                        <li><a href="#" class="open-control-panel"><i class="fas fa-cogs"></i> لوحة التحكم</a></li>
                     </ul>
                 </div>
 
                 <div class="footer-section">
-                    <h4>معلومات الاتصال</h4>
+                    <h4>معلومات المتجر</h4>
                     <div class="contact-info">
-                        <p><i class="fab fa-whatsapp"></i> <span id="footerWhatsapp">249933002015</span></p>
-                        <p><i class="fas fa-clock"></i> <span id="footerWorkingHours">8 صباحاً - 6 مساءً</span></p>
+                        <p><i class="fas fa-shipping-fast"></i> التوصيل خلال 12-24 ساعة</p>
+                        <p><i class="fas fa-map-marker-alt"></i> كافة مناطق السودان</p>
+                        <p><i class="fas fa-money-bill"></i> الدفع عند الاستلام</p>
+                        <p><i class="fas fa-headset"></i> دعم فني على مدار الساعة</p>
                     </div>
                 </div>
             </div>
@@ -510,7 +499,7 @@
                 <p class="copyright">
                     © <span id="currentYear">2024</span> <span id="copyrightStoreName">جمالك</span>. جميع الحقوق محفوظة.
                 </p>
-                <a href="#" class="footer-link" id="openControlPanel">
+                <a href="#" class="footer-link open-control-panel">
                     <i class="fas fa-cogs"></i>
                     لوحة التحكم
                 </a>
@@ -519,7 +508,7 @@
     </footer>
 
     <!-- زر الواتساب العائم -->
-    <a href="https://wa.me/249933002015" target="_blank" class="whatsapp-float">
+    <a href="#" id="floatingWhatsapp" target="_blank" class="whatsapp-float">
         <i class="fab fa-whatsapp"></i>
     </a>
 
