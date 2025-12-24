@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.css">
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💄</text></svg>">
 </head>
 <body>
     <!-- شريط التنقل -->
@@ -68,6 +69,9 @@
             </div>
         </div>
     </div>
+
+    <!-- طبقة التعتيم -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <!-- القسم الرئيسي -->
     <section class="hero-section" id="home">
@@ -132,7 +136,7 @@
                     <button class="filter-btn" data-filter="sale">العروض</button>
                     <button class="filter-btn" data-filter="best">الأكثر مبيعاً</button>
                 </div>
-                <select class="sort-select" id="productSort" style="padding: 10px; border-radius: 20px; border: 2px solid var(--border-color);">
+                <select class="sort-select" id="productSort">
                     <option value="newest">الأحدث</option>
                     <option value="price-low">السعر: منخفض</option>
                     <option value="price-high">السعر: مرتفع</option>
@@ -144,21 +148,62 @@
         </div>
     </section>
 
+    <!-- قسم اتصل بنا -->
+    <section class="contact-section" id="contact">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title"><i class="fas fa-phone"></i> اتصل بنا</h2>
+                <p class="section-subtitle">نحن هنا لخدمتك على مدار الساعة</p>
+            </div>
+            <div class="contact-content">
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <i class="fas fa-phone-alt"></i>
+                        <div>
+                            <h3>الهاتف</h3>
+                            <p id="contactPhone">+249 123 456 789</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fab fa-whatsapp"></i>
+                        <div>
+                            <h3>واتساب</h3>
+                            <p>متاح 24/7 للطلبات والاستفسارات</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <h3>ساعات العمل</h3>
+                            <p>كل أيام الأسبوع من 9 صباحاً حتى 10 مساءً</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="whatsapp-contact">
+                    <a href="#" id="contactWhatsappLink" target="_blank" class="whatsapp-contact-btn">
+                        <i class="fab fa-whatsapp"></i>
+                        <span>تواصل معنا عبر واتساب</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- لوحة التحكم المطورة -->
     <div class="admin-sidebar" id="adminSidebar">
         <div id="adminAuthSection" class="auth-container">
             <div class="auth-icon"><i class="fas fa-lock"></i></div>
             <h2>لوحة التحكم</h2>
             <p>الرجاء إدخال رمز الحماية للمتابعة</p>
-            <input type="password" id="adminPinInput" class="auth-input" placeholder="****" maxlength="4">
+            <input type="password" id="adminPinInput" class="auth-input" placeholder="****" maxlength="4" inputmode="numeric">
             <button class="btn primary-btn" id="loginBtn" style="width: 100%;">دخول</button>
             <button class="btn outline-btn" id="closeAdminBtn" style="width: 100%; margin-top: 10px;">إغلاق</button>
         </div>
 
-        <div id="adminMainContent" class="hidden" style="height: 100%; display: flex; flex-direction: column;">
+        <div id="adminMainContent" class="hidden">
             <div class="admin-header">
                 <h3><i class="fas fa-cogs"></i> إدارة المتجر</h3>
-                <button id="logoutBtn" style="background: none; border: none; color: white; cursor: pointer;"><i class="fas fa-sign-out-alt"></i> خروج</button>
+                <button id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> خروج</button>
             </div>
             <div class="admin-tabs">
                 <button class="admin-tab-btn active" data-tab="products-list">المنتجات</button>
@@ -168,35 +213,41 @@
             <div class="admin-body">
                 <!-- قائمة المنتجات -->
                 <div id="tab-products-list" class="admin-tab-content">
-                    <div id="adminProductList"></div>
+                    <div id="adminProductList">
+                        <!-- قائمة المنتجات تظهر هنا -->
+                    </div>
                 </div>
                 <!-- إضافة منتج -->
                 <div id="tab-add-product" class="admin-tab-content hidden">
                     <form id="productForm">
-                        <div class="form-group" style="margin-bottom: 15px;">
+                        <div class="form-group">
                             <label>اسم المنتج</label>
-                            <input type="text" id="pName" class="auth-input" style="text-align: right; letter-spacing: normal;" required>
+                            <input type="text" id="pName" class="auth-input" required>
                         </div>
-                        <div class="form-group" style="margin-bottom: 15px;">
+                        <div class="form-group">
                             <label>السعر (ج.س)</label>
-                            <input type="number" id="pPrice" class="auth-input" style="text-align: right; letter-spacing: normal;" required>
+                            <input type="number" id="pPrice" class="auth-input" required>
                         </div>
-                        <div class="form-group" style="margin-bottom: 15px;">
+                        <div class="form-group">
                             <label>الفئة</label>
-                            <select id="pCategory" class="auth-input" style="text-align: right; letter-spacing: normal;">
+                            <select id="pCategory" class="auth-input">
                                 <option value="featured">المميز</option>
                                 <option value="new">الجديد</option>
                                 <option value="sale">العروض</option>
                                 <option value="best">الأكثر مبيعاً</option>
                             </select>
                         </div>
-                        <div class="form-group" style="margin-bottom: 15px;">
+                        <div class="form-group">
                             <label>رابط الصورة</label>
-                            <input type="url" id="pImage" class="auth-input" style="text-align: right; letter-spacing: normal;" placeholder="https://..." required>
+                            <input type="url" id="pImage" class="auth-input" placeholder="https://..." required>
                         </div>
-                        <div class="form-group" style="margin-bottom: 15px;">
+                        <div class="form-group">
+                            <label>العلامة (اختياري)</label>
+                            <input type="text" id="pBadge" class="auth-input" placeholder="مثال: جديد، مميز، عرض">
+                        </div>
+                        <div class="form-group">
                             <label>الوصف</label>
-                            <textarea id="pDesc" class="auth-input" style="text-align: right; letter-spacing: normal; height: 80px;"></textarea>
+                            <textarea id="pDesc" class="auth-input" rows="3"></textarea>
                         </div>
                         <button type="submit" class="btn primary-btn" style="width: 100%;">حفظ المنتج</button>
                     </form>
@@ -204,17 +255,25 @@
                 <!-- الإعدادات -->
                 <div id="tab-settings" class="admin-tab-content hidden">
                     <form id="settingsForm">
-                        <div class="form-group" style="margin-bottom: 15px;">
+                        <div class="form-group">
                             <label>اسم المتجر</label>
-                            <input type="text" id="sName" class="auth-input" style="text-align: right; letter-spacing: normal;">
+                            <input type="text" id="sName" class="auth-input">
                         </div>
-                        <div class="form-group" style="margin-bottom: 15px;">
+                        <div class="form-group">
                             <label>رقم الواتساب</label>
-                            <input type="text" id="sWhatsapp" class="auth-input" style="text-align: right; letter-spacing: normal;">
+                            <input type="text" id="sWhatsapp" class="auth-input" placeholder="249123456789">
                         </div>
-                        <div class="form-group" style="margin-bottom: 15px;">
+                        <div class="form-group">
+                            <label>وصف المتجر</label>
+                            <textarea id="sDescription" class="auth-input" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>رقم الهاتف للعرض</label>
+                            <input type="text" id="sPhone" class="auth-input" placeholder="+249 123 456 789">
+                        </div>
+                        <div class="form-group">
                             <label>رمز الحماية الجديد</label>
-                            <input type="password" id="sPin" class="auth-input" style="text-align: right; letter-spacing: normal;" maxlength="4">
+                            <input type="password" id="sPin" class="auth-input" maxlength="4" placeholder="أتركه فارغاً لحفظ الرمز الحالي">
                         </div>
                         <button type="submit" class="btn primary-btn" style="width: 100%;">تحديث الإعدادات</button>
                     </form>
@@ -223,13 +282,16 @@
         </div>
     </div>
 
-    <footer style="background: var(--dark-color); color: white; padding: 50px 0 20px; margin-top: 50px;">
+    <!-- طبقة تعتيم لوحة التحكم -->
+    <div class="admin-overlay" id="adminOverlay"></div>
+
+    <footer>
         <div class="container">
-            <div style="text-align: center; margin-bottom: 30px;">
+            <div class="footer-header">
                 <h2 class="store-name-text">جمالك</h2>
                 <p id="footerStoreDescription">متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية</p>
             </div>
-            <div style="text-align: center; border-top: 1px solid #444; padding-top: 20px;">
+            <div class="footer-bottom">
                 <p>&copy; <span id="currentYear"></span> جميع الحقوق محفوظة لمتجر <span class="store-name-text">جمالك</span></p>
             </div>
         </div>
