@@ -27,183 +27,85 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💄</text></svg>">
 </head>
 <body>
-    <!-- شاشة تسجيل الدخول الرئيسية -->
+    <!-- شاشة تسجيل الدخول البسيطة -->
     <div id="authScreen" class="auth-screen">
-        <div class="auth-container">
-            <!-- الشريط الجانبي مع معلومات المتجر -->
-            <div class="auth-sidebar">
-                <div class="auth-sidebar-content">
-                    <div class="auth-brand">
-                        <div class="auth-logo-circle">
-                            <i class="fas fa-spa"></i>
-                        </div>
-                        <h1 class="store-name-text">جمالك</h1>
-                        <p class="store-tagline">متجر العطور والجمال الفاخر</p>
-                    </div>
-                    
-                    <div class="auth-features">
-                        <div class="feature-item">
-                            <i class="fas fa-shipping-fast"></i>
-                            <div>
-                                <h4>توصيل سريع</h4>
-                                <p>توصيل لكافة المناطق خلال 24-48 ساعة</p>
-                            </div>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-check-circle"></i>
-                            <div>
-                                <h4>منتجات أصلية</h4>
-                                <p>ضمان جودة المنتجات وأصالتها</p>
-                            </div>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-headset"></i>
-                            <div>
-                                <h4>دعم فني</h4>
-                                <p>خدمة عملاء على مدار الساعة</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="auth-quote">
-                        <p><i class="fas fa-quote-right"></i> جمالك ليس فقط منتجات، إنه تجربة فريدة من الرقي والأناقة</p>
+        <div class="auth-background-elements">
+            <img src="https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=1000&auto=format&fit=crop" alt="Perfume" class="bg-img perfume-img">
+            <img src="https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=1000&auto=format&fit=crop" alt="Lipstick" class="bg-img lipstick-img">
+            <div class="bg-crystal crystal-1"></div>
+            <div class="bg-crystal crystal-2"></div>
+        </div>
+
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="logo-container">
+                    <div class="logo-circle">
+                        <span class="logo-text">QB</span>
                     </div>
                 </div>
+                <h1 class="welcome-text">مرحباً بك في QB</h1>
             </div>
-            
-            <!-- نموذج تسجيل الدخول -->
-            <div class="auth-form-section">
-                <div class="auth-form-container">
-                    <!-- رسائل الخطأ العامة -->
-                    <div id="generalError" class="error-message"></div>
-                    
-                    <!-- رسائل التحميل -->
-                    <div class="loading-overlay">
-                        <div class="spinner"></div>
+
+            <div id="generalError" class="error-message"></div>
+
+            <div class="auth-options" id="authOptions">
+                <button id="googleSignInBtn" class="auth-option-btn">
+                    <div class="btn-content">
+                        <span class="btn-text">متابعة باستخدام Google</span>
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" class="btn-icon">
                     </div>
-                    
-                    <div class="auth-form-header">
-                        <h2>مرحباً بك في <span class="highlight">جمالك</span></h2>
-                        <p>سجل الدخول لتجربة تسوق فريدة</p>
+                </button>
+
+                <button id="showEmailFormBtn" class="auth-option-btn">
+                    <div class="btn-content">
+                        <span class="btn-text">متابعة باستخدام Email & Password</span>
+                        <i class="far fa-envelope btn-icon-fa"></i>
                     </div>
-                    
-                    <!-- أزرار تسجيل الدخول الاجتماعية -->
-                    <div class="social-auth-buttons">
-                        <button id="googleSignInBtn" class="social-auth-btn google-btn">
-                            <i class="fab fa-google"></i>
-                            <span>المتابعة مع جوجل</span>
-                        </button>
-                        
-                        <button id="guestSignInBtn" class="social-auth-btn guest-btn">
-                            <i class="fas fa-user-clock"></i>
-                            <span>الدخول كضيف</span>
-                        </button>
+                </button>
+
+                <button id="guestSignInBtn" class="auth-option-btn">
+                    <div class="btn-content">
+                        <span class="btn-text">متابعة كـ ضيف</span>
+                        <i class="far fa-user btn-icon-fa"></i>
                     </div>
-                    
-                    <!-- الفاصل -->
-                    <div class="auth-divider">
-                        <span>أو سجل باستخدام البريد</span>
+                </button>
+            </div>
+
+            <!-- نموذج البريد الإلكتروني (مخفي افتراضياً) -->
+            <div id="emailAuthSection" class="email-form-container hidden">
+                <form id="emailAuthForm">
+                    <div class="form-group">
+                        <input type="email" id="emailInput" placeholder="البريد الإلكتروني" required>
                     </div>
-                    
-                    <!-- تلميح تسجيل دخول الأدمن -->
-                    <div class="admin-login-hint" style="text-align: center; margin-bottom: 15px;">
-                        <button id="adminLoginBtn" class="text-link" style="color: var(--accent-color); font-weight: bold;">
-                            <i class="fas fa-user-shield"></i> تسجيل دخول المسؤولين
-                        </button>
+                    <div class="form-group">
+                        <input type="password" id="passwordInput" placeholder="كلمة المرور" required>
                     </div>
-                    
-                    <!-- نموذج البريد الإلكتروني -->
-                    <div class="email-auth-form" id="emailAuthSection">
-                        <form id="emailAuthForm">
-                            <div class="form-group">
-                                <label for="emailInput">البريد الإلكتروني</label>
-                                <div class="input-with-icon">
-                                    <i class="fas fa-envelope"></i>
-                                    <input type="email" id="emailInput" class="auth-input" placeholder="example@email.com" autocomplete="email" required>
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <div class="password-header">
-                                    <label for="passwordInput">كلمة المرور</label>
-                                    <button type="button" id="togglePassword" class="toggle-password-btn">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                </div>
-                                <div class="input-with-icon">
-                                    <i class="fas fa-lock"></i>
-                                    <input type="password" id="passwordInput" class="auth-input" placeholder="كلمة المرور" autocomplete="current-password" required>
-                                </div>
-                            </div>
-                            
-                            <div class="form-actions">
-                                <button id="signInWithEmailBtn" class="auth-btn primary-btn" type="submit">
-                                    <i class="fas fa-sign-in-alt"></i>
-                                    تسجيل الدخول
-                                </button>
-                                
-                                <div class="auth-links">
-                                    <button id="signUpWithEmailBtn" class="text-link" type="button">
-                                        إنشاء حساب جديد
-                                    </button>
-                                    <span class="divider">|</span>
-                                    <button id="forgotPasswordBtn" class="text-link" type="button">
-                                        نسيت كلمة المرور؟
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    
-                    <!-- شروط الخدمة -->
-                    <div class="terms-notice">
-                        <p>باستمرارك، فإنك توافق على <a href="#" class="terms-link">شروط الخدمة</a> و <a href="#" class="terms-link">سياسة الخصوصية</a></p>
-                    </div>
-                </div>
+                    <button type="submit" id="signInWithEmailBtn" class="submit-btn">تسجيل الدخول</button>
+                    <button type="button" id="backToOptions" class="back-btn">العودة</button>
+                </form>
+            </div>
+
+            <div class="auth-footer">
+                <p>بالمتابعة، أنت توافق على شروط الخدمة وسياسة الخصوصية.</p>
             </div>
         </div>
     </div>
 
     <!-- باقي محتوى الصفحة (يتم إظهاره بعد تسجيل الدخول) -->
     <div id="mainApp" class="hidden">
-        <!-- شريط التنقل -->
-        <nav class="navbar">
-            <div class="container">
-                <a href="#" class="logo">
-                    <i class="fas fa-spa"></i>
-                    <div class="logo-text">
-                        <h1 class="store-name-text">جمالك</h1>
-                        <p class="tagline">عطور ومستحضرات تجميل</p>
-                    </div>
-                </a>
-
-                <div class="nav-menu">
-                    <a href="#home" class="nav-link active"><i class="fas fa-home"></i> الرئيسية</a>
-                    <a href="#products" class="nav-link"><i class="fas fa-store"></i> المنتجات</a>
-                    <a href="#categories" class="nav-link"><i class="fas fa-list"></i> الأقسام</a>
-                    <a href="#contact" class="nav-link"><i class="fas fa-phone"></i> اتصل بنا</a>
+        <!-- شريط التنقل البسيط -->
+        <header class="main-header">
+            <div class="top-bar">
+                <div class="search-container">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="productSearch" placeholder="ابحث عن عطر أو منتج...">
                 </div>
-
-                <div class="nav-actions">
-                    <a href="#" id="whatsappNavLink" target="_blank" class="whatsapp-nav-btn">
-                        <i class="fab fa-whatsapp"></i>
-                        <span>اطلب الآن</span>
-                    </a>
-                    <button class="admin-btn hidden" id="adminToggle">
-                        <i class="fas fa-user-shield"></i>
-                        <span>الإدارة</span>
-                    </button>
-                    <button class="user-btn" id="userToggle">
-                        <i class="fas fa-user"></i>
-                        <span id="userNameDisplay">حسابي</span>
-                    </button>
+                <div class="user-actions">
+                    <button id="userToggle" class="icon-btn"><i class="far fa-user"></i></button>
+                    <button id="adminToggle" class="icon-btn hidden"><i class="fas fa-cog"></i></button>
                 </div>
-
-                <button class="menu-toggle" id="menuToggle">
-                    <i class="fas fa-bars"></i>
-                </button>
             </div>
-        </nav>
+        </header>
 
         <!-- القائمة الجانبية للجوال -->
         <div class="mobile-sidebar" id="mobileSidebar">
@@ -252,36 +154,16 @@
             </div>
         </section>
 
-        <!-- قسم التصنيفات -->
-        <section class="categories-section" id="categories">
-            <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title"><i class="fas fa-tags"></i> تصفح حسب الفئة</h2>
-                </div>
-                <div class="categories-grid">
-                    <div class="category-card" data-category="featured">
-                        <div class="category-icon"><i class="fas fa-star"></i></div>
-                        <h3>المميز</h3>
-                        <span class="category-tag" id="featuredCount">0 منتج</span>
-                    </div>
-                    <div class="category-card" data-category="new">
-                        <div class="category-icon"><i class="fas fa-bolt"></i></div>
-                        <h3>الجديد</h3>
-                        <span class="category-tag" id="newCount">0 منتج</span>
-                    </div>
-                    <div class="category-card" data-category="sale">
-                        <div class="category-icon"><i class="fas fa-percentage"></i></div>
-                        <h3>العروض</h3>
-                        <span class="category-tag" id="saleCount">0 منتج</span>
-                    </div>
-                    <div class="category-card" data-category="best">
-                        <div class="category-icon"><i class="fas fa-fire"></i></div>
-                        <h3>الأكثر مبيعاً</h3>
-                        <span class="category-tag" id="bestCount">0 منتج</span>
-                    </div>
-                </div>
+        <!-- أزرار التصنيفات الصغيرة في الأعلى -->
+        <nav class="categories-nav">
+            <div class="categories-scroll">
+                <button class="cat-btn active" data-filter="all">الكل</button>
+                <button class="cat-btn" data-filter="featured">المميز</button>
+                <button class="cat-btn" data-filter="new">الجديد</button>
+                <button class="cat-btn" data-filter="sale">العروض</button>
+                <button class="cat-btn" data-filter="best">الأكثر مبيعاً</button>
             </div>
-        </section>
+        </nav>
 
         <!-- قسم المنتجات -->
         <section class="products-section" id="products">
