@@ -56,7 +56,7 @@ function loadDefaultProducts() {
             description: "عطر نسائي برائحة الأزهار الطازجة يدوم طويلاً",
             price: 35000,
             category: "featured",
-            image: "https://images.unsplash.com/photo-1541643600914-78b084683601?w=500&auto=format&fit=crop",
+            image: "https://images.unsplash.com/photo-1541643600914-78b084683601?w=500&h=500&fit=crop&crop=center",
             badge: "الأكثر طلباً",
             createdAt: new Date().toISOString()
         },
@@ -66,7 +66,7 @@ function loadDefaultProducts() {
             description: "أحمر شفاه مات طويل الأمد بملمس ناعم",
             price: 4500,
             category: "new",
-            image: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=500&auto=format&fit=crop",
+            image: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=500&h=500&fit=crop&crop=center",
             badge: "جديد",
             createdAt: new Date().toISOString()
         },
@@ -76,7 +76,7 @@ function loadDefaultProducts() {
             description: "عطر رجالي بقاعدة خشبية تدوم طوال اليوم",
             price: 42000,
             category: "best",
-            image: "https://images.unsplash.com/photo-1590736969956-6d9c2a8d6976?w=500&auto=format&fit=crop",
+            image: "https://images.unsplash.com/photo-1590736969956-6d9c2a8d6976?w=500&h=500&fit=crop&crop=center",
             badge: "الأكثر مبيعاً",
             createdAt: new Date().toISOString()
         }
@@ -173,8 +173,10 @@ function renderProducts() {
     grid.innerHTML = filtered.map(product => `
         <div class="product-card">
             <div class="product-image">
-                <img src="${product.image}" alt="${product.name}" loading="lazy">
-                ${product.badge ? `<span class="product-badge">${product.badge}</span>` : ''}
+                <div class="image-square-container">
+                    <img src="${product.image}" alt="${product.name}" loading="lazy">
+                    ${product.badge ? `<span class="product-badge">${product.badge}</span>` : ''}
+                </div>
             </div>
             <div class="product-info">
                 <span class="product-category">${storeData.categories.find(c => c.id === product.category)?.name || 'عام'}</span>
@@ -441,7 +443,9 @@ function loadAdminProducts() {
     list.innerHTML = storeData.products.map(product => `
         <div class="admin-product-item">
             <div class="product-info-small">
-                <img src="${product.image}" alt="${product.name}">
+                <div class="admin-product-image-container">
+                    <img src="${product.image}" alt="${product.name}">
+                </div>
                 <div class="product-details">
                     <h4>${product.name}</h4>
                     <p>${formatPrice(product.price)}</p>
@@ -483,19 +487,19 @@ function handleAddProduct(e) {
     const badge = document.getElementById('pBadge').value.trim();
     const description = document.getElementById('pDesc').value.trim();
     
-// التحقق من البيانات
-	    if (!name || !price || !imageBase64) {
-	        showToast("الرجاء ملء جميع الحقول المطلوبة (بما في ذلك الصورة)", "error");
-	        return;
-	    }
+    // التحقق من البيانات
+    if (!name || !price || !imageBase64) {
+        showToast("الرجاء ملء جميع الحقول المطلوبة (بما في ذلك الصورة)", "error");
+        return;
+    }
     
     if (price <= 0) {
         showToast("الرجاء إدخال سعر صحيح", "error");
         return;
     }
     
-// تحديد الصورة (المرفوعة فقط)
-	    const finalImage = imageBase64;
+    // تحديد الصورة (المرفوعة فقط)
+    const finalImage = imageBase64;
     const stock = parseInt(document.getElementById('pStock').value) || 0;
 
     // إنشاء المنتج الجديد
@@ -758,8 +762,7 @@ window.openEditModal = function(id) {
     document.getElementById('editPPrice').value = product.price;
     document.getElementById('editPCategory').value = product.category;
     document.getElementById('editPStock').value = product.stock || 0;
-    document.getElementById('editPImage').value = product.image.startsWith('data:') ? '' : product.image;
-	    document.getElementById('editPBadge').value = product.badge || '';
+    document.getElementById('editPBadge').value = product.badge || '';
     document.getElementById('editPDesc').value = product.description || '';
 
     document.getElementById('editProductModal').classList.remove('hidden');
@@ -780,13 +783,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const price = parseFloat(document.getElementById('editPPrice').value);
             const category = document.getElementById('editPCategory').value;
             const stock = parseInt(document.getElementById('editPStock').value) || 0;
-            // تم إزالة حقل رابط الصورة من النموذج بناءً على طلب المستخدم
             const badge = document.getElementById('editPBadge').value.trim();
             const description = document.getElementById('editPDesc').value.trim();
 
             const index = storeData.products.findIndex(p => p.id == id);
             if (index !== -1) {
-                // تحديث البيانات مع الحفاظ على الصورة القديمة إذا لم يتم إدخال رابط جديد
+                // تحديث البيانات مع الحفاظ على الصورة القديمة
                 const oldImage = storeData.products[index].image;
                 storeData.products[index] = {
                     ...storeData.products[index],
@@ -824,3 +826,4 @@ window.changeQty = function(id, delta) {
     
     input.value = val;
 };
+
