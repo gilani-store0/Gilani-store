@@ -2,8 +2,10 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#FF6B8B">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="description" content="متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية">
     <title>جمالك | متجر مستحضرات التجميل والعطور</title>
     
@@ -203,6 +205,49 @@
         </div>
     </section>
 
+    <!-- نافذة تعديل المنتج -->
+    <div id="editProductModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>تعديل المنتج</h3>
+                <button onclick="closeEditModal()" class="close-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="editProductForm">
+                <input type="hidden" id="editPId">
+                <div class="form-group">
+                    <label>اسم المنتج</label>
+                    <input type="text" id="editPName" class="auth-input" required>
+                </div>
+                <div class="form-group">
+                    <label>السعر (ج.س)</label>
+                    <input type="number" id="editPPrice" class="auth-input" required min="100">
+                </div>
+                <div class="form-group">
+                    <label>الفئة</label>
+                    <select id="editPCategory" class="auth-input">
+                        <option value="featured">المميز</option>
+                        <option value="new">الجديد</option>
+                        <option value="sale">العروض</option>
+                        <option value="best">الأكثر مبيعاً</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>الكمية المتوفرة</label>
+                    <input type="number" id="editPStock" class="auth-input" min="0">
+                </div>
+                <div class="form-group">
+                    <label>صورة المنتج (رابط)</label>
+                    <input type="url" id="editPImage" class="auth-input">
+                </div>
+                <div class="form-group">
+                    <label>الوصف</label>
+                    <textarea id="editPDesc" class="auth-input" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn primary-btn" style="width: 100%;">حفظ التعديلات</button>
+            </form>
+        </div>
+    </div>
+
     <!-- لوحة التحكم -->
     <div class="admin-sidebar" id="adminSidebar">
         <div id="adminAuthSection" class="auth-container">
@@ -257,9 +302,28 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>رابط الصورة</label>
-                            <input type="url" id="pImage" class="auth-input" placeholder="https://example.com/image.jpg" required>
-                            <small style="color: #666; margin-top: 5px; display: block;">
+                            <label>الكمية المتوفرة</label>
+                            <input type="number" id="pStock" class="auth-input" value="10" min="0">
+                        </div>
+                                 <div class="form-group">
+                            <label>صورة المنتج</label>
+                            <div class="image-upload-container">
+                                <input type="file" id="pImageFile" class="auth-input" accept="image/*" style="display: none;">
+                                <input type="hidden" id="pImageBase64">
+                                <div class="upload-placeholder" onclick="document.getElementById('pImageFile').click()">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <span>اضغط لرفع صورة</span>
+                                </div>
+                                <div id="imagePreview" class="image-preview hidden">
+                                    <img src="" alt="Preview">
+                                    <button type="button" class="remove-img" onclick="removeSelectedImage()"><i class="fas fa-times"></i></button>
+                                </div>
+                            </div>
+                            <div style="margin-top: 10px;">
+                                <label style="font-size: 0.8rem; color: #666;">أو أدخل رابط صورة مباشر:</label>
+                                <input type="url" id="pImage" class="auth-input" placeholder="https://...">
+                            </div>
+                        </div>       <small style="color: #666; margin-top: 5px; display: block;">
                                 نوصي باستخدام روابط من unsplash.com
                             </small>
                         </div>
