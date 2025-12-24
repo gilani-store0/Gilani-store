@@ -49,8 +49,31 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
     checkInitialAuth();
     setupFullscreenMobile();
-    setupSimpleAuthUI(); // تهيئة واجهة تسجيل الدخول الجديدة
+    setupSimpleAuthUI();
+    createBackgroundParticles();
 });
+
+// إنشاء جزيئات الخلفية المتحركة
+function createBackgroundParticles() {
+    const container = document.querySelector('.auth-background-elements');
+    if (!container) return;
+    
+    for (let i = 0; i < 20; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'bg-particle';
+        particle.style.width = Math.random() * 60 + 20 + 'px';
+        particle.style.height = particle.style.width;
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.top = Math.random() * 100 + 100 + '%';
+        particle.style.background = `linear-gradient(45deg, 
+            rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.1),
+            rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.05)
+        )`;
+        particle.style.animationDuration = Math.random() * 30 + 20 + 's';
+        particle.style.animationDelay = Math.random() * 5 + 's';
+        container.appendChild(particle);
+    }
+}
 
 // تهيئة واجهة تسجيل الدخول الجديدة
 function setupSimpleAuthUI() {
@@ -80,24 +103,26 @@ function setupSimpleAuthUI() {
     }
 }
 
-// إعداد مصادقة Firebase
+// إعداد مصادقة Firebase مع تحسينات
 function setupFirebaseAuth() {
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             currentUser = user;
             await checkUserAdminStatus(user);
 
-            // التوجيه حسب نوع المستخدم
-            if (isAdmin) {
-                const shouldRedirect = localStorage.getItem('redirectToAdmin') !== 'false';
-                if (shouldRedirect) {
-                    openAdminPanel();
+            // التأخير قليلاً للسماح للرسوم المتحركة
+            setTimeout(() => {
+                if (isAdmin) {
+                    const shouldRedirect = localStorage.getItem('redirectToAdmin') !== 'false';
+                    if (shouldRedirect) {
+                        openAdminPanel();
+                    } else {
+                        showMainApp();
+                    }
                 } else {
                     showMainApp();
                 }
-            } else {
-                showMainApp();
-            }
+            }, 800);
             
             await loadStoreData();
             updateUserUI();
@@ -114,171 +139,7 @@ function setupFirebaseAuth() {
     });
 }
 
-// =====================================
-// نظام التحقق من صحة البيانات
-// =====================================
-
-// التحقق من صحة البيانات قبل الإرسال
-function validateAuthForm(email, password, isSignUp = false) {
-    const errors = [];
-    
-    // التحقق من البريد الإلكتروني
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email) {
-        errors.push("البريد الإلكتروني مطلوب");
-    } else if (!emailRegex.test(email)) {
-        errors.push("البريد الإلكتروني غير صالح");
-    }
-    
-    // التحقق من كلمة المرور
-    if (!password) {
-        errors.push("كلمة المرور مطلوبة");
-    } else if (password.length < 6) {
-        errors.push("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
-    } else if (isSignUp && !/(?=.*[A-Za-z])(?=.*\d)/.test(password)) {
-        errors.push("كلمة المرور يجب أن تحتوي على أحرف وأرقام");
-    }
-    
-    return errors;
-}
-
-// عرض رسائل الخطأ المخصصة
-function showError(message, elementId = null) {
-    // إخفاء جميع رسائل الخطأ السابقة
-    document.querySelectorAll('.error-message').forEach(el => {
-        el.classList.remove('show');
-    });
-    
-    // عرض رسالة الخطأ العامة
-    const generalError = document.getElementById('generalError');
-    if (generalError) {
-        generalError.textContent = message;
-        generalError.classList.add('show');
-        
-        setTimeout(() => {
-            generalError.classList.remove('show');
-        }, 5000);
-    }
-    
-    // إضافة رسالة خطأ لحقل معين إذا تم تحديده
-    if (elementId) {
-        const input = document.getElementById(elementId);
-        if (input) {
-            input.style.borderColor = '#EF4444';
-            
-            // إنشاء عنصر خطأ أسفل الحقل
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error-message show';
-            errorDiv.textContent = message;
-            errorDiv.id = `${elementId}-error`;
-            
-            // إزالة رسالة الخطأ القديمة إذا كانت موجودة
-            const oldError = document.getElementById(`${elementId}-error`);
-            if (oldError) oldError.remove();
-            
-            input.parentNode.insertBefore(errorDiv, input.nextSibling);
-            
-            // استعادة اللون عند التركيز
-            input.addEventListener('focus', function() {
-                this.style.borderColor = '';
-                errorDiv.remove();
-            });
-        }
-    }
-}
-
-// عرض مؤشر التحميل
-function showLoading(element = null) {
-    let button;
-    if (element) {
-        button = element;
-    } else {
-        button = document.getElementById('signInWithEmailBtn');
-    }
-    
-    if (button) {
-        button.disabled = true;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري المعالجة...';
-    }
-    
-    // إضافة طبقة تحميل عامة
-    const loadingOverlay = document.createElement('div');
-    loadingOverlay.className = 'loading-overlay';
-    loadingOverlay.innerHTML = '<div class="spinner"></div>';
-    loadingOverlay.id = 'globalLoading';
-    document.body.appendChild(loadingOverlay);
-}
-
-// إخفاء مؤشر التحميل
-function hideLoading(element = null) {
-    let button;
-    if (element) {
-        button = element;
-    } else {
-        button = document.getElementById('signInWithEmailBtn');
-    }
-    
-    if (button) {
-        button.disabled = false;
-        button.innerHTML = '<i class="fas fa-sign-in-alt"></i> تسجيل الدخول';
-    }
-    
-    const loadingOverlay = document.getElementById('globalLoading');
-    if (loadingOverlay) {
-        loadingOverlay.remove();
-    }
-}
-
-// =====================================
-// نظام الإشعارات المخصصة
-// =====================================
-
-// عرض إشعار مخصص
-function showCustomToast(message, type = 'info') {
-    // إخفاء الإشعارات السابقة
-    const oldToasts = document.querySelectorAll('.custom-toast');
-    oldToasts.forEach(toast => toast.remove());
-    
-    // إنشاء إشعار جديد
-    const toast = document.createElement('div');
-    toast.className = `custom-toast ${type}`;
-    
-    let icon = 'fa-info-circle';
-    let color = '#9D4EDD';
-    
-    if (type === 'success') {
-        icon = 'fa-check-circle';
-        color = '#06D6A0';
-    } else if (type === 'error') {
-        icon = 'fa-exclamation-circle';
-        color = '#EF4444';
-    } else if (type === 'warning') {
-        icon = 'fa-exclamation-triangle';
-        color = '#F59E0B';
-    }
-    
-    toast.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 12px;">
-            <i class="fas ${icon}" style="color: ${color}; font-size: 1.2rem;"></i>
-            <span>${message}</span>
-        </div>
-    `;
-    
-    document.body.appendChild(toast);
-    
-    setTimeout(() => toast.classList.add('show'), 100);
-    
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 400);
-    }, 5000);
-}
-
-// =====================================
-// نظام الصلاحيات المحسّن للأدمن
-// =====================================
-
-// التحقق من حالة المسؤول مع ذاكرة التخزين المؤقت
+// التحقق من حالة المسؤول مع تحسينات
 async function checkUserAdminStatus(user) {
     try {
         // التحقق من ذاكرة التخزين المؤقت أولاً
@@ -310,6 +171,7 @@ async function checkUserAdminStatus(user) {
                 }
             }
             
+            // تحديد إذا كان المستخدم مسؤولاً
             isAdmin = userData.isAdmin === true;
             
             // تخزين في ذاكرة التخزين المؤقت
@@ -318,6 +180,7 @@ async function checkUserAdminStatus(user) {
                 localStorage.setItem(`admin_time_${user.uid}`, now.getTime().toString());
             }
             
+            // تحديث واجهة المستخدم بناءً على الصلاحية
             updateAdminUI(isAdmin);
             
             if (isAdmin) {
@@ -331,11 +194,13 @@ async function checkUserAdminStatus(user) {
                 }
             }
         } else {
+            // إنشاء سجل جديد للمستخدم إذا لم يكن موجوداً
             await createUserRecord(user);
             isAdmin = false;
             updateAdminUI(false);
         }
         
+        // تنظيف ذاكرة التخزين المؤقت بعد ساعة
         setTimeout(() => {
             localStorage.removeItem(`admin_${user.uid}`);
             localStorage.removeItem(`admin_time_${user.uid}`);
@@ -348,26 +213,36 @@ async function checkUserAdminStatus(user) {
     }
 }
 
-// تحديث واجهة الأدمن
+// تحديث واجهة الأدمن - إصلاح مهم هنا
 function updateAdminUI(isAdminUser) {
     const adminBtn = document.getElementById('adminToggle');
     const mobileAdminBtn = document.getElementById('mobileAdminToggle');
     
-    if (isAdminUser) {
-        if (adminBtn) {
+    // تحديث الزر الرئيسي
+    if (adminBtn) {
+        if (isAdminUser) {
             adminBtn.classList.remove('hidden');
-            adminBtn.style.backgroundColor = 'var(--accent-color)';
-            adminBtn.style.color = '#000';
-            adminBtn.innerHTML = '<i class="fas fa-user-shield"></i><span>الإدارة</span>';
+            adminBtn.innerHTML = '<i class="fas fa-user-shield"></i>';
+            adminBtn.style.background = 'var(--gradient-3)';
+            adminBtn.style.color = 'var(--dark-color)';
+        } else {
+            adminBtn.classList.add('hidden');
         }
-        if (mobileAdminBtn) {
+    }
+    
+    // تحديث الزر في القائمة الجانبية للجوال
+    if (mobileAdminBtn) {
+        if (isAdminUser) {
             mobileAdminBtn.classList.remove('hidden');
-            mobileAdminBtn.style.backgroundColor = 'var(--accent-color)';
-            mobileAdminBtn.style.color = '#000';
+        } else {
+            mobileAdminBtn.classList.add('hidden');
         }
-    } else {
-        if (adminBtn) adminBtn.classList.add('hidden');
-        if (mobileAdminBtn) mobileAdminBtn.classList.add('hidden');
+    }
+    
+    // إخفاء لوحة التحكم إذا لم يكن المستخدم مسؤولاً وكانت مفتوحة
+    if (!isAdminUser && document.getElementById('adminSidebar').classList.contains('active')) {
+        closeAdminPanel();
+        showCustomToast("ليس لديك صلاحية للوصول إلى لوحة التحكم", "error");
     }
 }
 
@@ -437,7 +312,7 @@ async function logUnauthorizedAccess() {
 }
 
 // =====================================
-// الوظائف الأساسية
+// الوظائف الأساسية المحسنة
 // =====================================
 
 // التحقق من المصادقة الأولية
@@ -468,10 +343,14 @@ function showMainApp() {
     authScreen.classList.add('hidden');
     mainApp.classList.remove('hidden');
     
+    // إضافة تأثيرات رسومية
     mainApp.style.opacity = '0';
+    mainApp.style.transform = 'translateY(20px)';
+    
     setTimeout(() => {
-        mainApp.style.transition = 'opacity 0.5s ease';
+        mainApp.style.transition = 'all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
         mainApp.style.opacity = '1';
+        mainApp.style.transform = 'translateY(0)';
     }, 50);
 }
 
@@ -479,15 +358,10 @@ function showMainApp() {
 function updateUserUI() {
     if (!currentUser) return;
     
-    const userNameDisplay = document.getElementById('userNameDisplay');
     const userDisplayName = document.getElementById('userDisplayName');
     const userEmail = document.getElementById('userEmail');
     const userPhoto = document.getElementById('userPhoto');
     const userRole = document.getElementById('userRole');
-    
-    if (userNameDisplay) {
-        userNameDisplay.textContent = currentUser.displayName || 'حسابي';
-    }
     
     if (userDisplayName) {
         userDisplayName.textContent = currentUser.displayName || 'مستخدم';
@@ -497,10 +371,15 @@ function updateUserUI() {
         userEmail.textContent = currentUser.email || 'مستخدم ضيف';
     }
     
-    if (userPhoto && currentUser.photoURL) {
-        userPhoto.src = currentUser.photoURL;
-    } else if (userPhoto) {
-        userPhoto.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%23FF6B8B"/><text x="50" y="60" text-anchor="middle" fill="white" font-size="30">👤</text></svg>';
+    if (userPhoto) {
+        if (currentUser.photoURL) {
+            userPhoto.src = currentUser.photoURL;
+        } else {
+            // إنشاء صورة رمزية مخصصة
+            const name = currentUser.displayName || 'مستخدم';
+            const initials = name.charAt(0);
+            userPhoto.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23FF3366"/><text x="50" y="55" text-anchor="middle" fill="white" font-size="40" font-family="Cairo, sans-serif">${initials}</text></svg>`;
+        }
     }
     
     if (userRole) {
@@ -518,6 +397,7 @@ async function createUserRecord(user) {
             displayName: user.displayName || 'مستخدم',
             photoURL: user.photoURL || null,
             isAdmin: false,
+            isBlocked: false,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             lastLogin: firebase.firestore.FieldValue.serverTimestamp()
         };
@@ -754,13 +634,172 @@ async function handleForgotPassword() {
 }
 
 // =====================================
+// نظام التحقق من صحة البيانات
+// =====================================
+
+// التحقق من صحة البيانات قبل الإرسال
+function validateAuthForm(email, password, isSignUp = false) {
+    const errors = [];
+    
+    // التحقق من البريد الإلكتروني
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) {
+        errors.push("البريد الإلكتروني مطلوب");
+    } else if (!emailRegex.test(email)) {
+        errors.push("البريد الإلكتروني غير صالح");
+    }
+    
+    // التحقق من كلمة المرور
+    if (!password) {
+        errors.push("كلمة المرور مطلوبة");
+    } else if (password.length < 6) {
+        errors.push("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+    } else if (isSignUp && !/(?=.*[A-Za-z])(?=.*\d)/.test(password)) {
+        errors.push("كلمة المرور يجب أن تحتوي على أحرف وأرقام");
+    }
+    
+    return errors;
+}
+
+// عرض رسائل الخطأ المخصصة
+function showError(message, elementId = null) {
+    // إخفاء جميع رسائل الخطأ السابقة
+    document.querySelectorAll('.error-message').forEach(el => {
+        el.classList.remove('show');
+    });
+    
+    // عرض رسالة الخطأ العامة
+    const generalError = document.getElementById('generalError');
+    if (generalError) {
+        generalError.textContent = message;
+        generalError.classList.add('show');
+        
+        setTimeout(() => {
+            generalError.classList.remove('show');
+        }, 5000);
+    }
+    
+    // إضافة رسالة خطأ لحقل معين إذا تم تحديده
+    if (elementId) {
+        const input = document.getElementById(elementId);
+        if (input) {
+            input.style.borderColor = '#FF3366';
+            
+            // إنشاء عنصر خطأ أسفل الحقل
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message show';
+            errorDiv.textContent = message;
+            errorDiv.id = `${elementId}-error`;
+            
+            // إزالة رسالة الخطأ القديمة إذا كانت موجودة
+            const oldError = document.getElementById(`${elementId}-error`);
+            if (oldError) oldError.remove();
+            
+            input.parentNode.insertBefore(errorDiv, input.nextSibling);
+            
+            // استعادة اللون عند التركيز
+            input.addEventListener('focus', function() {
+                this.style.borderColor = '';
+                errorDiv.remove();
+            });
+        }
+    }
+}
+
+// عرض مؤشر التحميل
+function showLoading(element = null) {
+    let button;
+    if (element) {
+        button = element;
+    } else {
+        button = document.getElementById('signInWithEmailBtn');
+    }
+    
+    if (button) {
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري المعالجة...';
+    }
+    
+    // إضافة طبقة تحميل عامة
+    const loadingOverlay = document.createElement('div');
+    loadingOverlay.className = 'loading-overlay';
+    loadingOverlay.innerHTML = '<div class="spinner"></div>';
+    loadingOverlay.id = 'globalLoading';
+    document.body.appendChild(loadingOverlay);
+}
+
+// إخفاء مؤشر التحميل
+function hideLoading(element = null) {
+    let button;
+    if (element) {
+        button = element;
+    } else {
+        button = document.getElementById('signInWithEmailBtn');
+    }
+    
+    if (button) {
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-sign-in-alt"></i> تسجيل الدخول';
+    }
+    
+    const loadingOverlay = document.getElementById('globalLoading');
+    if (loadingOverlay) {
+        loadingOverlay.remove();
+    }
+}
+
+// =====================================
+// نظام الإشعارات المخصصة
+// =====================================
+
+// عرض إشعار مخصص
+function showCustomToast(message, type = 'info') {
+    // إخفاء الإشعارات السابقة
+    const oldToasts = document.querySelectorAll('.custom-toast');
+    oldToasts.forEach(toast => toast.remove());
+    
+    // إنشاء إشعار جديد
+    const toast = document.createElement('div');
+    toast.className = `custom-toast ${type}`;
+    
+    let icon = 'fa-info-circle';
+    
+    if (type === 'success') {
+        icon = 'fa-check-circle';
+    } else if (type === 'error') {
+        icon = 'fa-exclamation-circle';
+    } else if (type === 'warning') {
+        icon = 'fa-exclamation-triangle';
+    }
+    
+    toast.innerHTML = `
+        <i class="fas ${icon}"></i>
+        <span>${message}</span>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => toast.classList.add('show'), 100);
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 400);
+    }, 5000);
+}
+
+// =====================================
 // نظام إدارة الأدمن المحسّن
 // =====================================
 
 // فتح لوحة التحكم مع التحقق الأمني
 async function openAdminPanel() {
-    // التحقق من الصلاحية أولاً
-    if (!currentUser || !isAdmin) {
+    // التحقق من الصلاحية أولاً - مهم جداً
+    if (!currentUser) {
+        showCustomToast("الرجاء تسجيل الدخول أولاً", "error");
+        return;
+    }
+    
+    if (!isAdmin) {
         showCustomToast("ليس لديك صلاحية للوصول إلى لوحة التحكم", "error");
         await logUnauthorizedAccess();
         return;
@@ -984,7 +1023,7 @@ function renderProducts() {
 
     // عرض المنتجات
     grid.innerHTML = filtered.map(product => `
-        <div class="product-card">
+        <div class="product-card hover-lift">
             <div class="product-image">
                 <div class="image-square-container">
                     <img src="${product.image}" alt="${product.name}" loading="lazy">
@@ -1020,7 +1059,7 @@ function formatPrice(price) {
 }
 
 // =====================================
-// إعداد المستمعين للأحداث
+// إعداد المستمعين للأحداث المحسنة
 // =====================================
 
 function setupEventListeners() {
@@ -1097,8 +1136,13 @@ function setupMobileMenu() {
         link.addEventListener('click', closeMobileMenu);
     });
     
-    // زر الإدارة في الجوال
+    // زر الإدارة في الجوال - إضافة تحقق
     document.getElementById('mobileAdminToggle')?.addEventListener('click', () => {
+        if (!isAdmin) {
+            showCustomToast("ليس لديك صلاحية للوصول إلى لوحة التحكم", "error");
+            closeMobileMenu();
+            return;
+        }
         closeMobileMenu();
         openAdminPanel();
     });
@@ -1147,13 +1191,36 @@ function setupSearchAndFilter() {
             renderProducts();
         });
     });
+    
+    // أزرار التصنيفات في الأعلى
+    document.querySelectorAll('.cat-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const filter = this.dataset.filter;
+            currentFilter = filter;
+            
+            // تحديث أزرار الفلترة في قسم المنتجات
+            document.querySelectorAll('.filter-btn').forEach(fb => {
+                fb.classList.remove('active');
+                if (fb.dataset.filter === filter) {
+                    fb.classList.add('active');
+                }
+            });
+            
+            renderProducts();
+            
+            // التمرير إلى قسم المنتجات
+            document.getElementById('products').scrollIntoView({ behavior: 'smooth' });
+        });
+    });
 }
 
 // لوحة التحكم الأساسية
 function setupAdminPanel() {
     const adminToggle = document.getElementById('adminToggle');
     const adminOverlay = document.getElementById('adminOverlay');
-    const adminSidebar = document.getElementById('adminSidebar');
     
     if (adminToggle) {
         adminToggle.addEventListener('click', openAdminPanel);
@@ -1199,7 +1266,6 @@ function setupAdminPanel() {
 // حساب المستخدم
 function setupUserProfile() {
     const userToggle = document.getElementById('userToggle');
-    const userProfileModal = document.getElementById('userProfileModal');
     
     if (userToggle) {
         userToggle.addEventListener('click', openUserProfile);
@@ -1274,6 +1340,35 @@ function setupOtherListeners() {
             closeEditModal();
         }
     });
+    
+    // تحسينات للصور
+    const imageFileInput = document.getElementById('pImageFile');
+    if (imageFileInput) {
+        imageFileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (file.size > 2 * 1024 * 1024) {
+                showCustomToast("حجم الصورة كبير جداً (الحد الأقصى 2 ميجابايت)", "error");
+                this.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const base64String = event.target.result;
+                document.getElementById('pImageBase64').value = base64String;
+                
+                const preview = document.getElementById('imagePreview');
+                const placeholder = document.querySelector('.upload-placeholder');
+                
+                preview.querySelector('img').src = base64String;
+                preview.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        });
+    }
 }
 
 // تحديث السنة الحالية
@@ -1498,7 +1593,7 @@ async function loadAdminUsers() {
             <div class="admin-user-item">
                 <div class="user-info-small">
                     <div class="admin-user-image-container">
-                        <img src="${user.photoURL || 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23FF6B8B%22/><text x=%2250%22 y=%2260%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2230%22>👤</text></svg>'}" alt="${user.displayName}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23FF6B8B%22/><text x=%2250%22 y=%2260%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2230%22>👤</text></svg>'">
+                        <img src="${user.photoURL || 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23FF3366%22/><text x=%2250%22 y=%2260%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2230%22>👤</text></svg>'}" alt="${user.displayName}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23FF3366%22/><text x=%2250%22 y=%2260%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2230%22>👤</text></svg>'">
                     </div>
                     <div class="user-details">
                         <h4>${user.displayName}</h4>
@@ -1518,7 +1613,7 @@ async function loadAdminUsers() {
                         ${user.isAdmin ? 'إلغاء الإدارة' : 'تعيين كمسؤول'}
                     </button>
                     ${!user.isAdmin ? `
-                    <button class="delete-btn" style="background: #FF6B8B;" 
+                    <button class="delete-btn" style="background: var(--gradient-1);" 
                             onclick="toggleUserBlock('${user.id}', ${user.isBlocked || false})">
                         <i class="fas ${user.isBlocked ? 'fa-unlock' : 'fa-ban'}"></i>
                     </button>` : ''}
@@ -1595,21 +1690,21 @@ async function loadAdminStatistics() {
         
         const statsHTML = `
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px;">
-                <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px;">
+                <div class="stat-card" style="background: var(--gradient-1); color: white; padding: 20px; border-radius: 15px;">
                     <h5 style="margin: 0 0 10px 0; font-size: 0.9rem;">المستخدمين</h5>
                     <p style="font-size: 2rem; font-weight: bold; margin: 0;">${usersCount.data().count}</p>
                 </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 12px;">
+                <div class="stat-card" style="background: var(--gradient-2); color: white; padding: 20px; border-radius: 15px;">
                     <h5 style="margin: 0 0 10px 0; font-size: 0.9rem;">المنتجات</h5>
                     <p style="font-size: 2rem; font-weight: bold; margin: 0;">${productsCount.data().count}</p>
                 </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 20px; border-radius: 12px;">
+                <div class="stat-card" style="background: var(--gradient-3); color: var(--dark-color); padding: 20px; border-radius: 15px;">
                     <h5 style="margin: 0 0 10px 0; font-size: 0.9rem;">الطلبات</h5>
                     <p style="font-size: 2rem; font-weight: bold; margin: 0;">${ordersCount.data().count}</p>
                 </div>
             </div>
             
-            <div style="background: white; padding: 20px; border-radius: 12px; margin-top: 20px;">
+            <div style="background: white; padding: 20px; border-radius: 15px; margin-top: 20px; border: 2px solid var(--border-color);">
                 <h5 style="margin: 0 0 15px 0; color: var(--secondary-color);">
                     <i class="fas fa-history"></i> آخر نشاطات المسؤولين
                 </h5>
@@ -1742,37 +1837,6 @@ function importData() {
     input.click();
 }
 
-// وظائف معالجة الصور
-document.addEventListener('DOMContentLoaded', function() {
-    const imageFileInput = document.getElementById('pImageFile');
-    if (imageFileInput) {
-        imageFileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            if (file.size > 2 * 1024 * 1024) {
-                showCustomToast("حجم الصورة كبير جداً (الحد الأقصى 2 ميجابايت)", "error");
-                this.value = '';
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const base64String = event.target.result;
-                document.getElementById('pImageBase64').value = base64String;
-                
-                const preview = document.getElementById('imagePreview');
-                const placeholder = document.querySelector('.upload-placeholder');
-                
-                preview.querySelector('img').src = base64String;
-                preview.classList.remove('hidden');
-                placeholder.classList.add('hidden');
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-});
-
 function removeSelectedImage() {
     const imageFileInput = document.getElementById('pImageFile');
     const imageBase64Input = document.getElementById('pImageBase64');
@@ -1891,6 +1955,28 @@ function loadDefaultProducts() {
             badge: "الأكثر طلباً",
             stock: 10,
             createdAt: new Date().toISOString()
+        },
+        {
+            id: "2",
+            name: "عطر خشبي للرجال",
+            description: "عطر رجالي برائحة خشبية قوية تدوم طوال اليوم",
+            price: 45000,
+            category: "new",
+            image: "https://images.unsplash.com/photo-1590736969956-6d9c2a8d697f?w=500&h=500&fit=crop",
+            badge: "جديد",
+            stock: 15,
+            createdAt: new Date().toISOString()
+        },
+        {
+            id: "3",
+            name: "مجموعة مكياج كاملة",
+            description: "مجموعة متكاملة من أفضل منتجات المكياج",
+            price: 85000,
+            category: "best",
+            image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500&h=500&fit=crop",
+            badge: "الأكثر مبيعاً",
+            stock: 5,
+            createdAt: new Date().toISOString()
         }
     ];
     
@@ -1909,17 +1995,21 @@ setTimeout(() => {
 document.addEventListener('DOMContentLoaded', function() {
     const style = document.createElement('style');
     style.textContent = `
-        .feature-item, .social-auth-btn, .auth-input {
-            transform: translateY(0);
+        .floating-element {
+            animation: floatUpDown 3s ease-in-out infinite;
+        }
+        
+        .btn:hover i {
+            transform: translateX(5px);
+        }
+        
+        .hover-lift {
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         
-        .feature-item:hover, .social-auth-btn:hover {
-            transform: translateY(-3px);
-        }
-        
-        .auth-input:focus {
-            transform: translateY(-1px);
+        .hover-lift:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
         }
     `;
     document.head.appendChild(style);
@@ -1931,3 +2021,17 @@ window.addEventListener('error', function(e) {
     showCustomToast(`حدث خطأ: ${e.error.message}`, 'error');
 });
 
+// إضافة تأثيرات للمنتجات عند التمرير
+document.addEventListener('DOMContentLoaded', function() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('fade-in');
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.product-card').forEach(card => {
+        observer.observe(card);
+    });
+});
