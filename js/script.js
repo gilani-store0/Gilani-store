@@ -7,7 +7,7 @@ let storeData = {
         closingTime: "18:00",
         description: "متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية"
     },
-    products: [], // فارغة لتبدأ من الصفر
+    products: [],
     categories: [
         { id: "perfumes", name: "العطور", count: 0 },
         { id: "makeup", name: "المكياج", count: 0 },
@@ -34,11 +34,56 @@ function initializeStore() {
             storeData = JSON.parse(savedData);
         } catch (e) {
             console.error('خطأ في تحميل البيانات:', e);
+            // إضافة منتجات افتراضية عند الخطأ
+            addDefaultProducts();
         }
+    } else {
+        // إضافة منتجات افتراضية للمستخدم الجديد
+        addDefaultProducts();
+        saveStoreData();
     }
     
     // تحديث تعداد الأقسام
     updateCategoryCounts();
+}
+
+// إضافة منتجات افتراضية
+function addDefaultProducts() {
+    storeData.products = [
+        {
+            id: "1",
+            name: "عطر فلورال رومانسي",
+            description: "عطر نسائي برائحة الأزهار الطازجة مع لمسات الفواكه",
+            price: 350,
+            category: "perfumes",
+            image: "https://images.unsplash.com/photo-1541643600914-78b084683601?w=500&auto=format&fit=crop",
+            stock: 10,
+            createdAt: new Date().toISOString(),
+            orderCount: 0
+        },
+        {
+            id: "2",
+            name: "أحمر شفاه مات",
+            description: "أحمر شفاه طويل الأمد بتشكيلة ألوان متنوعة",
+            price: 120,
+            category: "makeup",
+            image: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=500&auto=format&fit=crop",
+            stock: 15,
+            createdAt: new Date().toISOString(),
+            orderCount: 0
+        },
+        {
+            id: "3",
+            name: "مرطب البشرة اليومي",
+            description: "مرطب خفيف للبشرة مع حماية من الشمس SPF 30",
+            price: 180,
+            category: "skincare",
+            image: "https://images.unsplash.com/photo-1556228578-9c360e1d8d34?w=500&auto=format&fit=crop",
+            stock: 8,
+            createdAt: new Date().toISOString(),
+            orderCount: 0
+        }
+    ];
 }
 
 // حفظ البيانات
@@ -199,6 +244,20 @@ function setupEventListeners() {
     
     // التصنيفات
     setupCategoryCards();
+    
+    // البحث في لوحة التحكم
+    const adminSearch = document.getElementById('adminSearch');
+    if (adminSearch) {
+        adminSearch.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const filteredProducts = storeData.products.filter(product => 
+                product.name.toLowerCase().includes(searchTerm) ||
+                (product.description && product.description.toLowerCase().includes(searchTerm)) ||
+                product.category.toLowerCase().includes(searchTerm)
+            );
+            displayAdminProducts(filteredProducts);
+        });
+    }
 }
 
 // تحديث القائمة النشطة
@@ -240,7 +299,7 @@ function displayProducts(products) {
                         <span class="product-category">${categoryName}</span>
                         <h3 class="product-title">${product.name}</h3>
                         <p class="product-description">${product.description}</p>
-                        <div class="product-price">${product.price} ج.م</div>
+                        <div class="product-price">${product.price.toFixed(2)} ج.م</div>
                         <div class="product-actions">
                             <button class="btn primary-btn" onclick="orderProduct('${product.id}')">
                                 <i class="fab fa-whatsapp"></i>
@@ -391,11 +450,13 @@ function updateAdminProductsTable() {
                 return `
                     <div class="product-item" data-id="${product.id}">
                         <div class="product-item-image">
-                            <img src="${product.image}" alt="${product.name}">
+                            <img src="${product.image}" alt="${product.name}" 
+                                 onerror="this.src='https://images.unsplash.com/photo-1541643600914-78b084683601?w=500'">
                         </div>
                         <div class="product-item-info">
                             <h4>${product.name}</h4>
-                            <p>${categoryName} - ${product.price} ج.م</p>
+                            <p>${categoryName} - ${product.price.toFixed(2)} ج.م</p>
+                            <small>المتبقي: ${product.stock} - الطلبات: ${product.orderCount || 0}</small>
                         </div>
                         <div class="product-item-actions">
                             <button class="btn small-btn primary-btn" onclick="editProduct('${product.id}')">
@@ -410,51 +471,57 @@ function updateAdminProductsTable() {
             }).join('')}
         </div>
     `;
+}
+
+// عرض المنتجات في لوحة التحكم للبحث
+function displayAdminProducts(products) {
+    const container = document.getElementById('adminProductsTable');
+    const emptyTable = document.getElementById('emptyAdminTable');
     
-    // إضافة تنسيقات للقائمة
-    const style = document.createElement('style');
-    style.textContent = `
-        .products-list {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        .product-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 15px;
-            background: var(--light-gray);
-            border-radius: var(--border-radius);
-        }
-        .product-item-image {
-            width: 60px;
-            height: 60px;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .product-item-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .product-item-info {
-            flex: 1;
-        }
-        .product-item-info h4 {
-            margin-bottom: 5px;
-            color: var(--dark-color);
-        }
-        .product-item-info p {
-            color: var(--gray-color);
-            font-size: 0.9rem;
-        }
-        .product-item-actions {
-            display: flex;
-            gap: 10px;
-        }
+    if (!container) return;
+    
+    if (products.length === 0) {
+        emptyTable.classList.add('hidden');
+        container.innerHTML = `
+            <div class="empty-table">
+                <i class="fas fa-search"></i>
+                <p>لا توجد منتجات تطابق بحثك</p>
+            </div>
+        `;
+        return;
+    }
+    
+    emptyTable.classList.add('hidden');
+    
+    container.innerHTML = `
+        <div class="products-list">
+            ${products.map(product => {
+                const categoryName = storeData.categories.find(c => c.id === product.category)?.name || 'غير مصنف';
+                
+                return `
+                    <div class="product-item" data-id="${product.id}">
+                        <div class="product-item-image">
+                            <img src="${product.image}" alt="${product.name}" 
+                                 onerror="this.src='https://images.unsplash.com/photo-1541643600914-78b084683601?w=500'">
+                        </div>
+                        <div class="product-item-info">
+                            <h4>${product.name}</h4>
+                            <p>${categoryName} - ${product.price.toFixed(2)} ج.م</p>
+                            <small>المتبقي: ${product.stock} - الطلبات: ${product.orderCount || 0}</small>
+                        </div>
+                        <div class="product-item-actions">
+                            <button class="btn small-btn primary-btn" onclick="editProduct('${product.id}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn small-btn secondary-btn" onclick="deleteProduct('${product.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
     `;
-    document.head.appendChild(style);
 }
 
 // تعديل منتج
@@ -505,7 +572,11 @@ function setupSettingsForm() {
     document.getElementById('whatsappNumber').value = settings.whatsapp;
     document.getElementById('openingTime').value = settings.openingTime;
     document.getElementById('closingTime').value = settings.closingTime;
-    document.getElementById('storeDescription').value = settings.description;
+    
+    // تحميل حقل الوصف إذا كان موجوداً
+    if (document.getElementById('storeDescription')) {
+        document.getElementById('storeDescription').value = settings.description;
+    }
     
     // حفظ الإعدادات
     form.addEventListener('submit', function(e) {
@@ -516,7 +587,9 @@ function setupSettingsForm() {
             whatsapp: document.getElementById('whatsappNumber').value,
             openingTime: document.getElementById('openingTime').value,
             closingTime: document.getElementById('closingTime').value,
-            description: document.getElementById('storeDescription').value
+            description: document.getElementById('storeDescription') ? 
+                        document.getElementById('storeDescription').value : 
+                        "متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية"
         };
         
         saveStoreData();
@@ -653,4 +726,3 @@ function showNotification(message, type = 'info') {
         }
     }).showToast();
 }
-
