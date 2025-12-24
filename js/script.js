@@ -1,3 +1,5 @@
+[file name]: script.js
+[file content begin]
 // بيانات المتجر الأساسية - نسخة محسنة
 let storeData = {
     settings: {
@@ -32,11 +34,23 @@ document.addEventListener('DOMContentLoaded', function() {
     updateCurrentYear();
     setupCategoryCards();
     checkStorageStatus();
+    registerServiceWorker();
 });
+
+// تسجيل Service Worker لـ PWA
+function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').then(registration => {
+            console.log('ServiceWorker registered');
+        }).catch(error => {
+            console.log('ServiceWorker registration failed:', error);
+        });
+    }
+}
 
 // تهيئة المتجر مع نظام تخزين احتياطي
 function initializeStore() {
-    const STORAGE_KEY = 'beautyStoreData';
+    const STORAGE_KEY = 'beautyStoreData_v2'; // تغيير المفتاح لتجنب مشاكل التخزين القديم
     let dataLoaded = false;
     
     // المحاولة 1: localStorage العادي
@@ -44,29 +58,29 @@ function initializeStore() {
         const savedData = localStorage.getItem(STORAGE_KEY);
         if (savedData) {
             storeData = JSON.parse(savedData);
-            console.log('تم تحميل البيانات من localStorage');
+            console.log('تم تحميل البيانات من localStorage:', storeData.products.length, 'منتج');
             dataLoaded = true;
         }
     } catch (e) {
         console.error('خطأ في تحميل البيانات من localStorage:', e);
     }
     
-    // المحاولة 2: localStorage البديل
+    // المحاولة 2: المحاولة بالمفتاح القديم
     if (!dataLoaded) {
         try {
-            const altData = localStorage.getItem('beautyStore_backup');
-            if (altData) {
-                storeData = JSON.parse(altData);
-                console.log('تم تحميل البيانات من النسخة الاحتياطية');
+            const oldData = localStorage.getItem('beautyStoreData');
+            if (oldData) {
+                storeData = JSON.parse(oldData);
+                console.log('تم تحميل البيانات من الإصدار القديم');
                 dataLoaded = true;
             }
         } catch (e) {
-            console.error('خطأ في تحميل النسخة الاحتياطية:', e);
+            console.error('خطأ في تحميل البيانات القديمة:', e);
         }
     }
     
     // المحاولة 3: تحميل البيانات الافتراضية
-    if (!dataLoaded) {
+    if (!dataLoaded || !storeData.products || storeData.products.length === 0) {
         console.log('جاري تحميل البيانات الافتراضية...');
         loadDefaultProducts();
         saveStoreData();
@@ -79,6 +93,7 @@ function initializeStore() {
 
 // تحميل منتجات افتراضية
 function loadDefaultProducts() {
+    // استخدام روابط صور من Unsplash تعمل بشكل أفضل
     storeData.products = [
         {
             id: Date.now() + 1,
@@ -86,7 +101,7 @@ function loadDefaultProducts() {
             description: "عطر نسائي برائحة الأزهار الطازجة يدوم طويلاً",
             price: 35000,
             category: "featured",
-            image: "https://images.unsplash.com/photo-1541643600914-78b084683601?w=500&auto=format&fit=crop&q=60",
+            image: "https://images.unsplash.com/photo-1541643600914-78b084683601?w=500&auto=format&fit=crop",
             badge: "الأكثر طلباً",
             createdAt: new Date().toISOString()
         },
@@ -96,7 +111,7 @@ function loadDefaultProducts() {
             description: "أحمر شفاه مات طويل الأمد بملمس ناعم",
             price: 4500,
             category: "new",
-            image: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=500&auto=format&fit=crop&q=60",
+            image: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=500&auto=format&fit=crop",
             badge: "جديد",
             createdAt: new Date().toISOString()
         },
@@ -106,7 +121,7 @@ function loadDefaultProducts() {
             description: "عطر رجالي بقاعدة خشبية تدوم طوال اليوم",
             price: 42000,
             category: "best",
-            image: "https://images.unsplash.com/photo-1590736969956-6d9c2a8d6976?w=500&auto=format&fit=crop&q=60",
+            image: "https://images.unsplash.com/photo-1590736969956-6d9c2a8d6976?w=500&auto=format&fit=crop",
             badge: "الأكثر مبيعاً",
             createdAt: new Date(Date.now() - 86400000).toISOString()
         }
@@ -115,7 +130,6 @@ function loadDefaultProducts() {
 
 // التحقق من سلامة البيانات
 function validateData() {
-    // التأكد من وجود الإعدادات الأساسية
     if (!storeData.settings) {
         storeData.settings = {
             storeName: "جمالك",
@@ -126,12 +140,10 @@ function validateData() {
         };
     }
     
-    // التأكد من وجود المنتجات
     if (!Array.isArray(storeData.products)) {
         storeData.products = [];
     }
     
-    // التأكد من وجود الفئات
     if (!Array.isArray(storeData.categories)) {
         storeData.categories = [
             { id: "featured", name: "المميز", icon: "fa-star" },
@@ -141,30 +153,68 @@ function validateData() {
         ];
     }
     
-    // تنظيف المنتجات الفارغة
-    storeData.products = storeData.products.filter(product => 
-        product && product.id && product.name && product.price
-    );
+    // تنظيف المنتجات وتأكيد وجود صور صحيحة
+    storeData.products = storeData.products.filter(product => {
+        if (!product || !product.id || !product.name || !product.price) return false;
+        
+        // إضافة صورة افتراضية إذا لم تكن موجودة
+        if (!product.image || product.image.trim() === '') {
+            product.image = getDefaultProductImage();
+        }
+        
+        // معالجة روابط الصور لضمان عملها
+        product.image = fixImageUrl(product.image);
+        
+        return true;
+    });
+}
+
+// معالجة روابط الصور
+function fixImageUrl(url) {
+    if (!url) return getDefaultProductImage();
+    
+    // إزالة المسافات
+    url = url.trim();
+    
+    // إذا كان الرابط من Unsplash، تأكد من وجود المعلمات الصحيحة
+    if (url.includes('unsplash.com') && !url.includes('?w=')) {
+        url += '?w=500&auto=format&fit=crop';
+    }
+    
+    // إذا كان الرابط من محرر الصور، تأكد من صحة الرابط
+    if (url.includes('https://') && (url.includes('.jpg') || url.includes('.jpeg') || url.includes('.png') || url.includes('.webp'))) {
+        return url;
+    }
+    
+    // إذا لم يكن رابط صورة صالح، استخدم الصورة الافتراضية
+    return getDefaultProductImage();
+}
+
+// الحصول على صورة افتراضية
+function getDefaultProductImage() {
+    const defaultImages = [
+        'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=500&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500&auto=format&fit=crop'
+    ];
+    return defaultImages[Math.floor(Math.random() * defaultImages.length)];
 }
 
 // حفظ بيانات المتجر مع نظام احتياطي
 function saveStoreData() {
-    const STORAGE_KEY = 'beautyStoreData';
-    const BACKUP_KEY = 'beautyStore_backup';
+    const STORAGE_KEY = 'beautyStoreData_v2';
+    const BACKUP_KEY = 'beautyStore_backup_v2';
     let savedSuccessfully = false;
     
     try {
-        // المحاولة 1: حفظ في localStorage
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(storeData));
-        console.log('تم حفظ البيانات في localStorage');
+        // حفظ في localStorage
+        const dataToSave = JSON.stringify(storeData);
+        localStorage.setItem(STORAGE_KEY, dataToSave);
+        console.log('تم حفظ البيانات، عدد المنتجات:', storeData.products.length);
         savedSuccessfully = true;
         
-        // المحاولة 2: حفظ نسخة احتياطية
-        localStorage.setItem(BACKUP_KEY, JSON.stringify(storeData));
-        console.log('تم حفظ النسخة الاحتياطية');
-        
-        // المحاولة 3: حفظ في sessionStorage كنسخة إضافية
-        sessionStorage.setItem(STORAGE_KEY + '_session', JSON.stringify(storeData));
+        // حفظ نسخة احتياطية
+        localStorage.setItem(BACKUP_KEY, dataToSave);
         
     } catch (e) {
         console.error('خطأ في حفظ البيانات:', e);
@@ -178,8 +228,12 @@ function saveStoreData() {
                     name: p.name,
                     price: p.price,
                     category: p.category,
-                    image: p.image
-                }))
+                    image: p.image,
+                    description: p.description || '',
+                    badge: p.badge || '',
+                    createdAt: p.createdAt
+                })),
+                categories: storeData.categories
             };
             localStorage.setItem(STORAGE_KEY + '_lite', JSON.stringify(simplifiedData));
             console.log('تم حفظ البيانات المبسطة');
@@ -189,7 +243,6 @@ function saveStoreData() {
         }
     }
     
-    // تحديث حالة التخزين
     updateStorageStatus(savedSuccessfully);
     return savedSuccessfully;
 }
@@ -268,13 +321,16 @@ function renderProducts() {
         return;
     }
 
-    grid.innerHTML = filtered.map(product => `
+    grid.innerHTML = filtered.map(product => {
+        const imageUrl = product.image || getDefaultProductImage();
+        return `
         <div class="product-card" data-id="${product.id}">
             <div class="product-image">
-                <img src="${product.image || 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=500&auto=format&fit=crop'}" 
-                     alt="${product.name}" 
+                <img src="${imageUrl}" 
+                     alt="${product.name || 'منتج'}" 
                      loading="lazy"
-                     onerror="this.src='https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=500&auto=format&fit=crop'">
+                     onerror="this.onerror=null; this.src='${getDefaultProductImage()}';"
+                     crossorigin="anonymous">
                 ${product.badge ? `<span class="product-badge">${product.badge}</span>` : ''}
             </div>
             <div class="product-info">
@@ -289,7 +345,7 @@ function renderProducts() {
                 </div>
             </div>
         </div>
-    `).join('');
+    `}).join('');
 }
 
 // تنسيق السعر
@@ -324,16 +380,9 @@ ${product.description ? `الوصف: ${product.description}` : ''}
 
 // إعداد المستمعين للأحداث
 function setupEventListeners() {
-    // القائمة الجانبية للجوال
     setupMobileMenu();
-    
-    // البحث والفلترة
     setupSearchAndFilter();
-    
-    // لوحة التحكم
     setupAdminPanel();
-    
-    // المستمعين الآخرين
     setupOtherListeners();
 }
 
@@ -345,7 +394,8 @@ function setupMobileMenu() {
     const mobileSidebar = document.getElementById('mobileSidebar');
     
     if (menuToggle) {
-        menuToggle.addEventListener('click', () => {
+        menuToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
             mobileSidebar.classList.add('active');
             sidebarOverlay.classList.add('active');
             document.body.style.overflow = 'hidden';
@@ -360,12 +410,10 @@ function setupMobileMenu() {
         sidebarOverlay.addEventListener('click', closeMobileMenu);
     }
     
-    // إغلاق القائمة عند النقر على رابط
     document.querySelectorAll('.sidebar-link').forEach(link => {
         link.addEventListener('click', closeMobileMenu);
     });
     
-    // إغلاق القائمة عند تغيير حجم الشاشة
     window.addEventListener('resize', () => {
         if (window.innerWidth > 992) {
             closeMobileMenu();
@@ -388,9 +436,13 @@ function setupSearchAndFilter() {
     const productSort = document.getElementById('productSort');
     
     if (productSearch) {
+        let searchTimeout;
         productSearch.addEventListener('input', (e) => {
-            searchQuery = e.target.value;
-            renderProducts();
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                searchQuery = e.target.value;
+                renderProducts();
+            }, 300);
         });
     }
     
@@ -401,7 +453,6 @@ function setupSearchAndFilter() {
         });
     }
     
-    // أزرار الفلترة
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -420,7 +471,8 @@ function setupAdminPanel() {
     const adminSidebar = document.getElementById('adminSidebar');
     
     if (adminToggle) {
-        adminToggle.addEventListener('click', () => {
+        adminToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
             adminSidebar.classList.add('active');
             adminOverlay.classList.add('active');
             document.body.style.overflow = 'hidden';
@@ -435,7 +487,6 @@ function setupAdminPanel() {
         adminOverlay.addEventListener('click', closeAdminPanel);
     }
     
-    // تسجيل الدخول والخروج
     const loginBtn = document.getElementById('loginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
     
@@ -447,7 +498,6 @@ function setupAdminPanel() {
         logoutBtn.addEventListener('click', handleLogout);
     }
     
-    // السماح بالدخول بالزر Enter في حقل الرمز
     const adminPinInput = document.getElementById('adminPinInput');
     if (adminPinInput) {
         adminPinInput.addEventListener('keypress', (e) => {
@@ -456,7 +506,6 @@ function setupAdminPanel() {
             }
         });
         
-        // تحسين تجربة المستخدم على الجوال
         adminPinInput.addEventListener('input', function() {
             if (this.value.length === 4) {
                 setTimeout(() => handleLogin(), 100);
@@ -464,7 +513,6 @@ function setupAdminPanel() {
         });
     }
     
-    // تبويبات لوحة التحكم
     document.querySelectorAll('.admin-tab-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
@@ -474,7 +522,6 @@ function setupAdminPanel() {
         });
     });
     
-    // نماذج لوحة التحكم
     const productForm = document.getElementById('productForm');
     const settingsForm = document.getElementById('settingsForm');
     
@@ -488,7 +535,6 @@ function setupAdminPanel() {
 }
 
 function closeAdminPanel() {
-    handleLogout();
     const adminSidebar = document.getElementById('adminSidebar');
     const adminOverlay = document.getElementById('adminOverlay');
     
@@ -499,7 +545,6 @@ function closeAdminPanel() {
 
 // المستمعين الآخرين
 function setupOtherListeners() {
-    // إغلاق لوحة التحكم بمفتاح ESC
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeAdminPanel();
@@ -507,7 +552,6 @@ function setupOtherListeners() {
         }
     });
     
-    // منع التمرير عند فتح القوائم الجانبية
     document.addEventListener('touchmove', function(e) {
         const adminSidebar = document.getElementById('adminSidebar');
         const mobileSidebar = document.getElementById('mobileSidebar');
@@ -518,11 +562,8 @@ function setupOtherListeners() {
         }
     }, { passive: false });
     
-    // تحسين تجربة اللمس
     if ('ontouchstart' in window) {
         document.body.classList.add('touch-device');
-        
-        // إضافة تأخير للـ :hover على الجوال
         document.addEventListener('touchstart', function() {}, true);
     }
 }
@@ -533,7 +574,6 @@ function setupCategoryCards() {
         card.addEventListener('click', function() {
             const category = this.dataset.category;
             
-            // تحديث أزرار الفلترة
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.classList.remove('active');
                 if (btn.dataset.filter === category) {
@@ -541,11 +581,9 @@ function setupCategoryCards() {
                 }
             });
             
-            // تطبيق الفلترة
             currentFilter = category;
             renderProducts();
             
-            // التمرير إلى قسم المنتجات
             const productsSection = document.getElementById('products');
             if (productsSection) {
                 productsSection.scrollIntoView({ 
@@ -579,7 +617,6 @@ function handleLogin() {
         showToast("تم تسجيل الدخول بنجاح ✅", "success");
         pinInput.value = '';
         
-        // إغلاق لوحة الأرقام على الجوال
         if ('visualViewport' in window) {
             pinInput.blur();
         }
@@ -588,7 +625,6 @@ function handleLogin() {
         pinInput.value = '';
         pinInput.focus();
         
-        // تأثير اهتزاز
         pinInput.style.animation = 'none';
         setTimeout(() => {
             pinInput.style.animation = 'shake 0.5s';
@@ -605,7 +641,6 @@ function handleLogout() {
     const pinInput = document.getElementById('adminPinInput');
     if (pinInput) pinInput.value = '';
     
-    // إعادة تعيين النماذج
     const productForm = document.getElementById('productForm');
     if (productForm) productForm.reset();
     
@@ -631,12 +666,15 @@ function loadAdminProducts() {
         return;
     }
     
-    list.innerHTML = storeData.products.map(product => `
+    list.innerHTML = storeData.products.map(product => {
+        const imageUrl = product.image || getDefaultProductImage();
+        return `
         <div class="admin-product-item" data-product-id="${product.id}">
             <div class="product-info-small">
-                <img src="${product.image || 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=500&auto=format&fit=crop'}" 
+                <img src="${imageUrl}" 
                      alt="${product.name}"
-                     onerror="this.src='https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=500&auto=format&fit=crop'">
+                     onerror="this.onerror=null; this.src='${getDefaultProductImage()}';"
+                     crossorigin="anonymous">
                 <div class="product-details">
                     <h4 class="text-truncate">${product.name || 'منتج بدون اسم'}</h4>
                     <p>${formatPrice(product.price || 0)}</p>
@@ -649,7 +687,7 @@ function loadAdminProducts() {
                 </button>
             </div>
         </div>
-    `).join('');
+    `}).join('');
 }
 
 // حذف منتج
@@ -672,7 +710,7 @@ window.deleteProduct = function(id) {
     }
 };
 
-// إضافة منتج جديد
+// إضافة منتج جديد - **هذا هو الجزء المهم الذي تم إصلاحه**
 function handleAddProduct(e) {
     e.preventDefault();
     
@@ -697,10 +735,11 @@ function handleAddProduct(e) {
         return;
     }
     
-    if (!imageInput || !imageInput.value.trim()) {
-        showToast("الرجاء إدخال رابط الصورة", "error");
-        imageInput?.focus();
-        return;
+    let imageUrl = '';
+    if (imageInput && imageInput.value.trim()) {
+        imageUrl = fixImageUrl(imageInput.value.trim());
+    } else {
+        imageUrl = getDefaultProductImage();
     }
     
     const newProduct = {
@@ -708,7 +747,7 @@ function handleAddProduct(e) {
         name: nameInput.value.trim(),
         price: price,
         category: categoryInput.value,
-        image: imageInput.value.trim(),
+        image: imageUrl, // استخدام الرابط المعالج
         badge: badgeInput.value.trim() || null,
         description: descInput.value.trim() || null,
         createdAt: new Date().toISOString()
@@ -730,7 +769,6 @@ function handleAddProduct(e) {
         const productsTab = document.querySelector('.admin-tab-btn[data-tab="products-list"]');
         if (productsTab) productsTab.click();
         
-        // إغلاق لوحة الأرقام على الجوال
         if ('visualViewport' in window) {
             nameInput.blur();
         }
@@ -774,7 +812,6 @@ function handleUpdateSettings(e) {
     const phone = sPhone?.value.trim() || '';
     const pin = sPin?.value || '';
     
-    // التحقق من البيانات الأساسية
     if (!name) {
         showToast("الرجاء إدخال اسم المتجر", "error");
         sName.focus();
@@ -787,13 +824,11 @@ function handleUpdateSettings(e) {
         return;
     }
     
-    // تحديث الإعدادات
     storeData.settings.storeName = name;
     storeData.settings.whatsapp = whatsapp.replace(/\D/g, '');
     storeData.settings.description = description;
     storeData.settings.phone = phone;
     
-    // تحديث رمز الحماية إذا تم إدخاله
     if (pin && pin.length === 4) {
         storeData.settings.adminPin = pin;
         if (sPin) sPin.value = '';
@@ -805,7 +840,6 @@ function handleUpdateSettings(e) {
         updateStoreUI();
         showToast("تم تحديث الإعدادات بنجاح ✅", "success");
         
-        // إغلاق لوحة الأرقام على الجوال
         if ('visualViewport' in window) {
             sName.blur();
         }
@@ -852,9 +886,9 @@ window.importData = function() {
             try {
                 const importedData = JSON.parse(e.target.result);
                 
-                // التحقق من صحة البيانات
                 if (importedData.settings && Array.isArray(importedData.products)) {
                     storeData = importedData;
+                    validateData(); // معالجة البيانات المستوردة
                     saveStoreData();
                     updateStoreUI();
                     renderProducts();
@@ -884,7 +918,6 @@ window.resetData = function() {
         return;
     }
     
-    // إعادة التعيين
     storeData = {
         settings: {
             storeName: "جمالك",
@@ -999,10 +1032,8 @@ document.head.appendChild(style);
 
 // تحسينات للأجهزة المحمولة
 if ('ontouchstart' in window) {
-    // تحسين تجربة اللمس
     document.body.classList.add('touch-device');
     
-    // إضافة مستمع لمس للأزرار
     document.querySelectorAll('button, .btn, .category-card, .product-card').forEach(el => {
         el.addEventListener('touchstart', function() {
             this.classList.add('touch-active');
@@ -1040,4 +1071,4 @@ if (window.location.hash === '#debug') {
     window.storeData = storeData;
     window.saveStoreData = saveStoreData;
 }
-
+[file content end]
