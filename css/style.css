@@ -816,6 +816,7 @@ body {
     padding: 30px;
     max-height: 60vh;
     overflow-y: auto;
+    position: relative;
 }
 
 .tab-content {
@@ -846,6 +847,18 @@ body {
 .btn.small-btn {
     padding: 8px 15px;
     font-size: 0.9rem;
+}
+
+/* زر إضافة منتج جديد */
+#addProductBtn {
+    background: linear-gradient(135deg, #4CAF50, #2E7D32);
+    color: white;
+    border: none;
+}
+
+#addProductBtn:hover {
+    background: linear-gradient(135deg, #2E7D32, #1B5E20);
+    transform: translateY(-2px);
 }
 
 .admin-form {
@@ -1028,6 +1041,28 @@ body {
     display: flex;
     gap: 10px;
     flex-shrink: 0;
+}
+
+/* تنسيقات إضافية لنموذج المنتج */
+.product-form-container {
+    display: none;
+    transition: var(--transition);
+    animation: fadeInDown 0.5s ease;
+}
+
+.product-form-container:not(.hidden) {
+    display: block !important;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* الفوتر */
