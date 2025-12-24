@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#FF6B8B">
+    <meta name="theme-color" content="#FF3366">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="description" content="متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية">
@@ -30,8 +30,8 @@
     <!-- شاشة تسجيل الدخول البسيطة -->
     <div id="authScreen" class="auth-screen">
         <div class="auth-background-elements">
-            <img src="https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=1000&auto=format&fit=crop" alt="Perfume" class="bg-img perfume-img">
-            <img src="https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=1000&auto=format&fit=crop" alt="Lipstick" class="bg-img lipstick-img">
+            <img src="https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=1000&auto=format&fit=crop" alt="Perfume" class="bg-img perfume-img floating-element">
+            <img src="https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=1000&auto=format&fit=crop" alt="Lipstick" class="bg-img lipstick-img floating-element">
             <div class="bg-crystal crystal-1"></div>
             <div class="bg-crystal crystal-2"></div>
         </div>
@@ -43,7 +43,7 @@
                         <span class="logo-text">QB</span>
                     </div>
                 </div>
-                <h1 class="welcome-text">مرحباً بك في QB</h1>
+                <h1 class="welcome-text">مرحباً بك في جمالك</h1>
             </div>
 
             <div id="generalError" class="error-message"></div>
@@ -58,7 +58,7 @@
 
                 <button id="showEmailFormBtn" class="auth-option-btn">
                     <div class="btn-content">
-                        <span class="btn-text">متابعة باستخدام Email & Password</span>
+                        <span class="btn-text">متابعة باستخدام البريد الإلكتروني</span>
                         <i class="far fa-envelope btn-icon-fa"></i>
                     </div>
                 </button>
@@ -117,7 +117,7 @@
                 </div>
                 <div class="user-actions">
                     <button id="userToggle" class="icon-btn"><i class="far fa-user"></i></button>
-                    <button id="adminToggle" class="icon-btn hidden"><i class="fas fa-cog"></i></button>
+                    <button id="adminToggle" class="icon-btn hidden"><i class="fas fa-user-shield"></i></button>
                     <button id="menuToggle" class="icon-btn mobile-only"><i class="fas fa-bars"></i></button>
                 </div>
             </div>
@@ -185,6 +185,7 @@
             <div class="container">
                 <div class="section-header">
                     <h2 class="section-title"><i class="fas fa-box-open"></i> منتجاتنا</h2>
+                    <p class="section-subtitle">اكتشف تشكيلتنا المتميزة من أفضل المنتجات</p>
                 </div>
                 <div class="section-controls">
                     <div class="search-bar">
@@ -304,7 +305,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="user-info">
-                        <img id="userPhoto" src="" alt="صورة المستخدم" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23FF6B8B%22/><text x=%2250%22 y=%2260%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2230%22>👤</text></svg>'">
+                        <img id="userPhoto" src="" alt="صورة المستخدم" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23FF3366%22/><text x=%2250%22 y=%2260%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2230%22>👤</text></svg>'">
                         <div>
                             <h4 id="userDisplayName">مستخدم</h4>
                             <p id="userEmail">email@example.com</p>
@@ -345,12 +346,24 @@
                 <button id="adminLogoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> خروج</button>
             </div>
             <div class="admin-tabs">
-                <button class="admin-tab-btn active" data-tab="products-list">المنتجات</button>
-                <button class="admin-tab-btn" data-tab="add-product">إضافة منتج</button>
-                <button class="admin-tab-btn" data-tab="statistics">الإحصائيات</button>
-                <button class="admin-tab-btn" data-tab="settings">الإعدادات</button>
-                <button class="admin-tab-btn" data-tab="users">المستخدمين</button>
-                <button class="admin-tab-btn" data-tab="backup">النسخ الاحتياطي</button>
+                <button class="admin-tab-btn active" data-tab="products-list">
+                    <i class="fas fa-list"></i> المنتجات
+                </button>
+                <button class="admin-tab-btn" data-tab="add-product">
+                    <i class="fas fa-plus-circle"></i> إضافة منتج
+                </button>
+                <button class="admin-tab-btn" data-tab="statistics">
+                    <i class="fas fa-chart-bar"></i> الإحصائيات
+                </button>
+                <button class="admin-tab-btn" data-tab="settings">
+                    <i class="fas fa-sliders-h"></i> الإعدادات
+                </button>
+                <button class="admin-tab-btn" data-tab="users">
+                    <i class="fas fa-users"></i> المستخدمين
+                </button>
+                <button class="admin-tab-btn" data-tab="backup">
+                    <i class="fas fa-database"></i> النسخ الاحتياطي
+                </button>
             </div>
             <div class="admin-body">
                 <!-- قائمة المنتجات -->
