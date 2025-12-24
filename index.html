@@ -1,36 +1,28 @@
-[file name]: index.html
-[file content begin]
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <meta name="theme-color" content="#FF6B8B">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="جمالك">
-    <meta name="mobile-web-apphhttt-capable" content="yes">
-    <meta name="description[file name]: index.html
-[file content begin]
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <meta name="theme-color" content="#FF6B8B">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="جمالك">
-    <meta name="mobile-web-app-capable" content="yes">
     <meta name="description" content="متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية">
     <title>جمالك | متجر مستحضرات التجميل والعطور</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- خط Cairo للعربية -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Toastify -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.css">
-    <link rel="manifest" href="manifest.json">
+    
+    <!-- CSS الخاص بنا -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💄</text></svg>">
-    <link rel="apple-touch-icon" href="https://images.unsplash.com/photo-1541643600914-78b084683601?w=180&h=180&fit=crop">
 </head>
 <body>
     <!-- شريط التنقل -->
@@ -211,7 +203,7 @@
         </div>
     </section>
 
-    <!-- لوحة التحكم المطورة -->
+    <!-- لوحة التحكم -->
     <div class="admin-sidebar" id="adminSidebar">
         <div id="adminAuthSection" class="auth-container">
             <div class="auth-icon"><i class="fas fa-lock"></i></div>
@@ -243,6 +235,7 @@
                         <!-- قائمة المنتجات تظهر هنا -->
                     </div>
                 </div>
+                
                 <!-- إضافة منتج -->
                 <div id="tab-add-product" class="admin-tab-content hidden">
                     <form id="productForm">
@@ -252,7 +245,7 @@
                         </div>
                         <div class="form-group">
                             <label>السعر (ج.س)</label>
-                            <input type="number" id="pPrice" class="auth-input" required min="0" step="100">
+                            <input type="number" id="pPrice" class="auth-input" required min="100" step="100">
                         </div>
                         <div class="form-group">
                             <label>الفئة</label>
@@ -265,8 +258,10 @@
                         </div>
                         <div class="form-group">
                             <label>رابط الصورة</label>
-                            <input type="url" id="pImage" class="auth-input" placeholder="https://images.unsplash.com/photo-..." required>
-                            <small style="display: block; margin-top: 5px; color: #666;">نوصي باستخدام روابط من Unsplash مثل: https://images.unsplash.com/photo-...</small>
+                            <input type="url" id="pImage" class="auth-input" placeholder="https://example.com/image.jpg" required>
+                            <small style="color: #666; margin-top: 5px; display: block;">
+                                نوصي باستخدام روابط من unsplash.com
+                            </small>
                         </div>
                         <div class="form-group">
                             <label>العلامة (اختياري)</label>
@@ -274,11 +269,12 @@
                         </div>
                         <div class="form-group">
                             <label>الوصف</label>
-                            <textarea id="pDesc" class="auth-input" rows="3"></textarea>
+                            <textarea id="pDesc" class="auth-input" rows="3" placeholder="وصف المنتج..."></textarea>
                         </div>
                         <button type="submit" class="btn primary-btn" style="width: 100%;">حفظ المنتج</button>
                     </form>
                 </div>
+                
                 <!-- الإعدادات -->
                 <div id="tab-settings" class="admin-tab-content hidden">
                     <form id="settingsForm">
@@ -305,6 +301,7 @@
                         <button type="submit" class="btn primary-btn" style="width: 100%;">تحديث الإعدادات</button>
                     </form>
                 </div>
+                
                 <!-- النسخ الاحتياطي -->
                 <div id="tab-backup" class="admin-tab-content hidden">
                     <div class="backup-actions">
@@ -329,6 +326,7 @@
     <!-- طبقة تعتيم لوحة التحكم -->
     <div class="admin-overlay" id="adminOverlay"></div>
 
+    <!-- الفوتر -->
     <footer>
         <div class="container">
             <div class="footer-header">
@@ -341,379 +339,13 @@
         </div>
     </footer>
 
+    <!-- زر الواتساب العائم -->
     <a href="#" id="floatingWhatsapp" class="floating-whatsapp" target="_blank">
         <i class="fab fa-whatsapp"></i>
     </a>
 
+    <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.js"></script>
     <script src="js/script.js"></script>
-    <script>
-        // تحميل PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/sw.js').then(function(registration) {
-                    console.log('ServiceWorker registration successful');
-                }, function(err) {
-                    console.log('ServiceWorker registration failed: ', err);
-                });
-            });
-        }
-        
-        // Install Prompt
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            // يمكنك هنا عرض زر تثبيت التطبيق
-        });
-    </script>
 </body>
 </html>
-[file content end]" content="متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية">
-    <title>جمالك | متجر مستحضرات التجميل والعطور</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.css">
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💄</text></svg>">
-    <link rel="apple-touch-icon" href="https://images.unsplash.com/photo-1541643600914-78b084683601?w=180&h=180&fit=crop">
-</head>
-<body>
-    <!-- شريط التنقل -->
-    <nav class="navbar">
-        <div class="container">
-            <a href="#" class="logo">
-                <i class="fas fa-spa"></i>
-                <div class="logo-text">
-                    <h1 class="store-name-text">جمالك</h1>
-                    <p class="tagline">عطور ومستحضرات تجميل</p>
-                </div>
-            </a>
-
-            <div class="nav-menu">
-                <a href="#home" class="nav-link active"><i class="fas fa-home"></i> الرئيسية</a>
-                <a href="#products" class="nav-link"><i class="fas fa-store"></i> المنتجات</a>
-                <a href="#categories" class="nav-link"><i class="fas fa-list"></i> الأقسام</a>
-                <a href="#contact" class="nav-link"><i class="fas fa-phone"></i> اتصل بنا</a>
-            </div>
-
-            <div class="nav-actions">
-                <a href="#" id="whatsappNavLink" target="_blank" class="whatsapp-nav-btn">
-                    <i class="fab fa-whatsapp"></i>
-                    <span>اطلب الآن</span>
-                </a>
-                <button class="admin-btn" id="adminToggle">
-                    <i class="fas fa-user-shield"></i>
-                    <span>الإدارة</span>
-                </button>
-            </div>
-
-            <button class="menu-toggle" id="menuToggle">
-                <i class="fas fa-bars"></i>
-            </button>
-        </div>
-    </nav>
-
-    <!-- القائمة الجانبية للجوال -->
-    <div class="mobile-sidebar" id="mobileSidebar">
-        <div class="sidebar-header">
-            <div class="sidebar-logo">
-                <i class="fas fa-spa"></i>
-                <h3 class="store-name-text">جمالك</h3>
-            </div>
-            <button class="close-sidebar" id="closeSidebar">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="sidebar-content">
-            <a href="#home" class="sidebar-link active"><i class="fas fa-home"></i> الرئيسية</a>
-            <a href="#products" class="sidebar-link"><i class="fas fa-store"></i> المنتجات</a>
-            <a href="#categories" class="sidebar-link"><i class="fas fa-list"></i> الأقسام</a>
-            <a href="#contact" class="sidebar-link"><i class="fas fa-phone"></i> اتصل بنا</a>
-            <div class="sidebar-contact">
-                <a href="#" id="mobileWhatsappLink" target="_blank" class="whatsapp-sidebar-btn">
-                    <i class="fab fa-whatsapp"></i> تواصل معنا عبر واتساب
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- طبقة التعتيم -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-    <!-- القسم الرئيسي -->
-    <section class="hero-section" id="home">
-        <div class="container">
-            <div class="hero-content">
-                <h1 class="hero-title">تسوق <span class="highlight">العطور</span> و<span class="highlight">الجمال</span> بجودة عالمية</h1>
-                <p class="hero-description">اكتشف تشكيلتنا الحصرية من أفضل العطور ومستحضرات التجميل الأصلية مع خدمة توصيل سريعة.</p>
-                <div class="hero-buttons">
-                    <a href="#products" class="btn primary-btn"><i class="fas fa-shopping-bag"></i> تصفح المنتجات</a>
-                    <a href="#contact" class="btn outline-btn"><i class="fab fa-whatsapp"></i> تواصل معنا</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- قسم التصنيفات -->
-    <section class="categories-section" id="categories">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title"><i class="fas fa-tags"></i> تصفح حسب الفئة</h2>
-            </div>
-            <div class="categories-grid">
-                <div class="category-card" data-category="featured">
-                    <div class="category-icon"><i class="fas fa-star"></i></div>
-                    <h3>المميز</h3>
-                    <span class="category-tag" id="featuredCount">0 منتج</span>
-                </div>
-                <div class="category-card" data-category="new">
-                    <div class="category-icon"><i class="fas fa-bolt"></i></div>
-                    <h3>الجديد</h3>
-                    <span class="category-tag" id="newCount">0 منتج</span>
-                </div>
-                <div class="category-card" data-category="sale">
-                    <div class="category-icon"><i class="fas fa-percentage"></i></div>
-                    <h3>العروض</h3>
-                    <span class="category-tag" id="saleCount">0 منتج</span>
-                </div>
-                <div class="category-card" data-category="best">
-                    <div class="category-icon"><i class="fas fa-fire"></i></div>
-                    <h3>الأكثر مبيعاً</h3>
-                    <span class="category-tag" id="bestCount">0 منتج</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- قسم المنتجات -->
-    <section class="products-section" id="products">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title"><i class="fas fa-box-open"></i> منتجاتنا</h2>
-            </div>
-            <div class="section-controls">
-                <div class="search-bar">
-                    <input type="text" id="productSearch" placeholder="ابحث عن منتج..." autocomplete="off">
-                    <i class="fas fa-search"></i>
-                </div>
-                <div class="filter-tabs">
-                    <button class="filter-btn active" data-filter="all">الكل</button>
-                    <button class="filter-btn" data-filter="featured">المميز</button>
-                    <button class="filter-btn" data-filter="new">الجديد</button>
-                    <button class="filter-btn" data-filter="sale">العروض</button>
-                    <button class="filter-btn" data-filter="best">الأكثر مبيعاً</button>
-                </div>
-                <select class="sort-select" id="productSort">
-                    <option value="newest">الأحدث</option>
-                    <option value="price-low">السعر: منخفض</option>
-                    <option value="price-high">السعر: مرتفع</option>
-                </select>
-            </div>
-            <div class="products-grid" id="productsGrid">
-                <!-- المنتجات تظهر هنا -->
-            </div>
-        </div>
-    </section>
-
-    <!-- قسم اتصل بنا -->
-    <section class="contact-section" id="contact">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title"><i class="fas fa-phone"></i> اتصل بنا</h2>
-                <p class="section-subtitle">نحن هنا لخدمتك على مدار الساعة</p>
-            </div>
-            <div class="contact-content">
-                <div class="contact-info">
-                    <div class="contact-item">
-                        <i class="fas fa-phone-alt"></i>
-                        <div>
-                            <h3>الهاتف</h3>
-                            <p id="contactPhone">+249 123 456 789</p>
-                        </div>
-                    </div>
-                    <div class="contact-item">
-                        <i class="fab fa-whatsapp"></i>
-                        <div>
-                            <h3>واتساب</h3>
-                            <p>متاح 24/7 للطلبات والاستفسارات</p>
-                        </div>
-                    </div>
-                    <div class="contact-item">
-                        <i class="fas fa-clock"></i>
-                        <div>
-                            <h3>ساعات العمل</h3>
-                            <p>كل أيام الأسبوع من 9 صباحاً حتى 10 مساءً</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="whatsapp-contact">
-                    <a href="#" id="contactWhatsappLink" target="_blank" class="whatsapp-contact-btn">
-                        <i class="fab fa-whatsapp"></i>
-                        <span>تواصل معنا عبر واتساب</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- لوحة التحكم المطورة -->
-    <div class="admin-sidebar" id="adminSidebar">
-        <div id="adminAuthSection" class="auth-container">
-            <div class="auth-icon"><i class="fas fa-lock"></i></div>
-            <h2>لوحة التحكم</h2>
-            <p>الرجاء إدخال رمز الحماية للمتابعة</p>
-            <input type="password" id="adminPinInput" class="auth-input" placeholder="****" maxlength="4" inputmode="numeric">
-            <button class="btn primary-btn" id="loginBtn" style="width: 100%;">دخول</button>
-            <button class="btn outline-btn" id="closeAdminBtn" style="width: 100%; margin-top: 10px;">إغلاق</button>
-            <p style="margin-top: 20px; font-size: 0.9rem; color: #666;">
-                <i class="fas fa-info-circle"></i> الرمز الافتراضي: 1234
-            </p>
-        </div>
-
-        <div id="adminMainContent" class="hidden">
-            <div class="admin-header">
-                <h3><i class="fas fa-cogs"></i> إدارة المتجر</h3>
-                <button id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> خروج</button>
-            </div>
-            <div class="admin-tabs">
-                <button class="admin-tab-btn active" data-tab="products-list">المنتجات</button>
-                <button class="admin-tab-btn" data-tab="add-product">إضافة منتج</button>
-                <button class="admin-tab-btn" data-tab="settings">الإعدادات</button>
-                <button class="admin-tab-btn" data-tab="backup">النسخ الاحتياطي</button>
-            </div>
-            <div class="admin-body">
-                <!-- قائمة المنتجات -->
-                <div id="tab-products-list" class="admin-tab-content">
-                    <div id="adminProductList">
-                        <!-- قائمة المنتجات تظهر هنا -->
-                    </div>
-                </div>
-                <!-- إضافة منتج -->
-                <div id="tab-add-product" class="admin-tab-content hidden">
-                    <form id="productForm">
-                        <div class="form-group">
-                            <label>اسم المنتج</label>
-                            <input type="text" id="pName" class="auth-input" required>
-                        </div>
-                        <div class="form-group">
-                            <label>السعر (ج.س)</label>
-                            <input type="number" id="pPrice" class="auth-input" required min="0" step="100">
-                        </div>
-                        <div class="form-group">
-                            <label>الفئة</label>
-                            <select id="pCategory" class="auth-input">
-                                <option value="featured">المميز</option>
-                                <option value="new">الجديد</option>
-                                <option value="sale">العروض</option>
-                                <option value="best">الأكثر مبيعاً</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>رابط الصورة</label>
-                            <input type="url" id="pImage" class="auth-input" placeholder="https://images.unsplash.com/photo-..." required>
-                            <small style="display: block; margin-top: 5px; color: #666;">نوصي باستخدام روابط من Unsplash مثل: https://images.unsplash.com/photo-...</small>
-                        </div>
-                        <div class="form-group">
-                            <label>العلامة (اختياري)</label>
-                            <input type="text" id="pBadge" class="auth-input" placeholder="مثال: جديد، مميز، عرض">
-                        </div>
-                        <div class="form-group">
-                            <label>الوصف</label>
-                            <textarea id="pDesc" class="auth-input" rows="3"></textarea>
-                        </div>
-                        <button type="submit" class="btn primary-btn" style="width: 100%;">حفظ المنتج</button>
-                    </form>
-                </div>
-                <!-- الإعدادات -->
-                <div id="tab-settings" class="admin-tab-content hidden">
-                    <form id="settingsForm">
-                        <div class="form-group">
-                            <label>اسم المتجر</label>
-                            <input type="text" id="sName" class="auth-input">
-                        </div>
-                        <div class="form-group">
-                            <label>رقم الواتساب</label>
-                            <input type="text" id="sWhatsapp" class="auth-input" placeholder="249123456789">
-                        </div>
-                        <div class="form-group">
-                            <label>وصف المتجر</label>
-                            <textarea id="sDescription" class="auth-input" rows="3"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>رقم الهاتف للعرض</label>
-                            <input type="text" id="sPhone" class="auth-input" placeholder="+249 123 456 789">
-                        </div>
-                        <div class="form-group">
-                            <label>رمز الحماية الجديد</label>
-                            <input type="password" id="sPin" class="auth-input" maxlength="4" placeholder="أتركه فارغاً لحفظ الرمز الحالي">
-                        </div>
-                        <button type="submit" class="btn primary-btn" style="width: 100%;">تحديث الإعدادات</button>
-                    </form>
-                </div>
-                <!-- النسخ الاحتياطي -->
-                <div id="tab-backup" class="admin-tab-content hidden">
-                    <div class="backup-actions">
-                        <button class="btn primary-btn" onclick="exportData()" style="width: 100%; margin-bottom: 10px;">
-                            <i class="fas fa-download"></i> تصدير البيانات
-                        </button>
-                        <button class="btn outline-btn" onclick="importData()" style="width: 100%; margin-bottom: 10px;">
-                            <i class="fas fa-upload"></i> استيراد البيانات
-                        </button>
-                        <button class="btn" onclick="resetData()" style="width: 100%; margin-bottom: 10px; background: #ff4757; color: white;">
-                            <i class="fas fa-trash"></i> إعادة التعيين
-                        </button>
-                        <div id="dataStatus" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px; text-align: center;">
-                            <p id="storageStatus">جاري التحقق من حالة التخزين...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- طبقة تعتيم لوحة التحكم -->
-    <div class="admin-overlay" id="adminOverlay"></div>
-
-    <footer>
-        <div class="container">
-            <div class="footer-header">
-                <h2 class="store-name-text">جمالك</h2>
-                <p id="footerStoreDescription">متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية</p>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; <span id="currentYear"></span> جميع الحقوق محفوظة لمتجر <span class="store-name-text">جمالك</span></p>
-            </div>
-        </div>
-    </footer>
-
-    <a href="#" id="floatingWhatsapp" class="floating-whatsapp" target="_blank">
-        <i class="fab fa-whatsapp"></i>
-    </a>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.js"></script>
-    <script src="js/script.js"></script>
-    <script>
-        // تحميل PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/sw.js').then(function(registration) {
-                    console.log('ServiceWorker registration successful');
-                }, function(err) {
-                    console.log('ServiceWorker registration failed: ', err);
-                });
-            });
-        }
-        
-        // Install Prompt
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            // يمكنك هنا عرض زر تثبيت التطبيق
-        });
-    </script>
-</body>
-</html>
-[file content end]
