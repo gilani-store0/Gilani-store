@@ -2,6 +2,7 @@
 
 import { setupFirebaseAuth } from './modules/auth.js';
 import { setupEventListeners } from './modules/ui.js';
+import { loadStoreData } from './modules/data.js';
 
 // نقطة دخول التطبيق
 document.addEventListener('DOMContentLoaded', function() {
@@ -16,7 +17,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // إعداد مستمعي الأحداث
     setTimeout(() => {
         setupEventListeners();
-    }, 100); // تأخير بسيط لضمان تحميل DOM
+        
+        // تحميل البيانات الأولية
+        loadStoreData().catch(error => {
+            console.error('خطأ في تحميل البيانات:', error);
+        });
+    }, 500); // تأخير لضمان تحميل جميع العناصر
     
     // إضافة مستمعي الأحداث العامة
     document.addEventListener('click', function(e) {
@@ -27,33 +33,39 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (userProfileSidebar?.classList.contains('active') && 
             !e.target.closest('#userProfileSidebar') && 
-            !e.target.closest('#userToggle')) {
-            userProfileSidebar.classList.remove('active');
-            document.getElementById('userProfileOverlay')?.classList.remove('active');
-            document.body.style.overflow = 'auto';
+            !e.target.closest('#userToggle') &&
+            !e.target.closest('#mobileUserToggle')) {
+            closeUserProfile();
         }
         
         if (adminSidebar?.classList.contains('active') && 
             !e.target.closest('#adminSidebar') && 
-            !e.target.closest('#adminToggle')) {
-            adminSidebar.classList.remove('active');
-            document.getElementById('adminOverlay')?.classList.remove('active');
-            document.body.style.overflow = 'auto';
+            !e.target.closest('#adminToggle') &&
+            !e.target.closest('#mobileAdminToggle')) {
+            closeAdminPanel();
         }
         
         if (mobileSidebar?.classList.contains('active') && 
             !e.target.closest('#mobileSidebar') && 
             !e.target.closest('#menuToggle')) {
-            mobileSidebar.classList.remove('active');
-            document.getElementById('sidebarOverlay')?.classList.remove('active');
-            document.body.style.overflow = 'auto';
+            closeMobileSidebar();
         }
     });
     
     // تعطيل إرسال النماذج الافتراضية
     document.querySelectorAll('form').forEach(form => {
         form.addEventListener('submit', function(e) {
-            e.preventDefault();
+            if (e.target.id !== 'emailAuthForm' && e.target.id !== 'settingsForm') {
+                e.preventDefault();
+            }
+        });
+    });
+    
+    // إضافة تحميل سلس للصور
+    document.addEventListener('DOMContentLoaded', function() {
+        const images = document.querySelectorAll('img[loading="lazy"]');
+        images.forEach(img => {
+            img.src = img.dataset.src || img.src;
         });
     });
 });
