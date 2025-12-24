@@ -680,13 +680,20 @@ body {
     top: 0;
     left: -100%;
     width: 100%;
-    max-width: 500px;
+    max-width: 500px; /* القيمة الافتراضية لسطح المكتب */
     height: 100%;
     background: white;
     z-index: 3000;
     transition: 0.3s ease;
     display: flex;
     flex-direction: column;
+}
+
+/* تعديل إضافي لضمان عرض كامل على الأجهزة الصغيرة */
+@media (max-width: 768px) {
+    .admin-sidebar {
+        max-width: 100%; /* تملأ الشاشة بالكامل على الجوال */
+    }
 }
 
 .admin-sidebar.active {
@@ -751,6 +758,7 @@ body {
 .admin-tab-btn.active {
     background: white;
     color: var(--secondary-color);
+    box-shadow: var(--shadow-sm); /* إضافة ظل خفيف للتبويب النشط */
 }
 
 .admin-body {
@@ -765,6 +773,7 @@ body {
     padding: 20px;
     border-radius: var(--border-radius);
     margin-bottom: 20px;
+    box-shadow: var(--shadow-sm); /* إضافة ظل خفيف للمحتوى */
 }
 
 /* نظام الحماية */
@@ -880,6 +889,7 @@ body {
     background: var(--light-gray);
     margin-bottom: 10px;
     border-radius: 8px;
+    border-right: 5px solid var(--primary-color); /* شريط جانبي لتمييز المنتج */
 }
 
 .product-info-small {
@@ -1113,9 +1123,7 @@ footer {
         width: 100%;
     }
 
-    .admin-sidebar {
-        max-width: 100%;
-    }
+    /* تم دمج التعديل في القاعدة العامة لـ 768px */
 
     .modal-content {
         max-width: 95%;
@@ -1149,9 +1157,7 @@ footer {
         grid-template-columns: 1fr;
     }
     
-    .admin-sidebar {
-        max-width: 100%;
-    }
+    /* تم دمج التعديل في القاعدة العامة لـ 768px */
     
     .admin-tabs {
         flex-wrap: wrap;
