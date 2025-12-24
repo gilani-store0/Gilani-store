@@ -487,19 +487,28 @@ body {
 }
 
 .product-image {
-    height: 200px;
-    overflow: hidden;
     position: relative;
+    background: #f8f9fa;
 }
 
-.product-image img {
+.image-square-container {
+    position: relative;
+    width: 100%;
+    padding-bottom: 100%; /* نسبة 1:1 */
+    overflow: hidden;
+}
+
+.image-square-container img {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
     transition: transform 0.5s ease;
 }
 
-.product-card:hover .product-image img {
+.product-card:hover .image-square-container img {
     transform: scale(1.05);
 }
 
@@ -513,6 +522,7 @@ body {
     border-radius: 15px;
     font-size: 0.8rem;
     font-weight: 600;
+    z-index: 1;
 }
 
 .product-info {
@@ -758,7 +768,7 @@ body {
 .admin-tab-btn.active {
     background: white;
     color: var(--secondary-color);
-    box-shadow: var(--shadow-sm); /* إضافة ظل خفيف للتبويب النشط */
+    box-shadow: var(--shadow-sm);
 }
 
 .admin-body {
@@ -773,7 +783,7 @@ body {
     padding: 20px;
     border-radius: var(--border-radius);
     margin-bottom: 20px;
-    box-shadow: var(--shadow-sm); /* إضافة ظل خفيف للمحتوى */
+    box-shadow: var(--shadow-sm);
 }
 
 /* نظام الحماية */
@@ -850,18 +860,28 @@ body {
     display: block;
 }
 
+.image-upload-hint {
+    font-size: 0.8rem;
+    color: var(--gray-color);
+    margin-top: 5px;
+}
+
 .image-preview {
     position: relative;
     width: 100%;
-    max-height: 200px;
+    padding-bottom: 100%; /* نسبة 1:1 للمعاينة */
     border-radius: 8px;
     overflow: hidden;
+    background: #f0f0f0;
 }
 
 .image-preview img {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
 }
 
 .remove-img {
@@ -878,6 +898,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 2;
 }
 
 /* عناصر إدارة المنتجات */
@@ -889,7 +910,7 @@ body {
     background: var(--light-gray);
     margin-bottom: 10px;
     border-radius: 8px;
-    border-right: 5px solid var(--primary-color); /* شريط جانبي لتمييز المنتج */
+    border-right: 5px solid var(--primary-color);
 }
 
 .product-info-small {
@@ -899,10 +920,17 @@ body {
     flex: 1;
 }
 
-.product-info-small img {
+.admin-product-image-container {
     width: 60px;
     height: 60px;
     border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.admin-product-image-container img {
+    width: 100%;
+    height: 100%;
     object-fit: cover;
 }
 
@@ -1123,8 +1151,6 @@ footer {
         width: 100%;
     }
 
-    /* تم دمج التعديل في القاعدة العامة لـ 768px */
-
     .modal-content {
         max-width: 95%;
         margin: 10px;
@@ -1157,8 +1183,6 @@ footer {
         grid-template-columns: 1fr;
     }
     
-    /* تم دمج التعديل في القاعدة العامة لـ 768px */
-    
     .admin-tabs {
         flex-wrap: wrap;
     }
@@ -1166,10 +1190,6 @@ footer {
     .admin-tab-btn {
         min-width: calc(50% - 10px);
         font-size: 0.85rem;
-    }
-
-    .product-image {
-        height: 180px;
     }
 
     .floating-whatsapp {
