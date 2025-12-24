@@ -2,13 +2,18 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#FF6B8B">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>جمالك | متجر مستحضرات التجميل والعطور</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.css">
-    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💄</text></svg>">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💄</text></svg>">
 </head>
 <body>
     <!-- شريط التنقل -->
@@ -126,7 +131,7 @@
             </div>
             <div class="section-controls">
                 <div class="search-bar">
-                    <input type="text" id="productSearch" placeholder="ابحث عن منتج...">
+                    <input type="text" id="productSearch" placeholder="ابحث عن منتج..." autocomplete="off">
                     <i class="fas fa-search"></i>
                 </div>
                 <div class="filter-tabs">
@@ -198,6 +203,9 @@
             <input type="password" id="adminPinInput" class="auth-input" placeholder="****" maxlength="4" inputmode="numeric">
             <button class="btn primary-btn" id="loginBtn" style="width: 100%;">دخول</button>
             <button class="btn outline-btn" id="closeAdminBtn" style="width: 100%; margin-top: 10px;">إغلاق</button>
+            <p style="margin-top: 20px; font-size: 0.9rem; color: #666;">
+                <i class="fas fa-info-circle"></i> الرمز الافتراضي: 1234
+            </p>
         </div>
 
         <div id="adminMainContent" class="hidden">
@@ -209,6 +217,7 @@
                 <button class="admin-tab-btn active" data-tab="products-list">المنتجات</button>
                 <button class="admin-tab-btn" data-tab="add-product">إضافة منتج</button>
                 <button class="admin-tab-btn" data-tab="settings">الإعدادات</button>
+                <button class="admin-tab-btn" data-tab="backup">النسخ الاحتياطي</button>
             </div>
             <div class="admin-body">
                 <!-- قائمة المنتجات -->
@@ -277,6 +286,23 @@
                         </div>
                         <button type="submit" class="btn primary-btn" style="width: 100%;">تحديث الإعدادات</button>
                     </form>
+                </div>
+                <!-- النسخ الاحتياطي -->
+                <div id="tab-backup" class="admin-tab-content hidden">
+                    <div class="backup-actions">
+                        <button class="btn primary-btn" onclick="exportData()" style="width: 100%; margin-bottom: 10px;">
+                            <i class="fas fa-download"></i> تصدير البيانات
+                        </button>
+                        <button class="btn outline-btn" onclick="importData()" style="width: 100%; margin-bottom: 10px;">
+                            <i class="fas fa-upload"></i> استيراد البيانات
+                        </button>
+                        <button class="btn" onclick="resetData()" style="width: 100%; margin-bottom: 10px; background: #ff4757; color: white;">
+                            <i class="fas fa-trash"></i> إعادة التعيين
+                        </button>
+                        <div id="dataStatus" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px; text-align: center;">
+                            <p id="storageStatus">جاري التحقق من حالة التخزين...</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
