@@ -23,6 +23,9 @@ document.addEventListener('DOMContentLoaded', function() {
     loadProducts();
     updateStoreInfo();
     updateCurrentYear();
+    
+    // فحص عناصر DOM للتأكد من تحميلها
+    setTimeout(checkDOMElements, 1000);
 });
 
 // تهيئة المتجر
@@ -220,15 +223,22 @@ function setupEventListeners() {
     const addFirstProductAdmin = document.getElementById('addFirstProductAdmin');
     
     if (addFirstProduct) {
-        addFirstProduct.addEventListener('click', () => {
+        addFirstProduct.addEventListener('click', function(e) {
+            e.preventDefault();
             openPanel();
-            document.querySelector('[data-tab="products-tab"]').click();
-            document.getElementById('addProductBtn').click();
+            // الانتظار قليلاً لفتح اللوحة ثم إظهار النموذج
+            setTimeout(() => {
+                document.querySelector('[data-tab="products-tab"]').click();
+                setTimeout(() => {
+                    document.getElementById('addProductBtn').click();
+                }, 100);
+            }, 300);
         });
     }
     
     if (addFirstProductAdmin) {
-        addFirstProductAdmin.addEventListener('click', () => {
+        addFirstProductAdmin.addEventListener('click', function(e) {
+            e.preventDefault();
             document.getElementById('addProductBtn').click();
         });
     }
@@ -258,6 +268,24 @@ function setupEventListeners() {
             displayAdminProducts(filteredProducts);
         });
     }
+    
+    // زر إغلاق النموذج
+    const closeFormBtn = document.getElementById('closeFormBtn');
+    if (closeFormBtn) {
+        closeFormBtn.addEventListener('click', function() {
+            document.getElementById('productFormContainer').classList.add('hidden');
+        });
+    }
+}
+
+// فحص عناصر DOM
+function checkDOMElements() {
+    console.log('=== فحص عناصر DOM ===');
+    console.log('addProductBtn:', document.getElementById('addProductBtn'));
+    console.log('productFormContainer:', document.getElementById('productFormContainer'));
+    console.log('productForm:', document.getElementById('productForm'));
+    console.log('hidden class:', document.getElementById('productFormContainer').classList.contains('hidden'));
+    console.log('=== انتهى الفحص ===');
 }
 
 // تحديث القائمة النشطة
@@ -342,30 +370,60 @@ function setupProductForm() {
     
     // إظهار النموذج
     if (addProductBtn && formContainer) {
-        addProductBtn.addEventListener('click', () => {
+        addProductBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('تم النقر على زر إضافة منتج');
+            
+            // إظهار النموذج
             formContainer.classList.remove('hidden');
+            
+            // إعادة تعيين النموذج
             form.reset();
             document.getElementById('editProductId').value = '';
+            document.getElementById('productStock').value = '1';
+            document.getElementById('productPrice').value = '';
+            
+            // إعادة تعيين معاينة الصورة
             document.getElementById('imagePreview').innerHTML = `
                 <i class="fas fa-image"></i>
                 <p>معاينة الصورة ستظهر هنا</p>
             `;
+            
+            // التمرير إلى أعلى النموذج
+            formContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            // إعطاء التركيز لحقل اسم المنتج
+            setTimeout(() => {
+                document.getElementById('productName').focus();
+            }, 300);
         });
     }
     
     // إخفاء النموذج
     if (cancelProductBtn && formContainer) {
-        cancelProductBtn.addEventListener('click', () => {
+        cancelProductBtn.addEventListener('click', function(e) {
+            e.preventDefault();
             formContainer.classList.add('hidden');
+            
+            // التمرير لأعلى القائمة
+            document.querySelector('.products-list-container').scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+            });
         });
     }
     
     // معاينة الصورة
     if (productImageInput) {
         productImageInput.addEventListener('input', function() {
-            const imageUrl = this.value;
+            const imageUrl = this.value.trim();
             if (imageUrl) {
                 updateImagePreview(imageUrl);
+            } else {
+                document.getElementById('imagePreview').innerHTML = `
+                    <i class="fas fa-image"></i>
+                    <p>معاينة الصورة ستظهر هنا</p>
+                `;
             }
         });
     }
@@ -376,12 +434,13 @@ function setupProductForm() {
         
         const productId = document.getElementById('editProductId').value;
         const productData = {
-            id: productId || Date.now().toString(),
-            name: document.getElementById('productName').value,
-            description: document.getElementById('productDescription').value,
-            price: parseFloat(document.getElementById('productPrice').value),
+            id: productId || 'product_' + Date.now(),
+            name: document.getElementById('productName').value.trim(),
+            description: document.getElementById('productDescription').value.trim() || 'لا يوجد وصف',
+            price: parseFloat(document.getElementById('productPrice').value) || 0,
             category: document.getElementById('productCategory').value,
-            image: document.getElementById('productImage').value,
+            image: document.getElementById('productImage').value.trim() || 
+                   'https://images.unsplash.com/photo-1541643600914-78b084683601?w=500',
             stock: parseInt(document.getElementById('productStock').value) || 1,
             createdAt: productId ? 
                 storeData.products.find(p => p.id === productId)?.createdAt || new Date().toISOString() : 
@@ -390,23 +449,30 @@ function setupProductForm() {
                 storeData.products.find(p => p.id === productId)?.orderCount || 0 : 0
         };
         
+        // التحقق من الحقول المطلوبة
+        if (!productData.name || productData.price <= 0 || !productData.category) {
+            showNotification('يرجى ملء جميع الحقول المطلوبة بشكل صحيح', 'error');
+            return;
+        }
+        
         if (productId) {
             // تعديل المنتج
             const index = storeData.products.findIndex(p => p.id === productId);
             if (index !== -1) {
                 storeData.products[index] = productData;
-                showNotification('تم تحديث المنتج بنجاح', 'success');
+                showNotification('تم تحديث المنتج بنجاح ✓', 'success');
             }
         } else {
             // إضافة منتج جديد
             storeData.products.push(productData);
-            showNotification('تم إضافة المنتج بنجاح', 'success');
+            showNotification('تم إضافة المنتج بنجاح ✓', 'success');
         }
         
         saveStoreData();
         loadProducts();
         updateAdminProductsTable();
         
+        // إعادة تعيين وإخفاء النموذج
         form.reset();
         formContainer.classList.add('hidden');
     });
@@ -704,6 +770,24 @@ function orderProduct(productId) {
 // تحميل بيانات لوحة التحكم
 function loadControlPanelData() {
     updateAdminProductsTable();
+    
+    // تحميل بيانات الإعدادات
+    const settings = storeData.settings;
+    if (document.getElementById('storeName')) {
+        document.getElementById('storeName').value = settings.storeName;
+    }
+    if (document.getElementById('whatsappNumber')) {
+        document.getElementById('whatsappNumber').value = settings.whatsapp;
+    }
+    if (document.getElementById('openingTime')) {
+        document.getElementById('openingTime').value = settings.openingTime;
+    }
+    if (document.getElementById('closingTime')) {
+        document.getElementById('closingTime').value = settings.closingTime;
+    }
+    if (document.getElementById('storeDescription')) {
+        document.getElementById('storeDescription').value = settings.description;
+    }
 }
 
 // إظهار الإشعارات
