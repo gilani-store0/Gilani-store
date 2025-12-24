@@ -544,7 +544,51 @@ body {
     font-size: 1.3rem;
     font-weight: 800;
     color: var(--secondary-color);
+    margin-bottom: 5px;
+}
+
+.product-stock-info {
     margin-bottom: 15px;
+    color: var(--gray-color);
+}
+
+.product-quantity-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    background: var(--light-gray);
+    padding: 5px;
+    border-radius: 8px;
+    width: fit-content;
+}
+
+.product-quantity-selector button {
+    width: 30px;
+    height: 30px;
+    border-radius: 5px;
+    border: none;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dark-color);
+    transition: var(--transition);
+}
+
+.product-quantity-selector button:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.product-quantity-selector input {
+    width: 40px;
+    text-align: center;
+    border: none;
+    background: transparent;
+    font-weight: 700;
+    font-family: 'Cairo', sans-serif;
 }
 
 .product-actions {
@@ -770,6 +814,63 @@ body {
     font-weight: 600;
 }
 
+/* تحسينات رفع الصور */
+.image-upload-container {
+    position: relative;
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: var(--transition);
+    background: var(--light-gray);
+}
+
+.image-upload-container:hover {
+    border-color: var(--primary-color);
+    background: var(--light-pink);
+}
+
+.upload-placeholder {
+    cursor: pointer;
+}
+
+.upload-placeholder i {
+    font-size: 2.5rem;
+    color: var(--gray-color);
+    margin-bottom: 10px;
+    display: block;
+}
+
+.image-preview {
+    position: relative;
+    width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.remove-img {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(255, 71, 87, 0.8);
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 /* عناصر إدارة المنتجات */
 .admin-product-item {
     display: flex;
@@ -816,6 +917,75 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.edit-btn {
+    background: var(--secondary-color);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.product-actions-small {
+    display: flex;
+    gap: 5px;
+}
+
+/* النافذة المنبثقة (Modal) */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 4000;
+    padding: 20px;
+}
+
+.modal-content {
+    background: white;
+    width: 100%;
+    max-width: 500px;
+    border-radius: 15px;
+    overflow: hidden;
+    animation: modalSlideUp 0.3s ease;
+}
+
+@keyframes modalSlideUp {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+    padding: 20px;
+    background: var(--light-gray);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+#editProductForm {
+    padding: 20px;
+    max-height: 80vh;
+    overflow-y: auto;
 }
 
 /* رسالة فارغة */
@@ -904,6 +1074,13 @@ footer {
         display: block;
     }
     
+    .hero-section {
+        padding: 40px 0;
+        min-height: 60vh;
+        display: flex;
+        align-items: center;
+    }
+
     .hero-title {
         font-size: 1.8rem;
     }
@@ -919,6 +1096,7 @@ footer {
     
     .section-controls {
         flex-direction: column;
+        padding: 15px;
     }
     
     .search-bar {
@@ -928,10 +1106,20 @@ footer {
     .filter-tabs {
         width: 100%;
         justify-content: flex-start;
+        padding-bottom: 10px;
     }
     
     .sort-select {
         width: 100%;
+    }
+
+    .admin-sidebar {
+        max-width: 100%;
+    }
+
+    .modal-content {
+        max-width: 95%;
+        margin: 10px;
     }
 }
 
@@ -946,6 +1134,11 @@ footer {
     
     .products-grid {
         grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .product-card {
+        margin: 0 5px;
     }
     
     .categories-grid {
@@ -966,6 +1159,19 @@ footer {
     
     .admin-tab-btn {
         min-width: calc(50% - 10px);
+        font-size: 0.85rem;
+    }
+
+    .product-image {
+        height: 180px;
+    }
+
+    .floating-whatsapp {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+        bottom: 15px;
+        left: 15px;
     }
 }
 
