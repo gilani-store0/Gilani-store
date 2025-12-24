@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupFirebaseAuth();
     setupEventListeners();
     checkInitialAuth();
+    setupFullscreenMobile();
     
     // إضافة تأثيرات تحميل أولية
     setTimeout(() => {
@@ -73,56 +74,334 @@ function setupFirebaseAuth() {
     });
 }
 
-// التحقق من حالة المسؤول
-async function checkUserAdminStatus(user) {
-    try {
-        const userDoc = await db.collection('users').doc(user.uid).get();
-        if (userDoc.exists) {
-            const userData = userDoc.data();
-            isAdmin = userData.isAdmin === true;
+// =====================================
+// نظام التحقق من صحة البيانات
+// =====================================
+
+// التحقق من صحة البيانات قبل الإرسال
+function validateAuthForm(email, password, isSignUp = false) {
+    const errors = [];
+    
+    // التحقق من البريد الإلكتروني
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) {
+        errors.push("البريد الإلكتروني مطلوب");
+    } else if (!emailRegex.test(email)) {
+        errors.push("البريد الإلكتروني غير صالح");
+    }
+    
+    // التحقق من كلمة المرور
+    if (!password) {
+        errors.push("كلمة المرور مطلوبة");
+    } else if (password.length < 6) {
+        errors.push("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+    } else if (isSignUp && !/(?=.*[A-Za-z])(?=.*\d)/.test(password)) {
+        errors.push("كلمة المرور يجب أن تحتوي على أحرف وأرقام");
+    }
+    
+    return errors;
+}
+
+// عرض رسائل الخطأ المخصصة
+function showError(message, elementId = null) {
+    // إخفاء جميع رسائل الخطأ السابقة
+    document.querySelectorAll('.error-message').forEach(el => {
+        el.classList.remove('show');
+    });
+    
+    // عرض رسالة الخطأ العامة
+    const generalError = document.getElementById('generalError');
+    if (generalError) {
+        generalError.textContent = message;
+        generalError.classList.add('show');
+        
+        // إخفاء الرسالة بعد 5 ثواني
+        setTimeout(() => {
+            generalError.classList.remove('show');
+        }, 5000);
+    }
+    
+    // إضافة رسالة خطأ لحقل معين إذا تم تحديده
+    if (elementId) {
+        const input = document.getElementById(elementId);
+        if (input) {
+            input.style.borderColor = '#EF4444';
             
-            // إظهار/إخفاء زر الإدارة
-            const adminBtn = document.getElementById('adminToggle');
-            const mobileAdminBtn = document.getElementById('mobileAdminToggle');
+            // إنشاء عنصر خطأ أسفل الحقل
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message show';
+            errorDiv.textContent = message;
+            errorDiv.id = `${elementId}-error`;
             
-            if (isAdmin) {
-                if (adminBtn) adminBtn.classList.remove('hidden');
-                if (mobileAdminBtn) mobileAdminBtn.classList.remove('hidden');
-                showToast("مرحباً بك مسؤول المتجر", "success");
-            } else {
-                if (adminBtn) adminBtn.classList.add('hidden');
-                if (mobileAdminBtn) mobileAdminBtn.classList.add('hidden');
-            }
-        } else {
-            // إنشاء سجل مستخدم جديد إذا لم يكن موجوداً
-            await createUserRecord(user);
-            isAdmin = false;
+            // إزالة رسالة الخطأ القديمة إذا كانت موجودة
+            const oldError = document.getElementById(`${elementId}-error`);
+            if (oldError) oldError.remove();
+            
+            input.parentNode.insertBefore(errorDiv, input.nextSibling);
+            
+            // استعادة اللون عند التركيز
+            input.addEventListener('focus', function() {
+                this.style.borderColor = '';
+                errorDiv.remove();
+            });
         }
-    } catch (error) {
-        console.error('خطأ في التحقق من حالة المسؤول:', error);
-        isAdmin = false;
     }
 }
 
-// إنشاء سجل مستخدم جديد
-async function createUserRecord(user) {
-    try {
-        const userData = {
-            uid: user.uid,
-            email: user.email || null,
-            displayName: user.displayName || 'مستخدم',
-            photoURL: user.photoURL || null,
-            isAdmin: false,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-        };
+// عرض مؤشر التحميل
+function showLoading(element) {
+    const button = element || document.getElementById('signInWithEmailBtn');
+    if (button) {
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري المعالجة...';
         
-        await db.collection('users').doc(user.uid).set(userData);
-        console.log('تم إنشاء سجل مستخدم جديد');
-    } catch (error) {
-        console.error('خطأ في إنشاء سجل المستخدم:', error);
+        // إضافة طبقة تحميل للنموذج
+        const formSection = document.querySelector('.auth-form-section');
+        let loadingOverlay = formSection.querySelector('.loading-overlay');
+        
+        if (!loadingOverlay) {
+            loadingOverlay = document.createElement('div');
+            loadingOverlay.className = 'loading-overlay';
+            loadingOverlay.innerHTML = '<div class="spinner"></div>';
+            formSection.appendChild(loadingOverlay);
+        }
+        
+        loadingOverlay.classList.add('active');
     }
 }
+
+// إخفاء مؤشر التحميل
+function hideLoading(element) {
+    const button = element || document.getElementById('signInWithEmailBtn');
+    if (button) {
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-sign-in-alt"></i> تسجيل الدخول';
+        
+        const loadingOverlay = document.querySelector('.loading-overlay');
+        if (loadingOverlay) {
+            loadingOverlay.classList.remove('active');
+        }
+    }
+}
+
+// =====================================
+// نظام الإشعارات المخصصة
+// =====================================
+
+// عرض إشعار مخصص
+function showCustomToast(message, type = 'info') {
+    // إخفاء الإشعارات السابقة
+    const oldToasts = document.querySelectorAll('.custom-toast');
+    oldToasts.forEach(toast => toast.remove());
+    
+    // إنشاء إشعار جديد
+    const toast = document.createElement('div');
+    toast.className = `custom-toast ${type}`;
+    
+    let icon = 'fa-info-circle';
+    let color = '#9D4EDD';
+    
+    if (type === 'success') {
+        icon = 'fa-check-circle';
+        color = '#06D6A0';
+    } else if (type === 'error') {
+        icon = 'fa-exclamation-circle';
+        color = '#EF4444';
+    } else if (type === 'warning') {
+        icon = 'fa-exclamation-triangle';
+        color = '#F59E0B';
+    }
+    
+    toast.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <i class="fas ${icon}" style="color: ${color}; font-size: 1.2rem;"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // إظهار الإشعار
+    setTimeout(() => toast.classList.add('show'), 100);
+    
+    // إخفاء الإشعار بعد 5 ثواني
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 400);
+    }, 5000);
+}
+
+// =====================================
+// نظام الصلاحيات المحسّن للأدمن
+// =====================================
+
+// التحقق من حالة المسؤول مع ذاكرة التخزين المؤقت
+async function checkUserAdminStatus(user) {
+    try {
+        // التحقق من ذاكرة التخزين المؤقت أولاً
+        const cachedAdmin = localStorage.getItem(`admin_${user.uid}`);
+        if (cachedAdmin === 'true') {
+            isAdmin = true;
+            updateAdminUI(true);
+            return;
+        }
+        
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        
+        if (userDoc.exists) {
+            const userData = userDoc.data();
+            const now = new Date();
+            
+            // التحقق من حالة الحظر المؤقت
+            if (userData.isBlocked) {
+                const blockUntil = userData.blockedUntil?.toDate();
+                if (blockUntil && now < blockUntil) {
+                    showCustomToast("حسابك محظور مؤقتاً. حاول مرة أخرى لاحقاً", "error");
+                    await signOut();
+                    return;
+                } else {
+                    // إزالة الحظر إذا انتهت المدة
+                    await db.collection('users').doc(user.uid).update({
+                        isBlocked: false,
+                        blockedUntil: null
+                    });
+                }
+            }
+            
+            isAdmin = userData.isAdmin === true;
+            
+            // تخزين في ذاكرة التخزين المؤقت (صالحة لمدة ساعة)
+            if (isAdmin) {
+                localStorage.setItem(`admin_${user.uid}`, 'true');
+                localStorage.setItem(`admin_time_${user.uid}`, now.getTime().toString());
+            }
+            
+            // تحديث الواجهة
+            updateAdminUI(isAdmin);
+            
+            // تسجيل الدخول في سجل الأدمن
+            if (isAdmin) {
+                await logAdminLogin(user.uid);
+                showCustomToast("مرحباً بك مسؤول المتجر", "success");
+                
+                // التحقق مما إذا كان يجب توجيه الأدمن للوحة التحكم
+                const shouldRedirect = localStorage.getItem('redirectToAdmin') === 'true';
+                if (shouldRedirect) {
+                    setTimeout(() => openAdminPanel(), 1000);
+                    localStorage.removeItem('redirectToAdmin');
+                }
+            }
+        } else {
+            // إنشاء سجل مستخدم جديد
+            await createUserRecord(user);
+            isAdmin = false;
+            updateAdminUI(false);
+        }
+        
+        // التحقق من مدة صلاحية ذاكرة التخزين المؤقت كل ساعة
+        setTimeout(() => {
+            localStorage.removeItem(`admin_${user.uid}`);
+            localStorage.removeItem(`admin_time_${user.uid}`);
+        }, 3600000);
+        
+    } catch (error) {
+        console.error('خطأ في التحقق من حالة المسؤول:', error);
+        isAdmin = false;
+        updateAdminUI(false);
+    }
+}
+
+// تحديث واجهة الأدمن
+function updateAdminUI(isAdminUser) {
+    const adminBtn = document.getElementById('adminToggle');
+    const mobileAdminBtn = document.getElementById('mobileAdminToggle');
+    
+    if (isAdminUser) {
+        if (adminBtn) {
+            adminBtn.classList.remove('hidden');
+            adminBtn.style.backgroundColor = 'var(--accent-color)';
+            adminBtn.style.color = '#000';
+            adminBtn.innerHTML = '<i class="fas fa-user-shield"></i><span>الإدارة</span>';
+        }
+        if (mobileAdminBtn) {
+            mobileAdminBtn.classList.remove('hidden');
+            mobileAdminBtn.style.backgroundColor = 'var(--accent-color)';
+            mobileAdminBtn.style.color = '#000';
+        }
+    } else {
+        if (adminBtn) adminBtn.classList.add('hidden');
+        if (mobileAdminBtn) mobileAdminBtn.classList.add('hidden');
+    }
+}
+
+// تسجيل دخول الأدمن
+async function logAdminLogin(adminId) {
+    try {
+        await db.collection('adminLogs').add({
+            adminId: adminId,
+            action: 'LOGIN',
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            ip: await getClientIP(),
+            userAgent: navigator.userAgent
+        });
+    } catch (error) {
+        console.error('Error logging admin login:', error);
+    }
+}
+
+// تسجيل إجراءات الأدمن
+async function logAdminAction(action, details = {}) {
+    if (!currentUser || !isAdmin) return;
+    
+    try {
+        await db.collection('adminLogs').add({
+            adminId: currentUser.uid,
+            action: action,
+            details: details,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            ip: await getClientIP(),
+            userAgent: navigator.userAgent
+        });
+    } catch (error) {
+        console.error('Error logging admin action:', error);
+    }
+}
+
+// تسجيل محاولات الدخول
+async function logLoginAttempt(uid, success, email = null) {
+    try {
+        await db.collection('loginAttempts').add({
+            uid: uid,
+            email: email,
+            success: success,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            ip: await getClientIP(),
+            userAgent: navigator.userAgent
+        });
+    } catch (error) {
+        console.error('Error logging login attempt:', error);
+    }
+}
+
+// تسجيل الوصول غير المصرح به
+async function logUnauthorizedAccess() {
+    try {
+        await db.collection('securityLogs').add({
+            uid: currentUser?.uid || 'anonymous',
+            action: 'UNAUTHORIZED_ADMIN_ACCESS',
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            ip: await getClientIP(),
+            userAgent: navigator.userAgent,
+            url: window.location.href
+        });
+    } catch (error) {
+        console.error('Error logging unauthorized access:', error);
+    }
+}
+
+// =====================================
+// الوظائف الأساسية
+// =====================================
 
 // التحقق من المصادقة الأولية
 function checkInitialAuth() {
@@ -192,6 +471,30 @@ function updateUserUI() {
     }
 }
 
+// إنشاء سجل مستخدم جديد
+async function createUserRecord(user) {
+    try {
+        const userData = {
+            uid: user.uid,
+            email: user.email || null,
+            displayName: user.displayName || 'مستخدم',
+            photoURL: user.photoURL || null,
+            isAdmin: false,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        await db.collection('users').doc(user.uid).set(userData);
+        console.log('تم إنشاء سجل مستخدم جديد');
+    } catch (error) {
+        console.error('خطأ في إنشاء سجل المستخدم:', error);
+    }
+}
+
+// =====================================
+// نظام تسجيل الدخول المحسّن
+// =====================================
+
 // تسجيل الدخول بجوجل
 async function signInWithGoogle() {
     try {
@@ -201,15 +504,15 @@ async function signInWithGoogle() {
         provider.addScope('email');
         
         const result = await auth.signInWithPopup(provider);
-        showToast("تم تسجيل الدخول بنجاح", "success");
+        showCustomToast("تم تسجيل الدخول بنجاح", "success");
         return result.user;
     } catch (error) {
         console.error('خطأ في تسجيل الدخول بجوجل:', error);
         
         if (error.code === 'auth/popup-closed-by-user') {
-            showToast("تم إغلاق نافذة تسجيل الدخول", "warning");
+            showCustomToast("تم إغلاق نافذة تسجيل الدخول", "warning");
         } else {
-            showToast("فشل تسجيل الدخول بجوجل", "error");
+            showCustomToast("فشل تسجيل الدخول بجوجل", "error");
         }
         return null;
     }
@@ -219,22 +522,24 @@ async function signInWithGoogle() {
 async function signInWithEmail(email, password) {
     try {
         const result = await auth.signInWithEmailAndPassword(email, password);
-        showToast("تم تسجيل الدخول بنجاح", "success");
+        showCustomToast("تم تسجيل الدخول بنجاح", "success");
         return result.user;
     } catch (error) {
         console.error('خطأ في تسجيل الدخول:', error);
         
         if (error.code === 'auth/user-not-found') {
-            showToast("المستخدم غير موجود", "error");
+            showError("المستخدم غير موجود. هل تريد إنشاء حساب جديد؟");
         } else if (error.code === 'auth/wrong-password') {
-            showToast("كلمة المرور غير صحيحة", "error");
+            showError("كلمة المرور غير صحيحة", 'passwordInput');
         } else if (error.code === 'auth/invalid-email') {
-            showToast("البريد الإلكتروني غير صالح", "error");
+            showError("البريد الإلكتروني غير صالح", 'emailInput');
+        } else if (error.code === 'auth/too-many-requests') {
+            showError("تم تجاوز عدد المحاولات المسموح بها. حاول مرة أخرى لاحقاً");
         } else {
-            showToast("فشل تسجيل الدخول", "error");
+            showError("حدث خطأ غير متوقع");
         }
         
-        return null;
+        throw error;
     }
 }
 
@@ -247,22 +552,22 @@ async function signUpWithEmail(email, password, displayName) {
         });
         
         await createUserRecord(result.user);
-        showToast("تم إنشاء الحساب بنجاح", "success");
+        showCustomToast("تم إنشاء الحساب بنجاح", "success");
         return result.user;
     } catch (error) {
         console.error('خطأ في إنشاء الحساب:', error);
         
         if (error.code === 'auth/email-already-in-use') {
-            showToast("هذا البريد الإلكتروني مستخدم بالفعل", "error");
+            showError("هذا البريد الإلكتروني مستخدم بالفعل", 'emailInput');
         } else if (error.code === 'auth/weak-password') {
-            showToast("كلمة المرور ضعيفة جداً", "error");
+            showError("كلمة المرور ضعيفة جداً", 'passwordInput');
         } else if (error.code === 'auth/invalid-email') {
-            showToast("البريد الإلكتروني غير صالح", "error");
+            showError("البريد الإلكتروني غير صالح", 'emailInput');
         } else {
-            showToast("فشل إنشاء الحساب", "error");
+            showError("فشل إنشاء الحساب");
         }
         
-        return null;
+        throw error;
     }
 }
 
@@ -270,11 +575,11 @@ async function signUpWithEmail(email, password, displayName) {
 async function signInAsGuest() {
     try {
         const result = await auth.signInAnonymously();
-        showToast("مرحباً بك كضيف", "success");
+        showCustomToast("مرحباً بك كضيف", "success");
         return result.user;
     } catch (error) {
         console.error('خطأ في تسجيل الدخول كضيف:', error);
-        showToast("فشل تسجيل الدخول كضيف", "error");
+        showCustomToast("فشل تسجيل الدخول كضيف", "error");
         return null;
     }
 }
@@ -283,17 +588,17 @@ async function signInAsGuest() {
 async function resetPassword(email) {
     try {
         await auth.sendPasswordResetEmail(email);
-        showToast("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني", "success");
+        showCustomToast("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني", "success");
         return true;
     } catch (error) {
         console.error('خطأ في إعادة تعيين كلمة المرور:', error);
         
         if (error.code === 'auth/user-not-found') {
-            showToast("المستخدم غير موجود", "error");
+            showError("المستخدم غير موجود", 'emailInput');
         } else if (error.code === 'auth/invalid-email') {
-            showToast("البريد الإلكتروني غير صالح", "error");
+            showError("البريد الإلكتروني غير صالح", 'emailInput');
         } else {
-            showToast("فشل إرسال رابط إعادة التعيين", "error");
+            showError("فشل إرسال رابط إعادة التعيين");
         }
         
         return false;
@@ -303,13 +608,376 @@ async function resetPassword(email) {
 // تسجيل الخروج
 async function signOut() {
     try {
+        // تسجيل خروج الأدمن
+        if (isAdmin) {
+            await logAdminAction('LOGOUT');
+        }
+        
         await auth.signOut();
-        showToast("تم تسجيل الخروج بنجاح", "success");
+        showCustomToast("تم تسجيل الخروج بنجاح", "success");
         currentUser = null;
         isAdmin = false;
+        
+        // إزالة ذاكرة التخزين المؤقت
+        if (currentUser) {
+            localStorage.removeItem(`admin_${currentUser.uid}`);
+            localStorage.removeItem(`admin_time_${currentUser.uid}`);
+        }
     } catch (error) {
         console.error('خطأ في تسجيل الخروج:', error);
-        showToast("فشل تسجيل الخروج", "error");
+        showCustomToast("فشل تسجيل الخروج", "error");
+    }
+}
+
+// =====================================
+// معالجة أحداث تسجيل الدخول
+// =====================================
+
+// تسجيل الدخول بالبريد
+async function handleEmailSignIn(e) {
+    e.preventDefault();
+    
+    const emailInput = document.getElementById('emailInput');
+    const passwordInput = document.getElementById('passwordInput');
+    
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+    
+    // التحقق من صحة البيانات
+    const errors = validateAuthForm(email, password);
+    if (errors.length > 0) {
+        showError(errors[0]);
+        return;
+    }
+    
+    // إظهار مؤشر التحميل
+    showLoading();
+    
+    try {
+        const user = await signInWithEmail(email, password);
+        if (user) {
+            // تسجيل محاولة الدخول الناجحة
+            await logLoginAttempt(user.uid, true);
+        }
+    } catch (error) {
+        // تسجيل محاولة الدخول الفاشلة
+        await logLoginAttempt(null, false, email);
+    } finally {
+        hideLoading();
+    }
+}
+
+// إنشاء حساب بالبريد
+async function handleEmailSignUp() {
+    const emailInput = document.getElementById('emailInput');
+    const passwordInput = document.getElementById('passwordInput');
+    
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+    
+    if (!email || !password) {
+        showError("الرجاء إدخال البريد الإلكتروني وكلمة المرور");
+        return;
+    }
+    
+    if (password.length < 6) {
+        showError("كلمة المرور يجب أن تكون 6 أحرف على الأقل", 'passwordInput');
+        return;
+    }
+    
+    const displayName = prompt("الرجاء إدخال اسمك:");
+    if (!displayName || displayName.trim() === '') {
+        showError("الرجاء إدخال اسم صحيح");
+        return;
+    }
+    
+    // إضافة تأثير تحميل
+    showLoading(document.getElementById('signUpWithEmailBtn'));
+    
+    try {
+        await signUpWithEmail(email, password, displayName.trim());
+    } catch (error) {
+        // تم عرض الخطأ في الدالة signUpWithEmail
+    } finally {
+        hideLoading(document.getElementById('signUpWithEmailBtn'));
+    }
+}
+
+// إعادة تعيين كلمة المرور
+async function handleForgotPassword() {
+    const email = document.getElementById('emailInput').value.trim();
+    
+    if (!email) {
+        showError("الرجاء إدخال بريدك الإلكتروني", 'emailInput');
+        return;
+    }
+    
+    const confirmReset = confirm(`هل تريد إرسال رابط إعادة تعيين كلمة المرور إلى ${email}؟`);
+    if (!confirmReset) return;
+    
+    // إضافة تأثير تحميل
+    showLoading(document.getElementById('forgotPasswordBtn'));
+    
+    await resetPassword(email);
+    
+    // استعادة الحالة الأصلية
+    hideLoading(document.getElementById('forgotPasswordBtn'));
+}
+
+// =====================================
+// نظام إدارة الأدمن المحسّن
+// =====================================
+
+// فتح لوحة التحكم مع التحقق الأمني
+async function openAdminPanel() {
+    // التحقق من الصلاحية أولاً
+    if (!currentUser || !isAdmin) {
+        showCustomToast("ليس لديك صلاحية للوصول إلى لوحة التحكم", "error");
+        
+        // تسجيل محاولة الوصول غير المصرح بها
+        await logUnauthorizedAccess();
+        return;
+    }
+    
+    // التحقق الأمني الإضافي
+    const requiresReauth = await shouldReauthenticate();
+    if (requiresReauth) {
+        showCustomToast("الرجاء إعادة تسجيل الدخول للوصول إلى لوحة التحكم", "warning");
+        return;
+    }
+    
+    // تسجيل الدخول إلى لوحة التحكم
+    await logAdminAction('ADMIN_PANEL_ACCESS');
+    
+    const adminSidebar = document.getElementById('adminSidebar');
+    const adminOverlay = document.getElementById('adminOverlay');
+    
+    if (adminSidebar) adminSidebar.classList.add('active');
+    if (adminOverlay) adminOverlay.classList.add('active');
+    
+    // إضافة طبقة حماية
+    document.addEventListener('click', handleAdminPanelClick);
+    
+    loadAdminProducts();
+    fillSettingsForm();
+    document.body.style.overflow = 'hidden';
+}
+
+// التحقق مما إذا كان يحتاج إلى إعادة المصادقة
+async function shouldReauthenticate() {
+    if (!currentUser) return true;
+    
+    const lastAuthTime = localStorage.getItem(`last_auth_${currentUser.uid}`);
+    if (!lastAuthTime) return true;
+    
+    const now = new Date().getTime();
+    const hoursSinceLastAuth = (now - parseInt(lastAuthTime)) / (1000 * 60 * 60);
+    
+    // إذا مرت أكثر من 12 ساعة منذ آخر مصادقة
+    return hoursSinceLastAuth > 12;
+}
+
+// معالجة النقرات في لوحة التحكم
+function handleAdminPanelClick(e) {
+    const adminSidebar = document.getElementById('adminSidebar');
+    if (!adminSidebar || !adminSidebar.classList.contains('active')) {
+        document.removeEventListener('click', handleAdminPanelClick);
+        return;
+    }
+    
+    // منع إغلاق لوحة التحكم عن طريق الخطأ
+    if (!adminSidebar.contains(e.target) && !e.target.closest('.admin-btn')) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // عرض تأكيد للإغلاق
+        if (confirm('هل تريد إغلاق لوحة التحكم؟')) {
+            closeAdminPanel();
+        }
+    }
+}
+
+// إغلاق لوحة التحكم
+function closeAdminPanel() {
+    // تسجيل خروج الأدمن من اللوحة
+    if (isAdmin) {
+        logAdminAction('ADMIN_PANEL_CLOSE');
+    }
+    
+    const adminSidebar = document.getElementById('adminSidebar');
+    const adminOverlay = document.getElementById('adminOverlay');
+    
+    if (adminSidebar) adminSidebar.classList.remove('active');
+    if (adminOverlay) adminOverlay.classList.remove('active');
+    
+    document.removeEventListener('click', handleAdminPanelClick);
+    document.body.style.overflow = 'auto';
+}
+
+// منع الوصول إلى صفحات الإدارة مباشرة
+function protectAdminRoutes() {
+    const path = window.location.hash;
+    if (path.includes('admin') && (!currentUser || !isAdmin)) {
+        showCustomToast("الوصوع غير مصرح به", "error");
+        window.location.hash = '#home';
+        
+        // تسجيل محاولة الوصول
+        logUnauthorizedAccess();
+    }
+}
+
+// =====================================
+// وظائف الأدمن المتقدمة
+// =====================================
+
+// تحميل إحصائيات الأدمن
+async function loadAdminStatistics() {
+    try {
+        // جلب الإحصائيات
+        const [usersCount, productsCount, ordersCount, recentLogs] = await Promise.all([
+            db.collection('users').count().get(),
+            db.collection('products').count().get(),
+            db.collection('orders').count().get(),
+            db.collection('adminLogs').orderBy('timestamp', 'desc').limit(10).get()
+        ]);
+        
+        const statsHTML = `
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px;">
+                    <h5 style="margin: 0 0 10px 0; font-size: 0.9rem;">المستخدمين</h5>
+                    <p style="font-size: 2rem; font-weight: bold; margin: 0;">${usersCount.data().count}</p>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 12px;">
+                    <h5 style="margin: 0 0 10px 0; font-size: 0.9rem;">المنتجات</h5>
+                    <p style="font-size: 2rem; font-weight: bold; margin: 0;">${productsCount.data().count}</p>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 20px; border-radius: 12px;">
+                    <h5 style="margin: 0 0 10px 0; font-size: 0.9rem;">الطلبات</h5>
+                    <p style="font-size: 2rem; font-weight: bold; margin: 0;">${ordersCount.data().count}</p>
+                </div>
+            </div>
+            
+            <div style="background: white; padding: 20px; border-radius: 12px; margin-top: 20px;">
+                <h5 style="margin: 0 0 15px 0; color: var(--secondary-color);">
+                    <i class="fas fa-history"></i> آخر نشاطات المسؤولين
+                </h5>
+                <div style="max-height: 300px; overflow-y: auto;">
+                    ${recentLogs.docs.map(doc => {
+                        const log = doc.data();
+                        return `
+                        <div style="padding: 10px; border-bottom: 1px solid #eee;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="font-weight: bold;">${log.action}</span>
+                                <small style="color: #666;">${log.timestamp?.toDate().toLocaleString('ar-SA')}</small>
+                            </div>
+                            <small style="color: #888;">${log.ip}</small>
+                        </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('statsContent').innerHTML = statsHTML;
+    } catch (error) {
+        console.error('خطأ في تحميل الإحصائيات:', error);
+        document.getElementById('statsContent').innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #666;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 2rem;"></i>
+                <p>خطأ في تحميل الإحصائيات</p>
+            </div>
+        `;
+    }
+}
+
+// حظر/إلغاء حظر المستخدم
+async function toggleUserBlock(userId, isCurrentlyBlocked) {
+    if (!confirm(`هل تريد ${isCurrentlyBlocked ? 'إلغاء حظر' : 'حظر'} هذا المستخدم؟`)) return;
+    
+    try {
+        const action = isCurrentlyBlocked ? 'UNBLOCK_USER' : 'BLOCK_USER';
+        await logAdminAction(action, { userId });
+        
+        if (isCurrentlyBlocked) {
+            await db.collection('users').doc(userId).update({
+                isBlocked: false,
+                blockedUntil: null
+            });
+            showCustomToast("تم إلغاء حظر المستخدم", "success");
+        } else {
+            const blockDuration = prompt("مدة الحظر بالأيام:", "1");
+            const days = parseInt(blockDuration) || 1;
+            const blockedUntil = new Date();
+            blockedUntil.setDate(blockedUntil.getDate() + days);
+            
+            await db.collection('users').doc(userId).update({
+                isBlocked: true,
+                blockedUntil: firebase.firestore.Timestamp.fromDate(blockedUntil),
+                blockReason: "حظر بواسطة المسؤول"
+            });
+            showCustomToast(`تم حظر المستخدم لمدة ${days} أيام`, "warning");
+        }
+        
+        loadAdminUsers();
+    } catch (error) {
+        console.error('خطأ في تحديث حالة الحظر:', error);
+        showCustomToast("حدث خطأ في تحديث حالة المستخدم", "error");
+    }
+}
+
+// =====================================
+// وظائف إضافية
+// =====================================
+
+// الحصول على IP العميل
+async function getClientIP() {
+    try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        return data.ip;
+    } catch {
+        return 'unknown';
+    }
+}
+
+// دعم العرض بشاشة كاملة على الجوال
+function setupFullscreenMobile() {
+    if ('standalone' in navigator || window.matchMedia('(display-mode: standalone)').matches) {
+        // التطبيق يعمل في وضع PWA
+        document.documentElement.style.setProperty('--safe-area-top', 'env(safe-area-inset-top)');
+        document.documentElement.style.setProperty('--safe-area-bottom', 'env(safe-area-inset-bottom)');
+    }
+    
+    // إضافة دعم لحجم العرض المتغير
+    let vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+    
+    window.addEventListener('resize', () => {
+        vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+    });
+}
+
+// =====================================
+// بقية الوظائف (تم الاحتفاظ بها مع التعديلات البسيطة)
+// =====================================
+
+// تبديل عرض كلمة المرور
+function togglePasswordVisibility() {
+    const passwordInput = document.getElementById('passwordInput');
+    const toggleBtn = document.getElementById('togglePassword');
+    const icon = toggleBtn.querySelector('i');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+        toggleBtn.setAttribute('aria-label', 'إخفاء كلمة المرور');
+    } else {
+        passwordInput.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+        toggleBtn.setAttribute('aria-label', 'إظهار كلمة المرور');
     }
 }
 
@@ -347,38 +1015,6 @@ async function loadStoreData() {
     }
 }
 
-// منتجات افتراضية (للحالات الطارئة)
-function loadDefaultProducts() {
-    storeData.products = [
-        {
-            id: "1",
-            name: "عطر فلورال رومانسي",
-            description: "عطر نسائي برائحة الأزهار الطازجة يدوم طويلاً",
-            price: 35000,
-            category: "featured",
-            image: "https://images.unsplash.com/photo-1541643600914-78b084683601?w=500&h=500&fit=crop&crop=center",
-            badge: "الأكثر طلباً",
-            stock: 10,
-            createdAt: new Date().toISOString()
-        }
-    ];
-}
-
-// حفظ البيانات
-async function saveStoreData() {
-    try {
-        // حفظ الإعدادات
-        await db.collection('settings').doc('store').set(storeData.settings, { merge: true });
-        
-        showToast("تم حفظ البيانات", "success");
-        return true;
-    } catch (e) {
-        console.error('خطأ في حفظ البيانات:', e);
-        showToast("حدث خطأ في حفظ البيانات", "error");
-        return false;
-    }
-}
-
 // تحديث الواجهة
 function updateStoreUI() {
     // تحديث اسم المتجر
@@ -408,15 +1044,6 @@ function updateStoreUI() {
     
     // تحديث السنة
     updateCurrentYear();
-}
-
-// تحديث عدد المنتجات في الفئات
-function updateCategoryCounts() {
-    storeData.categories.forEach(cat => {
-        const count = storeData.products.filter(p => p.category === cat.id).length;
-        const el = document.getElementById(`${cat.id}Count`);
-        if (el) el.textContent = `${count} منتج`;
-    });
 }
 
 // عرض المنتجات
@@ -489,46 +1116,22 @@ function formatPrice(price) {
     return new Intl.NumberFormat('ar-SD').format(price) + ' ج.س';
 }
 
-// الطلب عبر الواتساب
-function orderViaWhatsapp(productId) {
-    const product = storeData.products.find(p => p.id === productId);
-    if (!product) {
-        showToast("المنتج غير موجود", "error");
-        return;
-    }
-    
-    const qtyInput = document.getElementById(`qty-${productId}`);
-    const quantity = qtyInput ? parseInt(qtyInput.value) : 1;
-    const totalPrice = product.price * quantity;
-    
-    const userName = currentUser?.displayName || 'عميل';
-    const userContact = currentUser?.email ? `\nالبريد الإلكتروني: ${currentUser.email}` : '';
-    
-    const message = `مرحباً ${storeData.settings.storeName}، 
-
-أنا ${userName}، أود طلب المنتج التالي:
-
-المنتج: ${product.name}
-الكمية: ${quantity}
-السعر الإجمالي: ${formatPrice(totalPrice)}
-الفئة: ${storeData.categories.find(c => c.id === product.category)?.name || product.category}
-${product.description ? `الوصف: ${product.description}` : ''}
-${userContact}
-
-يرجى التواصل معي للتفاصيل.`;
-    
-    const waLink = `https://wa.me/${storeData.settings.whatsapp}?text=${encodeURIComponent(message)}`;
-    window.open(waLink, '_blank');
-}
-
+// =====================================
 // إعداد المستمعين للأحداث
+// =====================================
+
 function setupEventListeners() {
     // تسجيل الدخول
     document.getElementById('googleSignInBtn')?.addEventListener('click', () => signInWithGoogle());
-    document.getElementById('signInWithEmailBtn')?.addEventListener('click', handleEmailSignIn);
+    document.getElementById('emailAuthForm')?.addEventListener('submit', handleEmailSignIn);
     document.getElementById('signUpWithEmailBtn')?.addEventListener('click', handleEmailSignUp);
     document.getElementById('guestSignInBtn')?.addEventListener('click', () => signInAsGuest());
     document.getElementById('forgotPasswordBtn')?.addEventListener('click', handleForgotPassword);
+    document.getElementById('adminLoginBtn')?.addEventListener('click', () => {
+        document.getElementById('emailInput').value = '';
+        document.getElementById('passwordInput').value = '';
+        showCustomToast("الرجاء استخدام بيانات مسؤول المتجر", "info");
+    });
     
     // تبديل عرض كلمة المرور
     document.getElementById('togglePassword')?.addEventListener('click', togglePasswordVisibility);
@@ -549,116 +1152,22 @@ function setupEventListeners() {
     // حساب المستخدم
     setupUserProfile();
     
+    // بطاقات الفئات
+    setupCategoryCards();
+    
     // الأحداث الأخرى
     setupOtherListeners();
+    
+    // التحقق من محاولة الوصول للوحة التحكم
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('admin') === 'true') {
+        localStorage.setItem('redirectToAdmin', 'true');
+    }
 }
 
-// تسجيل الدخول بالبريد
-async function handleEmailSignIn() {
-    const emailInput = document.getElementById('emailInput');
-    const passwordInput = document.getElementById('passwordInput');
-    
-    const email = emailInput.value.trim();
-    const password = passwordInput.value.trim();
-    
-    if (!email || !password) {
-        showToast("الرجاء إدخال البريد الإلكتروني وكلمة المرور", "error");
-        return;
-    }
-    
-    // إضافة تأثير تحميل
-    const signInBtn = document.getElementById('signInWithEmailBtn');
-    const originalText = signInBtn.innerHTML;
-    signInBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري تسجيل الدخول...';
-    signInBtn.disabled = true;
-    
-    await signInWithEmail(email, password);
-    
-    // استعادة الحالة الأصلية
-    signInBtn.innerHTML = originalText;
-    signInBtn.disabled = false;
-}
-
-// إنشاء حساب بالبريد
-async function handleEmailSignUp() {
-    const emailInput = document.getElementById('emailInput');
-    const passwordInput = document.getElementById('passwordInput');
-    
-    const email = emailInput.value.trim();
-    const password = passwordInput.value.trim();
-    
-    if (!email || !password) {
-        showToast("الرجاء إدخال البريد الإلكتروني وكلمة المرور", "error");
-        return;
-    }
-    
-    if (password.length < 6) {
-        showToast("كلمة المرور يجب أن تكون 6 أحرف على الأقل", "error");
-        return;
-    }
-    
-    const displayName = prompt("الرجاء إدخال اسمك:");
-    if (!displayName || displayName.trim() === '') {
-        showToast("الرجاء إدخال اسم صحيح", "error");
-        return;
-    }
-    
-    // إضافة تأثير تحميل
-    const signUpBtn = document.getElementById('signUpWithEmailBtn');
-    const originalText = signUpBtn.innerHTML;
-    signUpBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري إنشاء الحساب...';
-    signUpBtn.disabled = true;
-    
-    await signUpWithEmail(email, password, displayName.trim());
-    
-    // استعادة الحالة الأصلية
-    signUpBtn.innerHTML = originalText;
-    signUpBtn.disabled = false;
-}
-
-// إعادة تعيين كلمة المرور
-async function handleForgotPassword() {
-    const email = document.getElementById('emailInput').value.trim();
-    
-    if (!email) {
-        showToast("الرجاء إدخال بريدك الإلكتروني", "error");
-        return;
-    }
-    
-    const confirmReset = confirm(`هل تريد إرسال رابط إعادة تعيين كلمة المرور إلى ${email}؟`);
-    if (!confirmReset) return;
-    
-    // إضافة تأثير تحميل
-    const forgotBtn = document.getElementById('forgotPasswordBtn');
-    const originalText = forgotBtn.innerHTML;
-    forgotBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
-    forgotBtn.disabled = true;
-    
-    await resetPassword(email);
-    
-    // استعادة الحالة الأصلية
-    forgotBtn.innerHTML = originalText;
-    forgotBtn.disabled = false;
-}
-
-// تبديل عرض كلمة المرور
-function togglePasswordVisibility() {
-    const passwordInput = document.getElementById('passwordInput');
-    const toggleBtn = document.getElementById('togglePassword');
-    const icon = toggleBtn.querySelector('i');
-    
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        icon.classList.remove('fa-eye');
-        icon.classList.add('fa-eye-slash');
-        toggleBtn.setAttribute('aria-label', 'إخفاء كلمة المرور');
-    } else {
-        passwordInput.type = 'password';
-        icon.classList.remove('fa-eye-slash');
-        icon.classList.add('fa-eye');
-        toggleBtn.setAttribute('aria-label', 'إظهار كلمة المرور');
-    }
-}
+// =====================================
+// بقية الوظائف الأساسية (بدون تغييرات جوهرية)
+// =====================================
 
 // القائمة الجانبية للجوال
 function setupMobileMenu() {
@@ -740,7 +1249,7 @@ function setupSearchAndFilter() {
     });
 }
 
-// لوحة التحكم
+// لوحة التحكم الأساسية
 function setupAdminPanel() {
     const adminToggle = document.getElementById('adminToggle');
     const adminOverlay = document.getElementById('adminOverlay');
@@ -768,6 +1277,8 @@ function setupAdminPanel() {
                 loadAdminUsers();
             } else if (this.dataset.tab === 'settings') {
                 fillSettingsForm();
+            } else if (this.dataset.tab === 'statistics') {
+                loadAdminStatistics();
             }
         });
     });
@@ -785,30 +1296,163 @@ function setupAdminPanel() {
     }
 }
 
-function openAdminPanel() {
-    if (!isAdmin) {
-        showToast("ليس لديك صلاحية للوصول إلى لوحة التحكم", "error");
+// حساب المستخدم
+function setupUserProfile() {
+    const userToggle = document.getElementById('userToggle');
+    const userProfileModal = document.getElementById('userProfileModal');
+    
+    if (userToggle) {
+        userToggle.addEventListener('click', openUserProfile);
+    }
+}
+
+function openUserProfile() {
+    const userProfileModal = document.getElementById('userProfileModal');
+    if (userProfileModal) {
+        userProfileModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeUserProfile() {
+    const userProfileModal = document.getElementById('userProfileModal');
+    if (userProfileModal) {
+        userProfileModal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+}
+
+// إعداد بطاقات الفئات
+function setupCategoryCards() {
+    document.querySelectorAll('.category-card').forEach(card => {
+        card.addEventListener('click', function() {
+            const category = this.dataset.category;
+            
+            // تحديث أزرار الفلترة
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.filter === category) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // تطبيق الفلترة
+            currentFilter = category;
+            renderProducts();
+            
+            // التمرير إلى قسم المنتجات
+            document.getElementById('products').scrollIntoView({ behavior: 'smooth' });
+        });
+    });
+}
+
+// الأحداث الأخرى
+function setupOtherListeners() {
+    // تحديث السنة
+    updateCurrentYear();
+    
+    // إغلاق لوحات التحكم بمفتاح ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeMobileMenu();
+            closeAdminPanel();
+            closeUserProfile();
+            closeEditModal();
+        }
+    });
+    
+    // إغلاق النوافذ المنبثقة بالنقر خارجها
+    document.addEventListener('click', (e) => {
+        const userProfileModal = document.getElementById('userProfileModal');
+        const editProductModal = document.getElementById('editProductModal');
+        
+        if (userProfileModal && !userProfileModal.classList.contains('hidden') && 
+            e.target === userProfileModal) {
+            closeUserProfile();
+        }
+        
+        if (editProductModal && !editProductModal.classList.contains('hidden') && 
+            e.target === editProductModal) {
+            closeEditModal();
+        }
+    });
+    
+    // حماية مسارات الأدمن
+    window.addEventListener('hashchange', protectAdminRoutes);
+}
+
+// تحديث السنة الحالية
+function updateCurrentYear() {
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+}
+
+// ... بقية الوظائف الموجودة في الكود الأصلي (renderProducts, formatPrice, loadStoreData, etc.)
+// مع التأكد من استبدال showToast بـ showCustomToast في جميع الأماكن
+
+// إضافة تأثيرات CSS إضافية
+document.addEventListener('DOMContentLoaded', function() {
+    // إضافة تأثيرات للعناصر عند التحميل
+    const style = document.createElement('style');
+    style.textContent = `
+        .feature-item, .social-auth-btn, .auth-input {
+            transform: translateY(0);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .feature-item:hover, .social-auth-btn:hover {
+            transform: translateY(-3px);
+        }
+        
+        .auth-input:focus {
+            transform: translateY(-1px);
+        }
+    `;
+    document.head.appendChild(style);
+});
+
+// =====================================
+// الوظائف المتبقية من الكود الأصلي (مع التعديلات البسيطة)
+// =====================================
+
+// تحديث عدد المنتجات في الفئات
+function updateCategoryCounts() {
+    storeData.categories.forEach(cat => {
+        const count = storeData.products.filter(p => p.category === cat.id).length;
+        const el = document.getElementById(`${cat.id}Count`);
+        if (el) el.textContent = `${count} منتج`;
+    });
+}
+
+// الطلب عبر الواتساب
+function orderViaWhatsapp(productId) {
+    const product = storeData.products.find(p => p.id === productId);
+    if (!product) {
+        showCustomToast("المنتج غير موجود", "error");
         return;
     }
     
-    const adminSidebar = document.getElementById('adminSidebar');
-    const adminOverlay = document.getElementById('adminOverlay');
+    const qtyInput = document.getElementById(`qty-${productId}`);
+    const quantity = qtyInput ? parseInt(qtyInput.value) : 1;
+    const totalPrice = product.price * quantity;
     
-    if (adminSidebar) adminSidebar.classList.add('active');
-    if (adminOverlay) adminOverlay.classList.add('active');
+    const userName = currentUser?.displayName || 'عميل';
+    const userContact = currentUser?.email ? `\nالبريد الإلكتروني: ${currentUser.email}` : '';
     
-    loadAdminProducts();
-    fillSettingsForm();
-    document.body.style.overflow = 'hidden';
-}
+    const message = `مرحباً ${storeData.settings.storeName}، 
 
-function closeAdminPanel() {
-    const adminSidebar = document.getElementById('adminSidebar');
-    const adminOverlay = document.getElementById('adminOverlay');
+أنا ${userName}، أود طلب المنتج التالي:
+
+المنتج: ${product.name}
+الكمية: ${quantity}
+السعر الإجمالي: ${formatPrice(totalPrice)}
+الفئة: ${storeData.categories.find(c => c.id === product.category)?.name || product.category}
+${product.description ? `الوصف: ${product.description}` : ''}
+${userContact}
+
+يرجى التواصل معي للتفاصيل.`;
     
-    if (adminSidebar) adminSidebar.classList.remove('active');
-    if (adminOverlay) adminOverlay.classList.remove('active');
-    document.body.style.overflow = 'auto';
+    const waLink = `https://wa.me/${storeData.settings.whatsapp}?text=${encodeURIComponent(message)}`;
+    window.open(waLink, '_blank');
 }
 
 // تحميل المنتجات في لوحة التحكم
@@ -866,10 +1510,10 @@ async function deleteProduct(id) {
         renderProducts();
         updateCategoryCounts();
         
-        showToast("تم حذف المنتج", "success");
+        showCustomToast("تم حذف المنتج", "success");
     } catch (error) {
         console.error('خطأ في حذف المنتج:', error);
-        showToast("حدث خطأ في حذف المنتج", "error");
+        showCustomToast("حدث خطأ في حذف المنتج", "error");
     }
 }
 
@@ -887,12 +1531,12 @@ async function handleAddProduct(e) {
     
     // التحقق من البيانات
     if (!name || !price || !imageBase64) {
-        showToast("الرجاء ملء جميع الحقول المطلوبة (بما في ذلك الصورة)", "error");
+        showCustomToast("الرجاء ملء جميع الحقول المطلوبة (بما في ذلك الصورة)", "error");
         return;
     }
     
     if (price <= 0) {
-        showToast("الرجاء إدخال سعر صحيح", "error");
+        showCustomToast("الرجاء إدخال سعر صحيح", "error");
         return;
     }
     
@@ -931,10 +1575,10 @@ async function handleAddProduct(e) {
         const productsTab = document.querySelector('.admin-tab-btn[data-tab="products-list"]');
         if (productsTab) productsTab.click();
         
-        showToast("تم إضافة المنتج بنجاح", "success");
+        showCustomToast("تم إضافة المنتج بنجاح", "success");
     } catch (error) {
         console.error('خطأ في إضافة المنتج:', error);
-        showToast("حدث خطأ في إضافة المنتج", "error");
+        showCustomToast("حدث خطأ في إضافة المنتج", "error");
     }
 }
 
@@ -955,11 +1599,15 @@ async function handleUpdateSettings(e) {
     storeData.settings.description = document.getElementById('sDescription').value.trim();
     storeData.settings.phone = document.getElementById('sPhone').value.trim();
     
-    if (await saveStoreData()) {
+    try {
+        await db.collection('settings').doc('store').set(storeData.settings, { merge: true });
         updateStoreUI();
         e.target.reset();
         fillSettingsForm();
-        showToast("تم تحديث الإعدادات بنجاح", "success");
+        showCustomToast("تم تحديث الإعدادات بنجاح", "success");
+    } catch (e) {
+        console.error('خطأ في حفظ البيانات:', e);
+        showCustomToast("حدث خطأ في حفظ البيانات", "error");
     }
 }
 
@@ -992,24 +1640,36 @@ async function loadAdminUsers() {
             <div class="admin-user-item">
                 <div class="user-info-small">
                     <div class="admin-user-image-container">
-                        <img src="${user.photoURL || 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23FF6B8B%22/><text x=%2250%22 y=%2260%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2230%22>👤</text></svg>'}" alt="${user.displayName}">
+                        <img src="${user.photoURL || 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23FF6B8B%22/><text x=%2250%22 y=%2260%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2230%22>👤</text></svg>'}" alt="${user.displayName}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23FF6B8B%22/><text x=%2250%22 y=%2260%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2230%22>👤</text></svg>'">
                     </div>
                     <div class="user-details">
                         <h4>${user.displayName}</h4>
                         <p>${user.email || 'بريد غير متوفر'}</p>
-                        <small>${user.isAdmin ? 'مسؤول' : 'مستخدم عادي'}</small>
+                        <small style="display: block; margin-top: 5px;">
+                            <i class="fas fa-calendar"></i> 
+                            ${user.createdAt ? new Date(user.createdAt.toDate()).toLocaleDateString('ar-SA') : 'غير معروف'}
+                        </small>
+                        <span class="role-badge ${user.isAdmin ? 'admin' : ''}" style="margin-top: 5px;">
+                            ${user.isAdmin ? 'مسؤول' : 'مستخدم عادي'}
+                        </span>
                     </div>
                 </div>
                 <div class="user-actions-small">
-                    <button class="role-btn ${user.isAdmin ? 'admin-btn' : 'user-btn'}" onclick="toggleUserRole('${user.id}', ${user.isAdmin})">
+                    <button class="role-btn ${user.isAdmin ? 'admin-btn' : 'user-btn'}" 
+                            onclick="toggleUserRole('${user.id}', ${user.isAdmin})">
                         ${user.isAdmin ? 'إلغاء الإدارة' : 'تعيين كمسؤول'}
                     </button>
+                    ${!user.isAdmin ? `
+                    <button class="delete-btn" style="background: #FF6B8B;" 
+                            onclick="toggleUserBlock('${user.id}', ${user.isBlocked || false})">
+                        <i class="fas ${user.isBlocked ? 'fa-unlock' : 'fa-ban'}"></i>
+                    </button>` : ''}
                 </div>
             </div>
         `).join('');
     } catch (error) {
         console.error('خطأ في تحميل المستخدمين:', error);
-        list.innerHTML = `<p style="color: #ff4757;">خطأ في تحميل المستخدمين</p>`;
+        list.innerHTML = `<p style="color: #ff4757; padding: 20px; text-align: center;">خطأ في تحميل المستخدمين</p>`;
     }
 }
 
@@ -1022,99 +1682,12 @@ async function toggleUserRole(userId, isCurrentlyAdmin) {
             isAdmin: !isCurrentlyAdmin
         });
         
-        showToast("تم تحديث صلاحية المستخدم", "success");
+        showCustomToast("تم تحديث صلاحية المستخدم", "success");
         loadAdminUsers();
     } catch (error) {
         console.error('خطأ في تحديث صلاحية المستخدم:', error);
-        showToast("حدث خطأ في تحديث الصلاحية", "error");
+        showCustomToast("حدث خطأ في تحديث الصلاحية", "error");
     }
-}
-
-// إعداد بطاقات الفئات
-function setupCategoryCards() {
-    document.querySelectorAll('.category-card').forEach(card => {
-        card.addEventListener('click', function() {
-            const category = this.dataset.category;
-            
-            // تحديث أزرار الفلترة
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.dataset.filter === category) {
-                    btn.classList.add('active');
-                }
-            });
-            
-            // تطبيق الفلترة
-            currentFilter = category;
-            renderProducts();
-            
-            // التمرير إلى قسم المنتجات
-            document.getElementById('products').scrollIntoView({ behavior: 'smooth' });
-        });
-    });
-}
-
-// حساب المستخدم
-function setupUserProfile() {
-    const userToggle = document.getElementById('userToggle');
-    const userProfileModal = document.getElementById('userProfileModal');
-    
-    if (userToggle) {
-        userToggle.addEventListener('click', openUserProfile);
-    }
-}
-
-function openUserProfile() {
-    const userProfileModal = document.getElementById('userProfileModal');
-    if (userProfileModal) {
-        userProfileModal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    }
-}
-
-function closeUserProfile() {
-    const userProfileModal = document.getElementById('userProfileModal');
-    if (userProfileModal) {
-        userProfileModal.classList.add('hidden');
-        document.body.style.overflow = 'auto';
-    }
-}
-
-// الأحداث الأخرى
-function setupOtherListeners() {
-    // تحديث السنة
-    updateCurrentYear();
-    
-    // إغلاق لوحات التحكم بمفتاح ESC
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            closeMobileMenu();
-            closeAdminPanel();
-            closeUserProfile();
-            closeEditModal();
-        }
-    });
-    
-    // إغلاق النوافذ المنبثقة بالنقر خارجها
-    document.addEventListener('click', (e) => {
-        const userProfileModal = document.getElementById('userProfileModal');
-        const editProductModal = document.getElementById('editProductModal');
-        
-        if (userProfileModal && !userProfileModal.classList.contains('hidden') && 
-            e.target === userProfileModal) {
-            closeUserProfile();
-        }
-        
-        if (editProductModal && !editProductModal.classList.contains('hidden') && 
-            e.target === editProductModal) {
-            closeEditModal();
-        }
-    });
-}
-
-// تحديث السنة الحالية
-function updateCurrentYear() {
-    document.getElementById('currentYear').textContent = new Date().getFullYear();
 }
 
 // تصدير البيانات
@@ -1154,10 +1727,10 @@ async function exportData() {
         document.body.removeChild(a);
         
         URL.revokeObjectURL(url);
-        showToast("تم تصدير البيانات", "success");
+        showCustomToast("تم تصدير البيانات", "success");
     } catch (error) {
         console.error('خطأ في تصدير البيانات:', error);
-        showToast("حدث خطأ في تصدير البيانات", "error");
+        showCustomToast("حدث خطأ في تصدير البيانات", "error");
     }
 }
 
@@ -1207,14 +1780,14 @@ function importData() {
                         
                         // إعادة تحميل البيانات
                         await loadStoreData();
-                        showToast("تم استيراد البيانات بنجاح", "success");
+                        showCustomToast("تم استيراد البيانات بنجاح", "success");
                     }
                 } else {
-                    showToast("ملف غير صالح", "error");
+                    showCustomToast("ملف غير صالح", "error");
                 }
             } catch (err) {
                 console.error('خطأ في قراءة الملف:', err);
-                showToast("خطأ في قراءة الملف", "error");
+                showCustomToast("خطأ في قراءة الملف", "error");
             }
         };
         
@@ -1222,37 +1795,6 @@ function importData() {
     };
     
     input.click();
-}
-
-// عرض الإشعارات
-function showToast(message, type = "info") {
-    let backgroundColor = "#9D4EDD";
-    
-    switch(type) {
-        case "success":
-            backgroundColor = "#06D6A0";
-            break;
-        case "error":
-            backgroundColor = "#ff4757";
-            break;
-        case "warning":
-            backgroundColor = "#FFD166";
-            break;
-    }
-    
-    Toastify({
-        text: message,
-        duration: 3000,
-        gravity: "top",
-        position: "center",
-        backgroundColor: backgroundColor,
-        stopOnFocus: true,
-        style: {
-            fontFamily: "'Cairo', sans-serif",
-            borderRadius: "8px",
-            padding: "12px 20px"
-        }
-    }).showToast();
 }
 
 // وظائف معالجة الصور
@@ -1265,7 +1807,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // التحقق من حجم الملف (أقصى حد 2 ميجابايت)
             if (file.size > 2 * 1024 * 1024) {
-                showToast("حجم الصورة كبير جداً (الحد الأقصى 2 ميجابايت)", "error");
+                showCustomToast("حجم الصورة كبير جداً (الحد الأقصى 2 ميجابايت)", "error");
                 this.value = '';
                 return;
             }
@@ -1371,10 +1913,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateCategoryCounts();
                 closeEditModal();
                 
-                showToast("تم تحديث المنتج بنجاح", "success");
+                showCustomToast("تم تحديث المنتج بنجاح", "success");
             } catch (error) {
                 console.error('خطأ في تحديث المنتج:', error);
-                showToast("حدث خطأ في تحديث المنتج", "error");
+                showCustomToast("حدث خطأ في تحديث المنتج", "error");
             }
         });
     }
@@ -1394,41 +1936,26 @@ function changeQty(id, delta) {
     input.value = val;
 }
 
+// منتجات افتراضية (للحالات الطارئة)
+function loadDefaultProducts() {
+    storeData.products = [
+        {
+            id: "1",
+            name: "عطر فلورال رومانسي",
+            description: "عطر نسائي برائحة الأزهار الطازجة يدوم طويلاً",
+            price: 35000,
+            category: "featured",
+            image: "https://images.unsplash.com/photo-1541643600914-78b084683601?w=500&h=500&fit=crop&crop=center",
+            badge: "الأكثر طلباً",
+            stock: 10,
+            createdAt: new Date().toISOString()
+        }
+    ];
+}
+
 // إعداد التطبيق بعد تحميل الصفحة
 setTimeout(() => {
     if (!currentUser) {
         showAuthScreen();
     }
 }, 100);
-
-// إضافة تأثيرات CSS إضافية
-document.addEventListener('DOMContentLoaded', function() {
-    // إضافة تأثيرات للعناصر عند التحميل
-    const style = document.createElement('style');
-    style.textContent = `
-        .auth-container {
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.5s ease, transform 0.5s ease;
-        }
-        
-        .auth-container.loaded {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        
-        .feature-item, .social-auth-btn, .auth-input {
-            transform: translateY(0);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        
-        .feature-item:hover, .social-auth-btn:hover {
-            transform: translateY(-3px);
-        }
-        
-        .auth-input:focus {
-            transform: translateY(-1px);
-        }
-    `;
-    document.head.appendChild(style);
-});
