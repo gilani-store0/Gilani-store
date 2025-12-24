@@ -43,6 +43,11 @@ document.addEventListener('DOMContentLoaded', function() {
     setupFirebaseAuth();
     setupEventListeners();
     checkInitialAuth();
+    
+    // إضافة تأثيرات تحميل أولية
+    setTimeout(() => {
+        document.querySelector('.auth-container').classList.add('loaded');
+    }, 100);
 });
 
 // إعداد مصادقة Firebase
@@ -122,16 +127,19 @@ async function createUserRecord(user) {
 // التحقق من المصادقة الأولية
 function checkInitialAuth() {
     const authScreen = document.getElementById('authScreen');
+    const mainApp = document.getElementById('mainApp');
+    
     authScreen.classList.remove('hidden');
+    mainApp.classList.add('hidden');
 }
 
 // إظهار صفحة المصادقة
 function showAuthScreen() {
     const authScreen = document.getElementById('authScreen');
-    const mainContent = document.querySelector('body > *:not(#authScreen)');
+    const mainApp = document.getElementById('mainApp');
     
     authScreen.classList.remove('hidden');
-    mainContent.style.display = 'none';
+    mainApp.classList.add('hidden');
     closeAdminPanel();
     closeUserProfile();
 }
@@ -139,10 +147,17 @@ function showAuthScreen() {
 // إظهار التطبيق الرئيسي
 function showMainApp() {
     const authScreen = document.getElementById('authScreen');
-    const mainContent = document.querySelector('body > *:not(#authScreen)');
+    const mainApp = document.getElementById('mainApp');
     
     authScreen.classList.add('hidden');
-    mainContent.style.display = 'block';
+    mainApp.classList.remove('hidden');
+    
+    // إضافة تأثير ظهور تدريجي
+    mainApp.style.opacity = '0';
+    setTimeout(() => {
+        mainApp.style.transition = 'opacity 0.5s ease';
+        mainApp.style.opacity = '1';
+    }, 50);
 }
 
 // تحديث واجهة المستخدم
@@ -181,12 +196,21 @@ function updateUserUI() {
 async function signInWithGoogle() {
     try {
         const provider = new firebase.auth.GoogleAuthProvider();
+        // إضافة نطاقات إضافية إذا لزم الأمر
+        provider.addScope('profile');
+        provider.addScope('email');
+        
         const result = await auth.signInWithPopup(provider);
         showToast("تم تسجيل الدخول بنجاح", "success");
         return result.user;
     } catch (error) {
         console.error('خطأ في تسجيل الدخول بجوجل:', error);
-        showToast("فشل تسجيل الدخول بجوجل", "error");
+        
+        if (error.code === 'auth/popup-closed-by-user') {
+            showToast("تم إغلاق نافذة تسجيل الدخول", "warning");
+        } else {
+            showToast("فشل تسجيل الدخول بجوجل", "error");
+        }
         return null;
     }
 }
@@ -199,7 +223,17 @@ async function signInWithEmail(email, password) {
         return result.user;
     } catch (error) {
         console.error('خطأ في تسجيل الدخول:', error);
-        showToast("البريد الإلكتروني أو كلمة المرور غير صحيحة", "error");
+        
+        if (error.code === 'auth/user-not-found') {
+            showToast("المستخدم غير موجود", "error");
+        } else if (error.code === 'auth/wrong-password') {
+            showToast("كلمة المرور غير صحيحة", "error");
+        } else if (error.code === 'auth/invalid-email') {
+            showToast("البريد الإلكتروني غير صالح", "error");
+        } else {
+            showToast("فشل تسجيل الدخول", "error");
+        }
+        
         return null;
     }
 }
@@ -222,6 +256,8 @@ async function signUpWithEmail(email, password, displayName) {
             showToast("هذا البريد الإلكتروني مستخدم بالفعل", "error");
         } else if (error.code === 'auth/weak-password') {
             showToast("كلمة المرور ضعيفة جداً", "error");
+        } else if (error.code === 'auth/invalid-email') {
+            showToast("البريد الإلكتروني غير صالح", "error");
         } else {
             showToast("فشل إنشاء الحساب", "error");
         }
@@ -240,6 +276,27 @@ async function signInAsGuest() {
         console.error('خطأ في تسجيل الدخول كضيف:', error);
         showToast("فشل تسجيل الدخول كضيف", "error");
         return null;
+    }
+}
+
+// إعادة تعيين كلمة المرور
+async function resetPassword(email) {
+    try {
+        await auth.sendPasswordResetEmail(email);
+        showToast("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني", "success");
+        return true;
+    } catch (error) {
+        console.error('خطأ في إعادة تعيين كلمة المرور:', error);
+        
+        if (error.code === 'auth/user-not-found') {
+            showToast("المستخدم غير موجود", "error");
+        } else if (error.code === 'auth/invalid-email') {
+            showToast("البريد الإلكتروني غير صالح", "error");
+        } else {
+            showToast("فشل إرسال رابط إعادة التعيين", "error");
+        }
+        
+        return false;
     }
 }
 
@@ -471,6 +528,10 @@ function setupEventListeners() {
     document.getElementById('signInWithEmailBtn')?.addEventListener('click', handleEmailSignIn);
     document.getElementById('signUpWithEmailBtn')?.addEventListener('click', handleEmailSignUp);
     document.getElementById('guestSignInBtn')?.addEventListener('click', () => signInAsGuest());
+    document.getElementById('forgotPasswordBtn')?.addEventListener('click', handleForgotPassword);
+    
+    // تبديل عرض كلمة المرور
+    document.getElementById('togglePassword')?.addEventListener('click', togglePasswordVisibility);
     
     // تسجيل الخروج
     document.getElementById('profileLogoutBtn')?.addEventListener('click', () => signOut());
@@ -494,21 +555,37 @@ function setupEventListeners() {
 
 // تسجيل الدخول بالبريد
 async function handleEmailSignIn() {
-    const email = document.getElementById('emailInput').value.trim();
-    const password = document.getElementById('passwordInput').value.trim();
+    const emailInput = document.getElementById('emailInput');
+    const passwordInput = document.getElementById('passwordInput');
+    
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
     
     if (!email || !password) {
         showToast("الرجاء إدخال البريد الإلكتروني وكلمة المرور", "error");
         return;
     }
     
+    // إضافة تأثير تحميل
+    const signInBtn = document.getElementById('signInWithEmailBtn');
+    const originalText = signInBtn.innerHTML;
+    signInBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري تسجيل الدخول...';
+    signInBtn.disabled = true;
+    
     await signInWithEmail(email, password);
+    
+    // استعادة الحالة الأصلية
+    signInBtn.innerHTML = originalText;
+    signInBtn.disabled = false;
 }
 
 // إنشاء حساب بالبريد
 async function handleEmailSignUp() {
-    const email = document.getElementById('emailInput').value.trim();
-    const password = document.getElementById('passwordInput').value.trim();
+    const emailInput = document.getElementById('emailInput');
+    const passwordInput = document.getElementById('passwordInput');
+    
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
     
     if (!email || !password) {
         showToast("الرجاء إدخال البريد الإلكتروني وكلمة المرور", "error");
@@ -521,7 +598,66 @@ async function handleEmailSignUp() {
     }
     
     const displayName = prompt("الرجاء إدخال اسمك:");
-    await signUpWithEmail(email, password, displayName);
+    if (!displayName || displayName.trim() === '') {
+        showToast("الرجاء إدخال اسم صحيح", "error");
+        return;
+    }
+    
+    // إضافة تأثير تحميل
+    const signUpBtn = document.getElementById('signUpWithEmailBtn');
+    const originalText = signUpBtn.innerHTML;
+    signUpBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري إنشاء الحساب...';
+    signUpBtn.disabled = true;
+    
+    await signUpWithEmail(email, password, displayName.trim());
+    
+    // استعادة الحالة الأصلية
+    signUpBtn.innerHTML = originalText;
+    signUpBtn.disabled = false;
+}
+
+// إعادة تعيين كلمة المرور
+async function handleForgotPassword() {
+    const email = document.getElementById('emailInput').value.trim();
+    
+    if (!email) {
+        showToast("الرجاء إدخال بريدك الإلكتروني", "error");
+        return;
+    }
+    
+    const confirmReset = confirm(`هل تريد إرسال رابط إعادة تعيين كلمة المرور إلى ${email}؟`);
+    if (!confirmReset) return;
+    
+    // إضافة تأثير تحميل
+    const forgotBtn = document.getElementById('forgotPasswordBtn');
+    const originalText = forgotBtn.innerHTML;
+    forgotBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+    forgotBtn.disabled = true;
+    
+    await resetPassword(email);
+    
+    // استعادة الحالة الأصلية
+    forgotBtn.innerHTML = originalText;
+    forgotBtn.disabled = false;
+}
+
+// تبديل عرض كلمة المرور
+function togglePasswordVisibility() {
+    const passwordInput = document.getElementById('passwordInput');
+    const toggleBtn = document.getElementById('togglePassword');
+    const icon = toggleBtn.querySelector('i');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+        toggleBtn.setAttribute('aria-label', 'إخفاء كلمة المرور');
+    } else {
+        passwordInput.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+        toggleBtn.setAttribute('aria-label', 'إظهار كلمة المرور');
+    }
 }
 
 // القائمة الجانبية للجوال
@@ -535,6 +671,7 @@ function setupMobileMenu() {
         menuToggle.addEventListener('click', () => {
             mobileSidebar.classList.add('active');
             sidebarOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
         });
     }
     
@@ -570,6 +707,7 @@ function closeMobileMenu() {
     
     if (mobileSidebar) mobileSidebar.classList.remove('active');
     if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+    document.body.style.overflow = 'auto';
 }
 
 // البحث والفلترة
@@ -661,6 +799,7 @@ function openAdminPanel() {
     
     loadAdminProducts();
     fillSettingsForm();
+    document.body.style.overflow = 'hidden';
 }
 
 function closeAdminPanel() {
@@ -669,6 +808,7 @@ function closeAdminPanel() {
     
     if (adminSidebar) adminSidebar.classList.remove('active');
     if (adminOverlay) adminOverlay.classList.remove('active');
+    document.body.style.overflow = 'auto';
 }
 
 // تحميل المنتجات في لوحة التحكم
@@ -928,6 +1068,7 @@ function openUserProfile() {
     const userProfileModal = document.getElementById('userProfileModal');
     if (userProfileModal) {
         userProfileModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
     }
 }
 
@@ -935,6 +1076,7 @@ function closeUserProfile() {
     const userProfileModal = document.getElementById('userProfileModal');
     if (userProfileModal) {
         userProfileModal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
     }
 }
 
@@ -1174,10 +1316,12 @@ async function openEditModal(id) {
     document.getElementById('editPDesc').value = product.description || '';
 
     document.getElementById('editProductModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
 }
 
 function closeEditModal() {
     document.getElementById('editProductModal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
 }
 
 // تحديث المنتج
@@ -1257,3 +1401,34 @@ setTimeout(() => {
     }
 }, 100);
 
+// إضافة تأثيرات CSS إضافية
+document.addEventListener('DOMContentLoaded', function() {
+    // إضافة تأثيرات للعناصر عند التحميل
+    const style = document.createElement('style');
+    style.textContent = `
+        .auth-container {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .auth-container.loaded {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .feature-item, .social-auth-btn, .auth-input {
+            transform: translateY(0);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .feature-item:hover, .social-auth-btn:hover {
+            transform: translateY(-3px);
+        }
+        
+        .auth-input:focus {
+            transform: translateY(-1px);
+        }
+    `;
+    document.head.appendChild(style);
+});
