@@ -479,23 +479,23 @@ function handleAddProduct(e) {
     const name = document.getElementById('pName').value.trim();
     const price = parseFloat(document.getElementById('pPrice').value);
     const category = document.getElementById('pCategory').value;
-    const image = document.getElementById('pImage').value.trim();
+    const imageBase64 = document.getElementById('pImageBase64').value;
     const badge = document.getElementById('pBadge').value.trim();
     const description = document.getElementById('pDesc').value.trim();
     
-    // التحقق من البيانات
-    if (!name || !price || !image) {
-        showToast("الرجاء ملء جميع الحقول المطلوبة", "error");
-        return;
-    }
+// التحقق من البيانات
+	    if (!name || !price || !imageBase64) {
+	        showToast("الرجاء ملء جميع الحقول المطلوبة (بما في ذلك الصورة)", "error");
+	        return;
+	    }
     
     if (price <= 0) {
         showToast("الرجاء إدخال سعر صحيح", "error");
         return;
     }
     
-    // تحديد الصورة (سواء مرفوعة أو رابط)
-    const finalImage = document.getElementById('pImageBase64').value || image;
+// تحديد الصورة (المرفوعة فقط)
+	    const finalImage = imageBase64;
     const stock = parseInt(document.getElementById('pStock').value) || 0;
 
     // إنشاء المنتج الجديد
@@ -759,6 +759,7 @@ window.openEditModal = function(id) {
     document.getElementById('editPCategory').value = product.category;
     document.getElementById('editPStock').value = product.stock || 0;
     document.getElementById('editPImage').value = product.image.startsWith('data:') ? '' : product.image;
+	    document.getElementById('editPBadge').value = product.badge || '';
     document.getElementById('editPDesc').value = product.description || '';
 
     document.getElementById('editProductModal').classList.remove('hidden');
@@ -779,7 +780,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const price = parseFloat(document.getElementById('editPPrice').value);
             const category = document.getElementById('editPCategory').value;
             const stock = parseInt(document.getElementById('editPStock').value) || 0;
-            const image = document.getElementById('editPImage').value.trim();
+            // تم إزالة حقل رابط الصورة من النموذج بناءً على طلب المستخدم
+            const badge = document.getElementById('editPBadge').value.trim();
             const description = document.getElementById('editPDesc').value.trim();
 
             const index = storeData.products.findIndex(p => p.id == id);
@@ -792,7 +794,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     price,
                     category,
                     stock,
-                    image: image || oldImage,
+                    image: oldImage,
+                    badge: badge || null,
                     description
                 };
 
