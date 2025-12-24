@@ -310,82 +310,88 @@
 
                 <!-- نموذج المنتج -->
                 <div class="product-form-container hidden" id="productFormContainer">
-                    <form id="productForm" class="admin-form">
-                        <input type="hidden" id="editProductId">
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="productName">
-                                    <i class="fas fa-tag"></i>
-                                    اسم المنتج *
-                                </label>
-                                <input type="text" id="productName" required placeholder="أدخل اسم المنتج">
+                    <div style="position: relative;">
+                        <button type="button" class="close-form-btn" id="closeFormBtn" 
+                                style="position: absolute; top: 10px; left: 10px; background: #f44336; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; z-index: 10;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <form id="productForm" class="admin-form">
+                            <input type="hidden" id="editProductId">
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="productName">
+                                        <i class="fas fa-tag"></i>
+                                        اسم المنتج *
+                                    </label>
+                                    <input type="text" id="productName" required placeholder="أدخل اسم المنتج">
+                                </div>
+                                <div class="form-group">
+                                    <label for="productCategory">
+                                        <i class="fas fa-list"></i>
+                                        القسم *
+                                    </label>
+                                    <select id="productCategory" required>
+                                        <option value="">اختر القسم</option>
+                                        <option value="perfumes">عطور</option>
+                                        <option value="makeup">مكياج</option>
+                                        <option value="skincare">العناية بالبشرة</option>
+                                        <option value="haircare">العناية بالشعر</option>
+                                    </select>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label for="productCategory">
-                                    <i class="fas fa-list"></i>
-                                    القسم *
-                                </label>
-                                <select id="productCategory" required>
-                                    <option value="">اختر القسم</option>
-                                    <option value="perfumes">عطور</option>
-                                    <option value="makeup">مكياج</option>
-                                    <option value="skincare">العناية بالبشرة</option>
-                                    <option value="haircare">العناية بالشعر</option>
-                                </select>
-                            </div>
-                        </div>
 
-                        <div class="form-row">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="productPrice">
+                                        <i class="fas fa-money-bill"></i>
+                                        السعر (جنيه) *
+                                    </label>
+                                    <input type="number" id="productPrice" required min="0" step="0.01" placeholder="السعر">
+                                </div>
+                                <div class="form-group">
+                                    <label for="productStock">
+                                        <i class="fas fa-cubes"></i>
+                                        الكمية المتاحة
+                                    </label>
+                                    <input type="number" id="productStock" min="0" value="1" placeholder="الكمية">
+                                </div>
+                            </div>
+
                             <div class="form-group">
-                                <label for="productPrice">
-                                    <i class="fas fa-money-bill"></i>
-                                    السعر (جنيه) *
+                                <label for="productDescription">
+                                    <i class="fas fa-align-left"></i>
+                                    وصف المنتج
                                 </label>
-                                <input type="number" id="productPrice" required min="0" step="0.01" placeholder="السعر">
+                                <textarea id="productDescription" rows="3" placeholder="أدخل وصف المنتج"></textarea>
                             </div>
+
                             <div class="form-group">
-                                <label for="productStock">
-                                    <i class="fas fa-cubes"></i>
-                                    الكمية المتاحة
+                                <label for="productImage">
+                                    <i class="fas fa-image"></i>
+                                    رابط صورة المنتج *
                                 </label>
-                                <input type="number" id="productStock" min="0" value="1" placeholder="الكمية">
+                                <input type="url" id="productImage" required 
+                                       placeholder="https://example.com/image.jpg">
+                                <small class="help-text">استخدم روابط صور واضحة من مواقع مثل Unsplash.com</small>
+                                <div class="image-preview" id="imagePreview">
+                                    <i class="fas fa-image"></i>
+                                    <p>معاينة الصورة ستظهر هنا</p>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="form-group">
-                            <label for="productDescription">
-                                <i class="fas fa-align-left"></i>
-                                وصف المنتج
-                            </label>
-                            <textarea id="productDescription" rows="3" placeholder="أدخل وصف المنتج"></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="productImage">
-                                <i class="fas fa-image"></i>
-                                رابط صورة المنتج *
-                            </label>
-                            <input type="url" id="productImage" required 
-                                   placeholder="https://example.com/image.jpg">
-                            <small class="help-text">استخدم روابط صور واضحة من مواقع مثل Unsplash.com</small>
-                            <div class="image-preview" id="imagePreview">
-                                <i class="fas fa-image"></i>
-                                <p>معاينة الصورة ستظهر هنا</p>
+                            <div class="form-actions">
+                                <button type="submit" class="btn primary-btn">
+                                    <i class="fas fa-save"></i>
+                                    حفظ المنتج
+                                </button>
+                                <button type="button" class="btn secondary-btn" id="cancelProductBtn">
+                                    <i class="fas fa-times"></i>
+                                    إلغاء
+                                </button>
                             </div>
-                        </div>
-
-                        <div class="form-actions">
-                            <button type="submit" class="btn primary-btn">
-                                <i class="fas fa-save"></i>
-                                حفظ المنتج
-                            </button>
-                            <button type="button" class="btn secondary-btn" id="cancelProductBtn">
-                                <i class="fas fa-times"></i>
-                                إلغاء
-                            </button>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
 
                 <!-- قائمة المنتجات -->
