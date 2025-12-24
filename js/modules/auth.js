@@ -34,7 +34,7 @@ export let isAdmin = false;
 let isSignUpMode = false; // حالة جديدة للتبديل بين تسجيل الدخول وإنشاء الحساب
 
 // =====================================
-// وظائف تسجيل السجلات (تم إزالة getClientIP)
+// وظائف تسجيل السجلات
 // =====================================
 
 // تسجيل دخول الأدمن
@@ -210,30 +210,45 @@ export async function signInWithGoogle() {
 }
 
 // تبديل وضع المصادقة (تسجيل الدخول/إنشاء حساب)
-export function toggleAuthMode() {
-    isSignUpMode = !isSignUpMode;
+export function toggleAuthMode(forceMode = null) {
+    if (forceMode !== null) {
+        isSignUpMode = forceMode;
+    } else {
+        isSignUpMode = !isSignUpMode;
+    }
+    
     const displayNameInput = document.getElementById('displayNameInput');
     const signInBtn = document.getElementById('signInWithEmailBtn');
     const toggleBtn = document.getElementById('toggleSignUpMode');
     
     if (isSignUpMode) {
-        displayNameInput.classList.remove('hidden');
-        displayNameInput.required = true;
-        signInBtn.innerHTML = '<i class="fas fa-user-plus"></i> إنشاء حساب';
-        signInBtn.id = 'signUpWithEmailBtn';
-        toggleBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> تسجيل الدخول بدلاً من ذلك';
+        displayNameInput?.classList.remove('hidden');
+        if (displayNameInput) displayNameInput.required = true;
+        if (signInBtn) {
+            signInBtn.innerHTML = '<i class="fas fa-user-plus"></i> إنشاء حساب';
+            signInBtn.id = 'signUpWithEmailBtn';
+        }
+        if (toggleBtn) {
+            toggleBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> تسجيل الدخول بدلاً من ذلك';
+        }
     } else {
-        displayNameInput.classList.add('hidden');
-        displayNameInput.required = false;
-        signInBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> تسجيل الدخول';
-        signInBtn.id = 'signInWithEmailBtn';
-        toggleBtn.innerHTML = '<i class="fas fa-user-plus"></i> إنشاء حساب جديد';
+        displayNameInput?.classList.add('hidden');
+        if (displayNameInput) displayNameInput.required = false;
+        if (signInBtn) {
+            signInBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> تسجيل الدخول';
+            signInBtn.id = 'signInWithEmailBtn';
+        }
+        if (toggleBtn) {
+            toggleBtn.innerHTML = '<i class="fas fa-user-plus"></i> إنشاء حساب جديد';
+        }
     }
     
     // إعادة تعيين مستمعي الأحداث للزر الرئيسي
     const emailAuthForm = document.getElementById('emailAuthForm');
-    emailAuthForm.removeEventListener('submit', handleAuthSubmit);
-    emailAuthForm.addEventListener('submit', handleAuthSubmit);
+    if (emailAuthForm) {
+        emailAuthForm.removeEventListener('submit', handleAuthSubmit);
+        emailAuthForm.addEventListener('submit', handleAuthSubmit);
+    }
 }
 
 // معالج إرسال نموذج المصادقة الموحد
@@ -241,16 +256,18 @@ export async function handleAuthSubmit(e) {
     e.preventDefault();
     
     if (isSignUpMode) {
-        await handleEmailSignUp(e);
+        await handleEmailSignUp();
     } else {
-        await handleEmailSignIn(e);
+        await handleEmailSignIn();
     }
 }
 
 // تسجيل الدخول بالبريد الإلكتروني
-async function handleEmailSignIn(e) {
+async function handleEmailSignIn() {
     const emailInput = document.getElementById('emailInput');
     const passwordInput = document.getElementById('passwordInput');
+    
+    if (!emailInput || !passwordInput) return;
     
     const email = emailInput.value.trim();
     const password = passwordInput.value.trim();
@@ -262,6 +279,8 @@ async function handleEmailSignIn(e) {
     }
     
     const signInBtn = document.getElementById('signInWithEmailBtn');
+    if (!signInBtn) return;
+    
     showLoading(signInBtn);
     
     try {
@@ -287,10 +306,12 @@ async function handleEmailSignIn(e) {
 }
 
 // إنشاء حساب جديد
-async function handleEmailSignUp(e) {
+async function handleEmailSignUp() {
     const displayNameInput = document.getElementById('displayNameInput');
     const emailInput = document.getElementById('emailInput');
     const passwordInput = document.getElementById('passwordInput');
+    
+    if (!displayNameInput || !emailInput || !passwordInput) return;
     
     const displayName = displayNameInput.value.trim();
     const email = emailInput.value.trim();
@@ -301,13 +322,15 @@ async function handleEmailSignUp(e) {
         return;
     }
     
-    const errors = validateAuthForm(email, password);
+    const errors = validateAuthForm(email, password, displayName, true);
     if (errors.length > 0) {
         showError(errors[0]);
         return;
     }
     
     const signUpBtn = document.getElementById('signUpWithEmailBtn');
+    if (!signUpBtn) return;
+    
     showLoading(signUpBtn);
     
     try {
@@ -350,7 +373,7 @@ export async function signInAsGuest() {
 
 // إعادة تعيين كلمة المرور
 export async function handleForgotPassword() {
-    const email = document.getElementById('emailInput').value.trim();
+    const email = document.getElementById('emailInput')?.value.trim();
     
     if (!email) {
         showError("الرجاء إدخال بريدك الإلكتروني لإعادة تعيين كلمة المرور");

@@ -1,7 +1,26 @@
 // js/modules/ui.js
 
-import { currentUser, isAdmin, handleSignOut, signInWithGoogle, handleEmailSignIn, handleEmailSignUp, signInAsGuest, handleForgotPassword } from './auth.js';
-import { storeData, renderProducts, updateCategoryCounts, updateStoreUI, handleProductSearch, handleFilterChange, handleSortChange, handleSettingsSubmit, loadAdminProducts, fillSettingsForm } from './data.js';
+import { 
+    currentUser, 
+    isAdmin, 
+    handleSignOut, 
+    signInWithGoogle, 
+    signInAsGuest, 
+    handleForgotPassword, 
+    handleAuthSubmit, 
+    toggleAuthMode 
+} from './auth.js';
+import { 
+    storeData, 
+    renderProducts, 
+    updateStoreUI, 
+    handleProductSearch, 
+    handleFilterChange, 
+    handleSortChange, 
+    handleSettingsSubmit, 
+    loadAdminProducts, 
+    fillSettingsForm 
+} from './data.js';
 import { showCustomToast } from './utils.js';
 
 // =====================================
@@ -194,97 +213,17 @@ function closeMobileSidebar() {
 }
 
 // =====================================
-// إعداد مستمعي الأحداث
+// وظائف إضافية
 // =====================================
-
-export function setupEventListeners() {
-    // 1. المصادقة
-    document.getElementById('googleSignInBtn')?.addEventListener('click', signInWithGoogle);
-    document.getElementById('guestSignInBtn')?.addEventListener('click', signInAsGuest);
-    document.getElementById('emailAuthForm')?.addEventListener('submit', handleAuthSubmit); // استخدام المعالج الموحد
-    document.getElementById('toggleSignUpMode')?.addEventListener('click', toggleAuthMode); // تبديل وضع المصادقة
-    document.getElementById('forgotPasswordBtn')?.addEventListener('click', handleForgotPassword);
-    document.getElementById('signOutBtn')?.addEventListener('click', handleSignOut);
-    
-    // تبديل نموذج البريد الإلكتروني
-    document.getElementById('showEmailFormBtn')?.addEventListener('click', () => {
-        document.getElementById('authOptions')?.classList.add('hidden');
-        document.getElementById('emailAuthSection')?.classList.remove('hidden');
-        toggleAuthMode(false); // التأكد من أن الوضع الافتراضي هو تسجيل الدخول
-    });
-    document.getElementById('backToOptions')?.addEventListener('click', () => {
-        document.getElementById('emailAuthSection')?.classList.add('hidden');
-        document.getElementById('authOptions')?.classList.remove('hidden');
-    });
-    
-    // تبديل عرض كلمة المرور
-    document.getElementById('togglePassword')?.addEventListener('click', togglePasswordVisibility);
-    
-    // 2. واجهة المستخدم الرئيسية
-    document.getElementById('userToggle')?.addEventListener('click', openUserProfile);
-    document.getElementById('closeUserProfileBtn')?.addEventListener('click', closeUserProfile);
-    document.getElementById('userProfileOverlay')?.addEventListener('click', closeUserProfile);
-    
-    // 3. لوحة التحكم
-    document.getElementById('adminToggle')?.addEventListener('click', openAdminPanel);
-    document.getElementById('closeAdminSidebar')?.addEventListener('click', closeAdminPanel);
-    document.getElementById('adminOverlay')?.addEventListener('click', closeAdminPanel);
-    
-    // 4. القائمة الجانبية للجوال
-    document.getElementById('menuToggle')?.addEventListener('click', openMobileSidebar);
-    document.getElementById('closeSidebar')?.addEventListener('click', closeMobileSidebar);
-    document.getElementById('sidebarOverlay')?.addEventListener('click', closeMobileSidebar);
-    
-    // 5. المنتجات والبحث
-    document.getElementById('productSearchHeader')?.addEventListener('input', handleProductSearch);
-    document.getElementById('productSearch')?.addEventListener('input', handleProductSearch);
-    document.getElementById('productSort')?.addEventListener('change', handleSortChange);
-    
-    // توحيد منطق التصفية
-    document.querySelectorAll('.filter-tabs .filter-btn').forEach(btn => {
-        btn.addEventListener('click', handleFilterChange);
-    });
-    document.querySelectorAll('.categories-nav .cat-btn').forEach(btn => {
-        btn.addEventListener('click', handleFilterChange);
-    });
-    
-    // 6. إعدادات المتجر
-    document.getElementById('settingsForm')?.addEventListener('submit', handleSettingsSubmit);
-    
-    // 7. وظائف إضافية
-    setupFullscreenMobile();
-    createBackgroundParticles();
-    
-    // تحديث السنة في التذييل
-    document.getElementById('currentYear').textContent = new Date().getFullYear();
-}
-
-// =====================================
-// وظائف إضافية (تم نقلها من script.js)
-// =====================================
-
-// دعم العرض بشاشة كاملة على الجوال
-function setupFullscreenMobile() {
-    if ('standalone' in navigator || window.matchMedia('(display-mode: standalone)').matches) {
-        document.documentElement.style.setProperty('--safe-area-top', 'env(safe-area-inset-top)');
-        document.documentElement.style.setProperty('--safe-area-bottom', 'env(safe-area-inset-bottom)');
-    }
-    
-    let vh = window.innerHeight * 0.01;
-    document.documentElement.style.setProperty('--vh', `${vh}px`);
-    
-    window.addEventListener('resize', () => {
-        vh = window.innerHeight * 0.01;
-        document.documentElement.style.setProperty('--vh', `${vh}px`);
-    });
-}
 
 // تبديل عرض كلمة المرور
 function togglePasswordVisibility() {
     const passwordInput = document.getElementById('passwordInput');
     const toggleBtn = document.getElementById('togglePassword');
-    const icon = toggleBtn.querySelector('i');
     
+    if (!passwordInput || !toggleBtn) return;
+    
+    const icon = toggleBtn.querySelector('i');
     if (passwordInput.type === 'password') {
         passwordInput.type = 'text';
         icon.classList.remove('fa-eye');
@@ -318,4 +257,103 @@ function createBackgroundParticles() {
         particle.style.animationDelay = Math.random() * 5 + 's';
         container.appendChild(particle);
     }
+}
+
+// =====================================
+// إعداد مستمعي الأحداث
+// =====================================
+
+export function setupEventListeners() {
+    // 1. المصادقة
+    document.getElementById('googleSignInBtn')?.addEventListener('click', signInWithGoogle);
+    document.getElementById('guestSignInBtn')?.addEventListener('click', signInAsGuest);
+    document.getElementById('emailAuthForm')?.addEventListener('submit', handleAuthSubmit);
+    document.getElementById('toggleSignUpMode')?.addEventListener('click', () => toggleAuthMode());
+    document.getElementById('forgotPasswordBtn')?.addEventListener('click', handleForgotPassword);
+    document.getElementById('signOutBtn')?.addEventListener('click', handleSignOut);
+    
+    // تبديل نموذج البريد الإلكتروني
+    document.getElementById('showEmailFormBtn')?.addEventListener('click', () => {
+        document.getElementById('authOptions')?.classList.add('hidden');
+        document.getElementById('emailAuthSection')?.classList.remove('hidden');
+        // تعيين الوضع الافتراضي لتسجيل الدخول
+        toggleAuthMode(false);
+    });
+    
+    document.getElementById('backToOptions')?.addEventListener('click', () => {
+        document.getElementById('emailAuthSection')?.classList.add('hidden');
+        document.getElementById('authOptions')?.classList.remove('hidden');
+    });
+    
+    // تبديل عرض كلمة المرور
+    document.getElementById('togglePassword')?.addEventListener('click', togglePasswordVisibility);
+    
+    // 2. واجهة المستخدم الرئيسية
+    document.getElementById('userToggle')?.addEventListener('click', openUserProfile);
+    document.getElementById('closeUserProfileBtn')?.addEventListener('click', closeUserProfile);
+    document.getElementById('userProfileOverlay')?.addEventListener('click', closeUserProfile);
+    
+    // 3. لوحة التحكم
+    document.getElementById('adminToggle')?.addEventListener('click', openAdminPanel);
+    document.getElementById('closeAdminSidebar')?.addEventListener('click', closeAdminPanel);
+    document.getElementById('adminOverlay')?.addEventListener('click', closeAdminPanel);
+    
+    // 4. القائمة الجانبية للجوال
+    document.getElementById('menuToggle')?.addEventListener('click', openMobileSidebar);
+    document.getElementById('closeSidebar')?.addEventListener('click', closeMobileSidebar);
+    document.getElementById('sidebarOverlay')?.addEventListener('click', closeMobileSidebar);
+    
+    // 5. المنتجات والبحث
+    document.getElementById('productSearchHeader')?.addEventListener('input', handleProductSearch);
+    document.getElementById('productSearch')?.addEventListener('input', handleProductSearch);
+    document.getElementById('productSort')?.addEventListener('change', handleSortChange);
+    
+    // توحيد منطق التصفية
+    document.querySelectorAll('.filter-tabs .filter-btn').forEach(btn => {
+        btn.addEventListener('click', handleFilterChange);
+    });
+    
+    document.querySelectorAll('.categories-nav .cat-btn').forEach(btn => {
+        btn.addEventListener('click', handleFilterChange);
+    });
+    
+    // 6. إعدادات المتجر
+    document.getElementById('settingsForm')?.addEventListener('submit', handleSettingsSubmit);
+    
+    // 7. التنقل في لوحة التحكم
+    document.querySelectorAll('.admin-nav-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            
+            // إزالة النشاط من جميع الأزرار
+            document.querySelectorAll('.admin-nav-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+            
+            // إضافة النشاط للزر الحالي
+            this.classList.add('active');
+            
+            // إخفاء جميع الأقسام
+            document.querySelectorAll('.admin-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // إظهار القسم المطلوب
+            document.getElementById(targetId)?.classList.add('active');
+        });
+    });
+    
+    // 8. وظائف إضافية
+    createBackgroundParticles();
+    
+    // 9. مستمعي الأحداث للجوال
+    document.getElementById('mobileUserToggle')?.addEventListener('click', () => {
+        closeMobileSidebar();
+        openUserProfile();
+    });
+    
+    document.getElementById('mobileAdminToggle')?.addEventListener('click', () => {
+        closeMobileSidebar();
+        openAdminPanel();
+    });
 }

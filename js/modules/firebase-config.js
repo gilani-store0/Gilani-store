@@ -16,9 +16,18 @@ const firebaseConfig = {
     measurementId: "G-4K0MDY0W5M"
 };
 
+// التحقق من صحة التكوين
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+    console.error('تكوين Firebase غير صالح. يرجى التحقق من الإعدادات.');
+    throw new Error('Firebase configuration is missing required fields');
+}
+
 // تهيئة Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// إعداد اللغة العربية
+auth.languageCode = 'ar';
 
 export { auth, db };

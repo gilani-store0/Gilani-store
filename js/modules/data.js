@@ -72,11 +72,40 @@ export async function loadStoreData() {
 
 // تحميل منتجات افتراضية في حالة فشل الاتصال بـ Firestore
 function loadDefaultProducts() {
-    // يمكن وضع قائمة منتجات افتراضية هنا
     storeData.products = [
-        { id: 'p1', name: 'عطر الورد الجوري', price: 150, category: 'featured', image: 'https://via.placeholder.com/300x300?text=Perfume+1', isSale: true, isNew: false, isBest: true },
-        { id: 'p2', name: 'أحمر شفاه مطفي', price: 50, category: 'new', image: 'https://via.placeholder.com/300x300?text=Lipstick+2', isSale: false, isNew: true, isBest: false },
-        { id: 'p3', name: 'كريم أساس طبيعي', price: 200, category: 'sale', image: 'https://via.placeholder.com/300x300?text=Foundation+3', isSale: true, isNew: false, isBest: false },
+        { 
+            id: 'p1', 
+            name: 'عطر الورد الجوري', 
+            price: 150, 
+            image: 'https://via.placeholder.com/300x300?text=Perfume+1', 
+            isSale: true, 
+            isNew: false, 
+            isBest: true,
+            isFeatured: true,
+            category: 'featured'
+        },
+        { 
+            id: 'p2', 
+            name: 'أحمر شفاه مطفي', 
+            price: 50, 
+            image: 'https://via.placeholder.com/300x300?text=Lipstick+2', 
+            isSale: false, 
+            isNew: true, 
+            isBest: false,
+            isFeatured: false,
+            category: 'new'
+        },
+        { 
+            id: 'p3', 
+            name: 'كريم أساس طبيعي', 
+            price: 200, 
+            image: 'https://via.placeholder.com/300x300?text=Foundation+3', 
+            isSale: true, 
+            isNew: false, 
+            isBest: false,
+            isFeatured: false,
+            category: 'sale'
+        },
     ];
     updateStoreUI();
     renderProducts();
@@ -92,12 +121,14 @@ function loadDefaultProducts() {
 export function updateStoreUI() {
     // تحديث اسم المتجر
     document.querySelectorAll('.store-name-text').forEach(el => {
-        el.textContent = storeData.settings.storeName;
+        if (storeData.settings.storeName) {
+            el.textContent = storeData.settings.storeName;
+        }
     });
     
     // تحديث وصف المتجر
     const footerDesc = document.getElementById('footerStoreDescription');
-    if (footerDesc) {
+    if (footerDesc && storeData.settings.description) {
         footerDesc.textContent = storeData.settings.description;
     }
     
@@ -119,14 +150,22 @@ export function renderProducts() {
     
     // تطبيق الفلترة والبحث
     let filteredProducts = storeData.products.filter(product => {
-        const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesSearch = product.name?.toLowerCase().includes(searchQuery.toLowerCase()) || false;
         
         let matchesFilter = true;
         if (currentFilter !== 'all') {
-            if (currentFilter === 'featured') matchesFilter = product.isFeatured === true;
-            else if (currentFilter === 'new') matchesFilter = product.isNew === true;
-            else if (currentFilter === 'sale') matchesFilter = product.isSale === true;
-            else if (currentFilter === 'best') matchesFilter = product.isBest === true;
+            if (currentFilter === 'featured') {
+                matchesFilter = product.isFeatured === true || product.category === 'featured';
+            }
+            else if (currentFilter === 'new') {
+                matchesFilter = product.isNew === true || product.category === 'new';
+            }
+            else if (currentFilter === 'sale') {
+                matchesFilter = product.isSale === true || product.category === 'sale';
+            }
+            else if (currentFilter === 'best') {
+                matchesFilter = product.isBest === true || product.category === 'best';
+            }
         }
         
         return matchesSearch && matchesFilter;
@@ -134,8 +173,8 @@ export function renderProducts() {
     
     // تطبيق الفرز
     filteredProducts.sort((a, b) => {
-        if (currentSort === 'price-low') return a.price - b.price;
-        if (currentSort === 'price-high') return b.price - a.price;
+        if (currentSort === 'price-low') return (a.price || 0) - (b.price || 0);
+        if (currentSort === 'price-high') return (b.price || 0) - (a.price || 0);
         // الفرز حسب الأحدث (افتراضياً)
         return 0;
     });
@@ -143,15 +182,18 @@ export function renderProducts() {
     grid.innerHTML = filteredProducts.map(product => `
         <div class="product-card" data-id="${product.id}">
             <div class="product-image-container">
-                <img src="${product.image}" alt="${product.name}" class="product-image">
+                <img src="${product.image || 'https://via.placeholder.com/300x300?text=No+Image'}" 
+                     alt="${product.name || 'منتج'}" 
+                     class="product-image"
+                     onerror="this.src='https://via.placeholder.com/300x300?text=No+Image'">
                 ${product.isSale ? '<span class="badge sale-badge">عرض</span>' : ''}
                 ${product.isNew ? '<span class="badge new-badge">جديد</span>' : ''}
                 <button class="wishlist-btn"><i class="far fa-heart"></i></button>
             </div>
             <div class="product-info">
-                <h3 class="product-name">${product.name}</h3>
+                <h3 class="product-name">${product.name || 'منتج بدون اسم'}</h3>
                 <div class="product-price">
-                    <span class="current-price">${product.price} ر.س</span>
+                    <span class="current-price">${product.price || 0} ر.س</span>
                     ${product.oldPrice ? `<span class="old-price">${product.oldPrice} ر.س</span>` : ''}
                 </div>
                 <button class="btn primary-btn add-to-cart-btn" data-id="${product.id}">
@@ -166,9 +208,29 @@ export function renderProducts() {
     }
 }
 
-// تحديث عدادات التصنيفات (لتحسين تجربة المستخدم)
+// تحديث عدادات التصنيفات
 export function updateCategoryCounts() {
-    // يمكن تنفيذ منطق تحديث عدد المنتجات لكل تصنيف هنا
+    // حساب عدد المنتجات في كل تصنيف
+    const counts = {
+        all: storeData.products.length,
+        featured: storeData.products.filter(p => p.isFeatured === true || p.category === 'featured').length,
+        new: storeData.products.filter(p => p.isNew === true || p.category === 'new').length,
+        sale: storeData.products.filter(p => p.isSale === true || p.category === 'sale').length,
+        best: storeData.products.filter(p => p.isBest === true || p.category === 'best').length
+    };
+    
+    // تحديث أزرار التصنيفات لتعرض العدد
+    document.querySelectorAll('.cat-btn, .filter-btn').forEach(btn => {
+        const filter = btn.dataset.filter;
+        if (filter && counts[filter] !== undefined) {
+            const countSpan = btn.querySelector('.count-badge') || document.createElement('span');
+            countSpan.className = 'count-badge';
+            countSpan.textContent = counts[filter];
+            if (!btn.querySelector('.count-badge')) {
+                btn.appendChild(countSpan);
+            }
+        }
+    });
 }
 
 // =====================================
@@ -177,14 +239,17 @@ export function updateCategoryCounts() {
 
 // معالجة البحث
 export function handleProductSearch(e) {
+    if (!e || !e.target) return;
     searchQuery = e.target.value.trim();
     renderProducts();
 }
 
 // معالجة التصفية
 export function handleFilterChange(e) {
+    if (!e || !e.target) return;
+    
     const newFilter = e.target.dataset.filter;
-    if (newFilter === currentFilter) return;
+    if (!newFilter || newFilter === currentFilter) return;
     
     currentFilter = newFilter;
     
@@ -201,6 +266,7 @@ export function handleFilterChange(e) {
 
 // معالجة الفرز
 export function handleSortChange(e) {
+    if (!e || !e.target) return;
     currentSort = e.target.value;
     renderProducts();
 }
@@ -211,37 +277,46 @@ export function handleSortChange(e) {
 
 // تحميل منتجات الأدمن
 export function loadAdminProducts() {
-    if (!isAdmin) return;
-    // منطق تحميل وعرض المنتجات في لوحة التحكم
+    if (!isAdmin || !currentUser) return;
+    console.log('تحميل منتجات الأدمن للمستخدم:', currentUser.uid);
+    // يمكن إضافة منطق تحميل وعرض المنتجات في لوحة التحكم هنا
 }
 
 // ملء نموذج الإعدادات
 export function fillSettingsForm() {
-    if (!isAdmin) return;
+    if (!isAdmin || !currentUser) return;
     
-    document.getElementById('storeNameInput').value = storeData.settings.storeName;
-    document.getElementById('whatsappInput').value = storeData.settings.whatsapp;
-    document.getElementById('phoneInput').value = storeData.settings.phone;
-    document.getElementById('descriptionInput').value = storeData.settings.description;
+    const storeNameInput = document.getElementById('storeNameInput');
+    const whatsappInput = document.getElementById('whatsappInput');
+    const phoneInput = document.getElementById('phoneInput');
+    const descriptionInput = document.getElementById('descriptionInput');
+    
+    if (storeNameInput) storeNameInput.value = storeData.settings.storeName || '';
+    if (whatsappInput) whatsappInput.value = storeData.settings.whatsapp || '';
+    if (phoneInput) phoneInput.value = storeData.settings.phone || '';
+    if (descriptionInput) descriptionInput.value = storeData.settings.description || '';
 }
 
 // معالجة إرسال نموذج الإعدادات
 export async function handleSettingsSubmit(e) {
     e.preventDefault();
-    if (!isAdmin) {
+    
+    if (!isAdmin || !currentUser) {
         showCustomToast("ليس لديك صلاحية لتعديل الإعدادات", "error");
         return;
     }
     
     const form = e.target;
     const saveBtn = form.querySelector('button[type="submit"]');
+    if (!saveBtn) return;
+    
     showLoading(saveBtn);
     
     const newSettings = {
-        storeName: document.getElementById('storeNameInput').value,
-        whatsapp: document.getElementById('whatsappInput').value,
-        phone: document.getElementById('phoneInput').value,
-        description: document.getElementById('descriptionInput').value,
+        storeName: document.getElementById('storeNameInput')?.value || '',
+        whatsapp: document.getElementById('whatsappInput')?.value || '',
+        phone: document.getElementById('phoneInput')?.value || '',
+        description: document.getElementById('descriptionInput')?.value || '',
     };
     
     try {

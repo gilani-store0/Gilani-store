@@ -57,6 +57,7 @@ export function showError(message, inputId = null) {
         // إزالة الخطأ بعد 5 ثوانٍ
         setTimeout(() => {
             errorDiv.classList.remove('active');
+            errorDiv.textContent = '';
         }, 5000);
     }
     
@@ -97,21 +98,31 @@ export function hideLoading(button) {
  * التحقق من صحة نموذج المصادقة
  * @param {string} email - البريد الإلكتروني
  * @param {string} password - كلمة المرور
+ * @param {string} displayName - الاسم (اختياري)
+ * @param {boolean} isSignUp - هل الوضع تسجيل حساب جديد؟
  * @returns {string[]} - قائمة بالأخطاء
  */
-export function validateAuthForm(email, password) {
+export function validateAuthForm(email, password, displayName = null, isSignUp = false) {
     const errors = [];
+    
     if (!email || !password) {
         errors.push("الرجاء إدخال البريد الإلكتروني وكلمة المرور");
     }
+    
+    if (isSignUp && !displayName) {
+        errors.push("الرجاء إدخال اسمك الكامل");
+    }
+    
     if (password && password.length < 6) {
         errors.push("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
     }
+    
     // تحقق بسيط من تنسيق البريد الإلكتروني
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (email && !emailRegex.test(email)) {
         errors.push("البريد الإلكتروني غير صالح");
     }
+    
     return errors;
 }
 
