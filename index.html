@@ -79,9 +79,24 @@
                     </div>
                     <div class="form-group">
                         <input type="password" id="passwordInput" placeholder="كلمة المرور" required>
+                        <button type="button" id="togglePassword" class="password-toggle">
+                            <i class="fas fa-eye"></i>
+                        </button>
                     </div>
-                    <button type="submit" id="signInWithEmailBtn" class="submit-btn">تسجيل الدخول</button>
-                    <button type="button" id="backToOptions" class="back-btn">العودة</button>
+                    <div class="form-actions">
+                        <button type="submit" id="signInWithEmailBtn" class="submit-btn">
+                            <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
+                        </button>
+                        <button type="button" id="signUpWithEmailBtn" class="secondary-btn">
+                            <i class="fas fa-user-plus"></i> إنشاء حساب
+                        </button>
+                        <button type="button" id="forgotPasswordBtn" class="text-btn">
+                            نسيت كلمة المرور؟
+                        </button>
+                    </div>
+                    <button type="button" id="backToOptions" class="back-btn">
+                        <i class="fas fa-arrow-right"></i> العودة
+                    </button>
                 </form>
             </div>
 
@@ -98,11 +113,12 @@
             <div class="top-bar">
                 <div class="search-container">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="productSearch" placeholder="ابحث عن عطر أو منتج...">
+                    <input type="text" id="productSearchHeader" placeholder="ابحث عن عطر أو منتج...">
                 </div>
                 <div class="user-actions">
                     <button id="userToggle" class="icon-btn"><i class="far fa-user"></i></button>
                     <button id="adminToggle" class="icon-btn hidden"><i class="fas fa-cog"></i></button>
+                    <button id="menuToggle" class="icon-btn mobile-only"><i class="fas fa-bars"></i></button>
                 </div>
             </div>
         </header>
@@ -121,7 +137,6 @@
             <div class="sidebar-content">
                 <a href="#home" class="sidebar-link active"><i class="fas fa-home"></i> الرئيسية</a>
                 <a href="#products" class="sidebar-link"><i class="fas fa-store"></i> المنتجات</a>
-                <a href="#categories" class="sidebar-link"><i class="fas fa-list"></i> الأقسام</a>
                 <a href="#contact" class="sidebar-link"><i class="fas fa-phone"></i> اتصل بنا</a>
                 <div class="sidebar-actions">
                     <a href="#" id="mobileWhatsappLink" target="_blank" class="whatsapp-sidebar-btn">
@@ -148,7 +163,7 @@
                     <p class="hero-description">اكتشف تشكيلتنا الحصرية من أفضل العطور ومستحضرات التجميل الأصلية مع خدمة توصيل سريعة.</p>
                     <div class="hero-buttons">
                         <a href="#products" class="btn primary-btn"><i class="fas fa-shopping-bag"></i> تصفح المنتجات</a>
-                        <a href="#contact" class="btn outline-btn"><i class="fab fa-whatsapp"></i> تواصل معنا</a>
+                        <a href="#" id="contactWhatsappLink" class="btn outline-btn"><i class="fab fa-whatsapp"></i> تواصل معنا</a>
                     </div>
                 </div>
             </div>
@@ -227,7 +242,7 @@
                         </div>
                     </div>
                     <div class="whatsapp-contact">
-                        <a href="#" id="contactWhatsappLink" target="_blank" class="whatsapp-contact-btn">
+                        <a href="#" id="contactWhatsappBtn" target="_blank" class="whatsapp-contact-btn">
                             <i class="fab fa-whatsapp"></i>
                             <span>تواصل معنا عبر واتساب</span>
                         </a>
