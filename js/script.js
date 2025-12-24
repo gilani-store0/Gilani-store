@@ -181,6 +181,14 @@ function renderProducts() {
                 <h3 class="product-name">${product.name}</h3>
                 ${product.description ? `<p class="product-description">${product.description}</p>` : ''}
                 <p class="product-price">${formatPrice(product.price)}</p>
+                <div class="product-stock-info">
+                    <small><i class="fas fa-cubes"></i> المتوفر: ${product.stock || 0}</small>
+                </div>
+                <div class="product-quantity-selector">
+                    <button onclick="changeQty(${product.id}, -1)"><i class="fas fa-minus"></i></button>
+                    <input type="number" id="qty-${product.id}" value="1" min="1" max="${product.stock || 99}" readonly>
+                    <button onclick="changeQty(${product.id}, 1)"><i class="fas fa-plus"></i></button>
+                </div>
                 <div class="product-actions">
                     <button class="buy-btn" onclick="orderViaWhatsapp(${product.id})">
                         <i class="fab fa-whatsapp"></i> اطلب الآن
@@ -204,10 +212,15 @@ function orderViaWhatsapp(productId) {
         return;
     }
     
+    const qtyInput = document.getElementById(`qty-${productId}`);
+    const quantity = qtyInput ? parseInt(qtyInput.value) : 1;
+    const totalPrice = product.price * quantity;
+    
     const message = `مرحباً ${storeData.settings.storeName}، أود طلب المنتج التالي:
 
 المنتج: ${product.name}
-السعر: ${formatPrice(product.price)}
+الكمية: ${quantity}
+السعر الإجمالي: ${formatPrice(totalPrice)}
 الفئة: ${storeData.categories.find(c => c.id === product.category)?.name || product.category}
 ${product.description ? `الوصف: ${product.description}` : ''}
 
@@ -436,6 +449,9 @@ function loadAdminProducts() {
                 </div>
             </div>
             <div class="product-actions-small">
+                <button class="edit-btn" onclick="openEditModal(${product.id})">
+                    <i class="fas fa-edit"></i>
+                </button>
                 <button class="delete-btn" onclick="deleteProduct(${product.id})">
                     <i class="fas fa-trash"></i>
                 </button>
@@ -478,13 +494,18 @@ function handleAddProduct(e) {
         return;
     }
     
+    // تحديد الصورة (سواء مرفوعة أو رابط)
+    const finalImage = document.getElementById('pImageBase64').value || image;
+    const stock = parseInt(document.getElementById('pStock').value) || 0;
+
     // إنشاء المنتج الجديد
     const newProduct = {
         id: Date.now(),
         name: name,
         price: price,
         category: category,
-        image: image,
+        image: finalImage,
+        stock: stock,
         badge: badge || null,
         description: description || null,
         createdAt: new Date().toISOString()
@@ -497,6 +518,7 @@ function handleAddProduct(e) {
     if (saveStoreData()) {
         // إعادة تعيين النموذج
         e.target.reset();
+        removeSelectedImage();
         
         // تحديث الواجهات
         renderProducts();
@@ -677,3 +699,125 @@ function showToast(message, type = "info") {
         stopOnFocus: true
     }).showToast();
 }
+
+
+// وظائف معالجة الصور
+document.addEventListener('DOMContentLoaded', function() {
+    const imageFileInput = document.getElementById('pImageFile');
+    if (imageFileInput) {
+        imageFileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // التحقق من حجم الملف (أقصى حد 2 ميجابايت لتجنب تجاوز مساحة localStorage)
+            if (file.size > 2 * 1024 * 1024) {
+                showToast("حجم الصورة كبير جداً (الحد الأقصى 2 ميجابايت)", "error");
+                this.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const base64String = event.target.result;
+                document.getElementById('pImageBase64').value = base64String;
+                
+                const preview = document.getElementById('imagePreview');
+                const placeholder = document.querySelector('.upload-placeholder');
+                
+                preview.querySelector('img').src = base64String;
+                preview.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+});
+
+window.removeSelectedImage = function() {
+    const imageFileInput = document.getElementById('pImageFile');
+    const imageBase64Input = document.getElementById('pImageBase64');
+    const preview = document.getElementById('imagePreview');
+    const placeholder = document.querySelector('.upload-placeholder');
+    
+    if (imageFileInput) imageFileInput.value = '';
+    if (imageBase64Input) imageBase64Input.value = '';
+    if (preview) {
+        preview.classList.add('hidden');
+        preview.querySelector('img').src = '';
+    }
+    if (placeholder) placeholder.classList.remove('hidden');
+};
+
+// وظائف تعديل المنتج
+window.openEditModal = function(id) {
+    const product = storeData.products.find(p => p.id == id);
+    if (!product) return;
+
+    document.getElementById('editPId').value = product.id;
+    document.getElementById('editPName').value = product.name;
+    document.getElementById('editPPrice').value = product.price;
+    document.getElementById('editPCategory').value = product.category;
+    document.getElementById('editPStock').value = product.stock || 0;
+    document.getElementById('editPImage').value = product.image.startsWith('data:') ? '' : product.image;
+    document.getElementById('editPDesc').value = product.description || '';
+
+    document.getElementById('editProductModal').classList.remove('hidden');
+};
+
+window.closeEditModal = function() {
+    document.getElementById('editProductModal').classList.add('hidden');
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    const editForm = document.getElementById('editProductForm');
+    if (editForm) {
+        editForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('editPId').value;
+            const name = document.getElementById('editPName').value.trim();
+            const price = parseFloat(document.getElementById('editPPrice').value);
+            const category = document.getElementById('editPCategory').value;
+            const stock = parseInt(document.getElementById('editPStock').value) || 0;
+            const image = document.getElementById('editPImage').value.trim();
+            const description = document.getElementById('editPDesc').value.trim();
+
+            const index = storeData.products.findIndex(p => p.id == id);
+            if (index !== -1) {
+                // تحديث البيانات مع الحفاظ على الصورة القديمة إذا لم يتم إدخال رابط جديد
+                const oldImage = storeData.products[index].image;
+                storeData.products[index] = {
+                    ...storeData.products[index],
+                    name,
+                    price,
+                    category,
+                    stock,
+                    image: image || oldImage,
+                    description
+                };
+
+                if (saveStoreData()) {
+                    renderProducts();
+                    loadAdminProducts();
+                    updateCategoryCounts();
+                    closeEditModal();
+                    showToast("تم تحديث المنتج بنجاح", "success");
+                }
+            }
+        });
+    }
+});
+
+// وظيفة تغيير الكمية
+window.changeQty = function(id, delta) {
+    const input = document.getElementById(`qty-${id}`);
+    if (!input) return;
+    
+    let val = parseInt(input.value) + delta;
+    const max = parseInt(input.getAttribute('max')) || 99;
+    
+    if (val < 1) val = 1;
+    if (val > max) val = max;
+    
+    input.value = val;
+};
