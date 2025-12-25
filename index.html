@@ -2,7 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- منع التكبير نهائياً -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#C89B3C">
     <meta name="description" content="متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية">
     <title>جمالك | متجر مستحضرات التجميل والعطور</title>
@@ -821,5 +822,152 @@
     <script type="module" src="js/cart.js"></script>
     <script type="module" src="js/admin.js"></script>
     <script type="module" src="js/main.js"></script>
+    
+    <!-- سكربت الإصلاح السريع المعدل -->
+    <script>
+    // حل سريع لأزرار المصادقة غير المستجيبة
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('تهيئة سريعة لأزرار المصادقة...');
+        
+        // زر Google
+        const googleBtn = document.getElementById('googleSignInBtn');
+        if (googleBtn) {
+            googleBtn.addEventListener('click', function() {
+                console.log('تم النقر على Google');
+                alert('تسجيل الدخول بـ Google سيعمل عند تفعيل Firebase');
+            });
+        }
+        
+        // زر البريد الإلكتروني
+        const emailBtn = document.getElementById('showEmailFormBtn');
+        if (emailBtn) {
+            emailBtn.addEventListener('click', function() {
+                console.log('تم النقر على البريد الإلكتروني');
+                document.getElementById('authOptions').classList.add('hidden');
+                document.getElementById('emailAuthSection').classList.remove('hidden');
+            });
+        }
+        
+        // زر الضيف - ينتقل إلى التطبيق الرئيسي مباشرة
+        const guestBtn = document.getElementById('guestSignInBtn');
+        if (guestBtn) {
+            guestBtn.addEventListener('click', function() {
+                console.log('تم النقر على الضيف');
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                
+                // تحديث السنة الحالية
+                const yearEl = document.getElementById('currentYear');
+                if (yearEl) yearEl.textContent = new Date().getFullYear();
+                
+                // إظهار المنتجات الافتراضية
+                const productsGrid = document.getElementById('productsGrid');
+                if (productsGrid) {
+                    productsGrid.innerHTML = `
+                        <div class="product-card">
+                            <span class="product-badge new">جديد</span>
+                            <img src="https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=300&h=300&fit=crop" 
+                                 alt="عطر فاخر" class="product-image">
+                            <div class="product-info">
+                                <h3 class="product-name">عطر فاخر</h3>
+                                <div class="product-price">
+                                    <span class="current-price">150 ر.س</span>
+                                </div>
+                                <button class="btn primary-btn add-to-cart-btn">
+                                    <i class="fas fa-cart-plus"></i> أضف للسلة
+                                </button>
+                            </div>
+                        </div>
+                        <div class="product-card">
+                            <span class="product-badge sale">عرض خاص</span>
+                            <img src="https://images.unsplash.com/photo-1526947425960-945c6e72858f?q=80&w=300&h=300&fit=crop" 
+                                 alt="مكياج سائل" class="product-image">
+                            <div class="product-info">
+                                <h3 class="product-name">مكياج سائل</h3>
+                                <div class="product-price">
+                                    <span class="current-price">85 ر.س</span>
+                                    <span class="old-price">120 ر.س</span>
+                                </div>
+                                <button class="btn primary-btn add-to-cart-btn">
+                                    <i class="fas fa-cart-plus"></i> أضف للسلة
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // إضافة أحداث لأزرار السلة
+                    productsGrid.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            alert('تم إضافة المنتج إلى السلة');
+                        });
+                    });
+                }
+                
+                // إعداد أحداث القائمة المتنقلة
+                const menuToggle = document.getElementById('menuToggle');
+                const closeNav = document.getElementById('closeNav');
+                const mobileNav = document.getElementById('mobileNav');
+                
+                if (menuToggle && mobileNav) {
+                    menuToggle.addEventListener('click', function() {
+                        mobileNav.classList.toggle('active');
+                    });
+                }
+                
+                if (closeNav && mobileNav) {
+                    closeNav.addEventListener('click', function() {
+                        mobileNav.classList.remove('active');
+                    });
+                }
+                
+                // إعداد أحداث التنقل
+                document.querySelectorAll('[data-section]').forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const section = this.dataset.section;
+                        alert(`سيتم فتح قسم: ${section}`);
+                        mobileNav.classList.remove('active');
+                    });
+                });
+                
+                // زر ابدأ التسوق
+                const startShoppingBtn = document.getElementById('startShoppingBtn');
+                if (startShoppingBtn) {
+                    startShoppingBtn.addEventListener('click', function() {
+                        alert('بدء التسوق');
+                    });
+                }
+            });
+        }
+        
+        // زر تبديل كلمة المرور
+        const togglePassBtn = document.getElementById('togglePassword');
+        if (togglePassBtn) {
+            togglePassBtn.addEventListener('click', function() {
+                const passwordInput = document.getElementById('passwordInput');
+                const icon = this.querySelector('i');
+                
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.classList.replace('fa-eye', 'fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.classList.replace('fa-eye-slash', 'fa-eye');
+                }
+            });
+        }
+        
+        // زر العودة
+        const backToOptionsBtn = document.getElementById('backToOptions');
+        if (backToOptionsBtn) {
+            backToOptionsBtn.addEventListener('click', function() {
+                document.getElementById('emailAuthSection').classList.add('hidden');
+                document.getElementById('authOptions').classList.remove('hidden');
+            });
+        }
+        
+        console.log('تم تهيئة جميع الأزرار بنجاح');
+    });
+    </script>
 </body>
 </html>
