@@ -22,19 +22,8 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💄</text></svg>">
 </head>
 <body>
-    <!-- شاشة التحميل الأولية -->
-    <div id="initialLoader" class="initial-loader">
-        <div class="loader-content">
-            <div class="logo-circle">
-                <span class="logo-text">ج</span>
-            </div>
-            <div class="loading-spinner"></div>
-            <p>جاري التحميل...</p>
-        </div>
-    </div>
-
-    <!-- شاشة المصادقة -->
-    <div id="authScreen" class="auth-screen hidden">
+    <!-- شاشة المصادقة - تظهر مباشرة -->
+    <div id="authScreen" class="auth-screen">
         <div class="auth-card">
             <div class="auth-header">
                 <div class="logo-circle">
@@ -119,7 +108,7 @@
         </div>
     </div>
 
-    <!-- التطبيق الرئيسي -->
+    <!-- التطبيق الرئيسي - مخفي في البداية -->
     <div id="mainApp" class="hidden">
         <!-- الهيدر -->
         <header class="main-header">
