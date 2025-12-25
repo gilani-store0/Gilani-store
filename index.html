@@ -116,29 +116,16 @@
                         <button id="adminToggle" class="icon-btn admin-only hidden" title="لوحة التحكم">
                             <i class="fas fa-cog"></i>
                         </button>
-                        <div class="user-profile-dropdown">
-                            <button id="userToggle" class="icon-btn">
-                                <img id="userAvatar" src="https://ui-avatars.com/api/?name=User&background=C89B3C&color=fff" alt="User" class="user-avatar-img hidden">
-                                <i id="userIcon" class="far fa-user"></i>
-                            </button>
-                            <div id="userDropdown" class="dropdown-menu hidden">
-                                <div class="dropdown-header">
-                                    <p id="dropdownUserName" class="user-name">مستخدم</p>
-                                    <p id="dropdownUserEmail" class="user-email">email@example.com</p>
-                                </div>
-                                <div class="dropdown-divider"></div>
-                                <a href="#profile" id="profileLink" class="dropdown-item">
-                                    <i class="fas fa-user-circle"></i> حسابي
-                                </a>
-                                <a href="#orders" class="dropdown-item">
-                                    <i class="fas fa-shopping-bag"></i> طلباتي
-                                </a>
-                                <div class="dropdown-divider"></div>
-                                <button id="logoutBtn" class="dropdown-item logout-item">
-                                    <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
-                                </button>
-                            </div>
-                        </div>
+                        <button id="ordersLink" class="icon-btn hidden" title="طلباتي">
+                            <i class="fas fa-shopping-bag"></i>
+                        </button>
+                        <button id="logoutBtn" class="icon-btn logout-item hidden" title="تسجيل الخروج">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                        <button id="userToggle" class="icon-btn" title="حسابي">
+                            <img id="userAvatar" src="https://ui-avatars.com/api/?name=User&background=C89B3C&color=fff" alt="User" class="user-avatar-img hidden">
+                            <i id="userIcon" class="far fa-user"></i>
+                        </button>
                         <button id="menuToggle" class="icon-btn mobile-only"><i class="fas fa-bars"></i></button>
                     </div>
                 </div>
@@ -215,6 +202,21 @@
                     <div class="products-grid" id="productsGrid">
                         <!-- المنتجات تحمل هنا -->
                         <div class="loading-spinner"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- صفحة الطلبات -->
+            <section id="ordersSection" class="orders-section hidden">
+                <div class="container">
+                    <h2 class="section-title"><i class="fas fa-shopping-bag"></i> طلباتي</h2>
+                    <p class="section-subtitle">تتبع حالة طلباتك السابقة والحالية</p>
+                    
+                    <div id="ordersList" class="orders-list">
+                        <div class="empty-state">
+                            <i class="fas fa-box-open"></i>
+                            <p>لم تقم بتقديم أي طلبات بعد.</p>
+                        </div>
                     </div>
                 </div>
             </section>
