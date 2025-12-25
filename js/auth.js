@@ -238,6 +238,9 @@ export function onAuthChange(callback) {
             AuthState.isAdmin = userData ? userData.isAdmin === true : false;
         } else {
             AuthState.isAdmin = false;
+            // إخفاء أزرار الطلبات وتسجيل الخروج في الهيدر
+            document.getElementById('ordersLink')?.classList.add('hidden');
+            document.getElementById('logoutBtn')?.classList.add('hidden');
         }
         callback(AuthState);
     });

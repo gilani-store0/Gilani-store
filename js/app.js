@@ -71,14 +71,13 @@ function setupEventListeners() {
         UI.showAuthScreen();
     });
 
-    // القائمة المنسدلة للمستخدم
-    document.getElementById('userToggle')?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        UI.toggleUserDropdown();
-    });
-
-    document.addEventListener('click', () => {
-        UI.closeUserDropdown();
+    // زر المستخدم (للانتقال إلى صفحة الحساب)
+    document.getElementById('userToggle')?.addEventListener('click', () => {
+        if (AuthState.currentUser) {
+            UI.showSection('profileSection');
+        } else {
+            UI.showAuthScreen();
+        }
     });
 
     // تسجيل الخروج
@@ -93,10 +92,9 @@ function setupEventListeners() {
     });
 
     // التنقل بين الأقسام
-    document.getElementById('profileLink')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        UI.showSection('profileSection');
-        UI.closeUserDropdown();
+    // (تم نقل منطق زر الحساب إلى userToggle)
+    document.getElementById('ordersLink')?.addEventListener('click', () => {
+        UI.showSection('ordersSection');
     });
 
     document.getElementById('adminToggle')?.addEventListener('click', () => {
@@ -220,7 +218,7 @@ function setupAdminControls(isAdmin) {
                 
                 adminSection.classList.toggle('hidden');
                 
-                if (!isHidden) {
+                if (isHidden) {
                     // إذا كانت مخفية، اظهرها
                     adminSection.scrollIntoView({ behavior: 'smooth' });
                 }

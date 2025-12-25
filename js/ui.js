@@ -30,20 +30,11 @@ export const UI = {
         if (yearEl) yearEl.textContent = new Date().getFullYear();
     },
 
-    // تبديل القائمة المنسدلة للمستخدم
-    toggleUserDropdown() {
-        const dropdown = document.getElementById('userDropdown');
-        dropdown.classList.toggle('hidden');
-    },
 
-    // إغلاق القائمة المنسدلة للمستخدم
-    closeUserDropdown() {
-        document.getElementById('userDropdown').classList.add('hidden');
-    },
 
     // إظهار قسم معين وإخفاء البقية
     showSection(sectionId) {
-        const sections = ['home', 'products', 'adminSection', 'profileSection'];
+        const sections = ['home', 'products', 'adminSection', 'profileSection', 'ordersSection'];
         sections.forEach(id => {
             const el = document.getElementById(id);
             if (el) {
@@ -68,8 +59,11 @@ export const UI = {
         const photo = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=C89B3C&color=fff`;
 
         // تحديث الهيدر
-        document.getElementById('dropdownUserName').textContent = name;
-        document.getElementById('dropdownUserEmail').textContent = email;
+        const ordersLink = document.getElementById('ordersLink');
+        const logoutBtn = document.getElementById('logoutBtn');
+        
+        if (ordersLink) ordersLink.classList.remove('hidden');
+        if (logoutBtn) logoutBtn.classList.remove('hidden');
         const userAvatar = document.getElementById('userAvatar');
         const userIcon = document.getElementById('userIcon');
         
