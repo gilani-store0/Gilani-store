@@ -30,21 +30,32 @@ export const UI = {
         if (yearEl) yearEl.textContent = new Date().getFullYear();
     },
 
-
-
     // إظهار قسم معين وإخفاء البقية
     showSection(sectionId) {
-        const sections = ['home', 'products', 'adminSection', 'profileSection', 'ordersSection'];
+        const sections = [
+            'home', 'productsSection', 'adminSection', 
+            'profileSection', 'ordersSection', 'cartSection', 'contactSection'
+        ];
+        
         sections.forEach(id => {
             const el = document.getElementById(id);
             if (el) {
-                if (id === sectionId || (sectionId === 'home' && id === 'products')) {
+                if (id === sectionId) {
                     el.classList.remove('hidden');
-                } else if (id === 'adminSection' || id === 'profileSection') {
+                } else {
                     el.classList.add('hidden');
                 }
             }
         });
+        
+        // إظهار الأقسام التي لا تحتوي على Section
+        if (sectionId === 'home') {
+            const servicesSection = document.querySelector('.services-section');
+            const contactSection = document.getElementById('contactSection');
+            
+            if (servicesSection) servicesSection.classList.remove('hidden');
+            if (contactSection) contactSection.classList.remove('hidden');
+        }
         
         // التمرير للأعلى عند تغيير القسم
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -59,19 +70,11 @@ export const UI = {
         const photo = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=C89B3C&color=fff`;
 
         // تحديث الهيدر
-        const ordersLink = document.getElementById('ordersLink');
+        const ordersBtn = document.getElementById('ordersBtn');
         const logoutBtn = document.getElementById('logoutBtn');
         
-        if (ordersLink) ordersLink.classList.remove('hidden');
+        if (ordersBtn) ordersBtn.classList.remove('hidden');
         if (logoutBtn) logoutBtn.classList.remove('hidden');
-        const userAvatar = document.getElementById('userAvatar');
-        const userIcon = document.getElementById('userIcon');
-        
-        if (user.photoURL || user.displayName) {
-            userAvatar.src = photo;
-            userAvatar.classList.remove('hidden');
-            userIcon.classList.add('hidden');
-        }
 
         // تحديث صفحة الحساب
         document.getElementById('profileName').textContent = name;
@@ -79,6 +82,12 @@ export const UI = {
         document.getElementById('profileAvatar').src = photo;
         document.getElementById('editDisplayName').value = name;
         
+        // تحديث الجوال
+        document.getElementById('mobileUserName').textContent = name;
+        document.getElementById('mobileUserEmail').textContent = email;
+        document.getElementById('mobileUserAvatar').src = photo;
+
+        // تحديث بادجة الأدمن
         const adminBadge = document.getElementById('adminBadge');
         if (adminBadge) {
             if (isAdmin) {
@@ -87,21 +96,6 @@ export const UI = {
                 adminBadge.classList.add('hidden');
             }
         }
-
-        // تحديث عناصر الأدمن في الهيدر والقائمة
-        document.querySelectorAll('.admin-only').forEach(el => {
-            if (isAdmin) {
-                el.classList.remove('hidden');
-            } else {
-                el.classList.add('hidden');
-            }
-        });
-
-        // تحديث الجوال
-        document.getElementById('mobileUserName').textContent = name;
-        document.getElementById('mobileUserAvatar').src = photo;
-        document.getElementById('mobileUserInfo').classList.remove('hidden');
-        document.getElementById('mobileUserBtn').classList.add('hidden');
     },
 
     // تبديل قائمة الجوال
@@ -147,7 +141,7 @@ export const UI = {
         }
     },
 
-    // إظهار نموذج البريد (تسجيل الدخول/التسجيل)
+    // إظهار نموذج البريد
     showEmailForm() {
         document.getElementById('authOptions').classList.add('hidden');
         document.getElementById('emailAuthSection').classList.remove('hidden');
@@ -155,10 +149,7 @@ export const UI = {
         document.getElementById('resetPasswordSection').classList.add('hidden');
         
         // التأكد من أننا في وضع تسجيل الدخول عند العودة
-        if (document.getElementById('displayNameInput').classList.contains('hidden')) {
-            // لا تفعل شيئاً، نحن في وضع تسجيل الدخول
-        } else {
-            // إذا كنا في وضع التسجيل، نعود لوضع تسجيل الدخول
+        if (!document.getElementById('displayNameInput').classList.contains('hidden')) {
             this.toggleAuthMode();
         }
     },
@@ -185,12 +176,16 @@ export const UI = {
         if (!grid) return;
         
         if (!products || products.length === 0) {
-            grid.innerHTML = '<p class="no-products">لا توجد منتجات حالياً.</p>';
+            grid.innerHTML = '<div class="empty-state"><i class="fas fa-box-open"></i><p>لا توجد منتجات حالياً.</p></div>';
             return;
         }
         
         grid.innerHTML = products.map(product => `
             <div class="product-card" data-id="${product.id}">
+                ${product.isNew ? '<span class="product-badge new">جديد</span>' : ''}
+                ${product.isSale ? '<span class="product-badge sale">عرض خاص</span>' : ''}
+                ${product.isBest ? '<span class="product-badge best">الأفضل</span>' : ''}
+                
                 <img src="${product.image || 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=300&h=300&fit=crop'}" 
                      alt="${product.name || 'منتج'}" 
                      class="product-image">

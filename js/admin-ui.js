@@ -7,13 +7,14 @@ import {
     getAllUsers, 
     updateUserAdminStatus, 
     getStoreStats,
-    getSiteSettings, // إضافة جلب الإعدادات
-    updateSiteSettings, // إضافة تحديث الإعدادات
+    getSiteSettings,
+    updateSiteSettings,
     formatDate,
     getProductImageUrl,
     setupConfirmation,
     executePendingAction,
-    clearConfirmation
+    clearConfirmation,
+    uploadFile
 } from './admin.js';
 
 export const AdminUI = {
@@ -27,16 +28,16 @@ export const AdminUI = {
 
     setupEventListeners() {
         // تبديل التبويبات
-
-        // معاينة الصورة عند اختيار ملف
-        document.getElementById('productImageFile')?.addEventListener('change', (e) => {
-            this.previewImage(e.target.files[0]);
-        });
         document.querySelectorAll('.admin-tab').forEach(tab => {
             tab.addEventListener('click', (e) => {
                 const tabName = e.currentTarget.dataset.tab;
                 this.switchTab(tabName);
             });
+        });
+
+        // معاينة الصورة عند اختيار ملف
+        document.getElementById('productImageFile')?.addEventListener('change', (e) => {
+            this.previewImage(e.target.files[0]);
         });
 
         // إضافة منتج
@@ -47,8 +48,9 @@ export const AdminUI = {
         // إغلاق المودال
         document.querySelectorAll('.close-modal').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.getElementById('productModal').classList.add('hidden');
-                document.getElementById('confirmModal').classList.add('hidden');
+                document.getElementById('productModal')?.classList.add('hidden');
+                document.getElementById('confirmModal')?.classList.add('hidden');
+                document.getElementById('messageModal')?.classList.add('hidden');
             });
         });
 
@@ -85,6 +87,7 @@ export const AdminUI = {
         // تحديث المحتوى
         document.querySelectorAll('.tab-pane').forEach(pane => {
             pane.classList.toggle('active', pane.id === `${tabName}Tab`);
+            pane.classList.toggle('hidden', pane.id !== `${tabName}Tab`);
         });
 
         await this.loadTabContent(tabName);
@@ -99,7 +102,7 @@ export const AdminUI = {
                 await this.renderUsersTable();
                 break;
             case 'orders':
-                // يمكن إضافة إدارة الطلبات لاحقاً
+                await this.renderOrdersTable();
                 break;
             case 'settings':
                 await this.renderSiteSettings();
@@ -115,7 +118,6 @@ export const AdminUI = {
     },
 
     // ============ إعدادات الموقع ============
-
     async renderSiteSettings() {
         const settings = await getSiteSettings();
         document.getElementById('storeNameInput').value = settings.storeName || '';
@@ -139,23 +141,24 @@ export const AdminUI = {
         const result = await updateSiteSettings(settingsData);
 
         if (result.success) {
-            alert('تم حفظ إعدادات الموقع بنجاح!');
-            // يمكن تحديث الواجهة الرئيسية هنا إذا لزم الأمر
+            this.showMessage('تم الحفظ', 'تم حفظ إعدادات الموقع بنجاح!', 'success');
+            location.reload();
         } else {
-            alert('حدث خطأ أثناء حفظ الإعدادات: ' + result.error);
+            this.showMessage('خطأ', 'حدث خطأ أثناء حفظ الإعدادات: ' + result.error, 'error');
         }
     },
 
+    // ============ المنتجات ============
     async renderProductsTable() {
         const tableBody = document.getElementById('productsTable');
         if (!tableBody) return;
 
-        tableBody.innerHTML = '<tr><td colspan="6" class="text-center">جاري التحميل...</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="7" class="text-center">جاري التحميل...</td></tr>';
         
         const products = await loadAllProducts();
         
         if (products.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="6" class="text-center">لا توجد منتجات حالياً</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="7" class="text-center">لا توجد منتجات حالياً</td></tr>';
             return;
         }
 
@@ -169,6 +172,7 @@ export const AdminUI = {
                     </div>
                 </td>
                 <td>${product.price} ر.س</td>
+                <td>${product.stock || 0}</td>
                 <td>
                     <span class="product-status ${product.isActive !== false ? 'status-active' : 'status-inactive'}">
                         ${product.isActive !== false ? 'نشط' : 'غير نشط'}
@@ -200,12 +204,14 @@ export const AdminUI = {
                     if (result.success) {
                         this.renderProductsTable();
                         this.updateStats();
+                        this.showMessage('تم الحذف', 'تم حذف المنتج بنجاح', 'success');
                     }
                 });
             });
         });
     },
 
+    // ============ المستخدمين ============
     async renderUsersTable() {
         const container = document.getElementById('usersTable');
         if (!container) return;
@@ -215,7 +221,7 @@ export const AdminUI = {
         const users = await getAllUsers();
         
         if (users.length === 0) {
-            container.innerHTML = '<p class="text-center">لا يوجد مستخدمين مسجلين</p>';
+            container.innerHTML = '<div class="empty-state"><i class="fas fa-users"></i><p>لا يوجد مستخدمين مسجلين</p></div>';
             return;
         }
 
@@ -235,8 +241,10 @@ export const AdminUI = {
                         ${users.map(user => `
                             <tr>
                                 <td>
-                                    <div class="user-cell">
-                                        <img src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'U')}" class="product-thumb" style="border-radius: 50%">
+                                    <div class="user-cell" style="display: flex; align-items: center; gap: 10px;">
+                                        <img src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'U')}" 
+                                             class="product-thumb" 
+                                             style="border-radius: 50%; width: 40px; height: 40px;">
                                         <span>${user.displayName || 'مستخدم'}</span>
                                     </div>
                                 </td>
@@ -248,7 +256,9 @@ export const AdminUI = {
                                 </td>
                                 <td>${formatDate(user.lastLogin)}</td>
                                 <td>
-                                    <button class="btn small-btn ${user.isAdmin ? 'danger-btn' : 'success-btn'} toggle-admin" data-id="${user.id}" data-admin="${user.isAdmin}">
+                                    <button class="btn small-btn ${user.isAdmin ? 'danger-btn' : 'success-btn'} toggle-admin" 
+                                            data-id="${user.id}" 
+                                            data-admin="${user.isAdmin}">
                                         ${user.isAdmin ? 'إلغاء مسؤول' : 'تعيين مسؤول'}
                                     </button>
                                 </td>
@@ -264,14 +274,41 @@ export const AdminUI = {
             btn.addEventListener('click', async () => {
                 const userId = btn.dataset.id;
                 const currentIsAdmin = btn.dataset.admin === 'true';
-                const result = await updateUserAdminStatus(userId, !currentIsAdmin);
-                if (result.success) {
-                    this.renderUsersTable();
+                const confirmMsg = currentIsAdmin 
+                    ? 'هل أنت متأكد من إلغاء صلاحية المسؤول عن هذا المستخدم؟' 
+                    : 'هل أنت متأكد من تعيين هذا المستخدم كمسؤول؟';
+                
+                if (confirm(confirmMsg)) {
+                    const result = await updateUserAdminStatus(userId, !currentIsAdmin);
+                    if (result.success) {
+                        this.showMessage('تم التحديث', 'تم تحديث صلاحيات المستخدم بنجاح', 'success');
+                        this.renderUsersTable();
+                    }
                 }
             });
         });
     },
 
+    // ============ الطلبات ============
+    async renderOrdersTable() {
+        const container = document.getElementById('ordersTable');
+        if (!container) return;
+
+        container.innerHTML = '<div class="loading-spinner"></div>';
+        
+        // محاكاة بيانات الطلبات
+        setTimeout(() => {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-shopping-cart"></i>
+                    <p>لا توجد طلبات حتى الآن</p>
+                    <small>ستظهر الطلبات هنا عندما يقوم العملاء بالشراء</small>
+                </div>
+            `;
+        }, 1000);
+    },
+
+    // ============ إدارة المنتجات ============
     showProductModal(productId = null, productData = null) {
         const modal = document.getElementById('productModal');
         const form = document.getElementById('productForm');
@@ -280,6 +317,12 @@ export const AdminUI = {
         form.reset();
         document.getElementById('editProductId').value = productId || '';
         title.textContent = productId ? 'تعديل المنتج' : 'إضافة منتج جديد';
+
+        // إعادة تعيين معاينة الصورة
+        document.getElementById('productImagePreview').classList.add('hidden');
+        document.getElementById('productImagePreview').src = '';
+        document.getElementById('productImageFile').value = '';
+        document.getElementById('productImage').value = '';
 
         if (productData) {
             document.getElementById('productName').value = productData.name || '';
@@ -293,11 +336,10 @@ export const AdminUI = {
             document.getElementById('isBest').checked = productData.isBest || false;
             document.getElementById('isActive').checked = productData.isActive !== false;
 
-            // عرض الصورة الحالية
-            this.displayImagePreview(productData.image);
-        } else {
-            // مسح المعاينة عند إضافة منتج جديد
-            this.displayImagePreview(null);
+            // عرض الصورة الحالية إذا كانت موجودة
+            if (productData.image) {
+                this.displayImagePreview(productData.image);
+            }
         }
 
         modal.classList.remove('hidden');
@@ -306,32 +348,43 @@ export const AdminUI = {
     async handleProductSubmit() {
         const productId = document.getElementById('editProductId').value;
         const imageFile = document.getElementById('productImageFile').files[0];
-        let imageUrl = document.getElementById('productImage').value; // URL الصورة الحالية أو القديمة
+        let imageUrl = document.getElementById('productImage').value;
 
         // 1. رفع الصورة الجديدة إذا وجدت
         if (imageFile) {
-            const uploadResult = await this.uploadProductImage(imageFile);
+            const fileName = `${Date.now()}_${imageFile.name}`;
+            const path = `product_images/${fileName}`;
+            const uploadResult = await uploadFile(imageFile, path);
+            
             if (uploadResult.success) {
                 imageUrl = uploadResult.url;
             } else {
-                alert('فشل رفع الصورة: ' + uploadResult.error);
+                this.showMessage('خطأ في الرفع', 'فشل رفع الصورة: ' + uploadResult.error, 'error');
                 return;
             }
         }
 
+        // 2. جمع بيانات المنتج
         const productData = {
             name: document.getElementById('productName').value,
             price: parseFloat(document.getElementById('productPrice').value),
-            image: imageUrl, // استخدام URL الصورة المحدث
+            image: imageUrl,
             description: document.getElementById('productDescription').value,
             category: document.getElementById('productCategory').value,
-            stock: parseInt(document.getElementById('productStock').value),
+            stock: parseInt(document.getElementById('productStock').value) || 0,
             isNew: document.getElementById('isNew').checked,
             isSale: document.getElementById('isSale').checked,
             isBest: document.getElementById('isBest').checked,
             isActive: document.getElementById('isActive').checked
         };
 
+        // 3. التحقق من البيانات المطلوبة
+        if (!productData.name || !productData.price) {
+            this.showMessage('بيانات ناقصة', 'الرجاء إدخال اسم المنتج والسعر', 'warning');
+            return;
+        }
+
+        // 4. حفظ البيانات
         let result;
         if (productId) {
             result = await updateExistingProduct(productId, productData);
@@ -343,12 +396,13 @@ export const AdminUI = {
             document.getElementById('productModal').classList.add('hidden');
             this.renderProductsTable();
             this.updateStats();
+            this.showMessage('تم الحفظ', productId ? 'تم تحديث المنتج بنجاح' : 'تم إضافة المنتج بنجاح', 'success');
         } else {
-            alert('حدث خطأ: ' + result.error);
+            this.showMessage('خطأ', 'حدث خطأ: ' + result.error, 'error');
         }
     },
 
-    // دوال مساعدة لرفع ومعاينة الصور
+    // ============ دوال مساعدة للصور ============
     previewImage(file) {
         if (file) {
             const reader = new FileReader();
@@ -372,10 +426,34 @@ export const AdminUI = {
         }
     },
 
-    async uploadProductImage(file) {
-        const fileName = `${Date.now()}_${file.name}`;
-        const path = `product_images/${fileName}`;
-        const { uploadFile } = await import('./admin.js'); // استيراد دالة الرفع
-        return uploadFile(file, path);
+    // ============ دوال مساعدة للرسائل ============
+    showMessage(title, text, type = 'info') {
+        const messageModal = document.getElementById('messageModal');
+        const messageIcon = document.getElementById('messageIcon');
+        const messageTitle = document.getElementById('messageTitle');
+        const messageText = document.getElementById('messageText');
+        
+        // تغيير الأيقونة حسب النوع
+        const icons = {
+            info: 'fas fa-info-circle',
+            success: 'fas fa-check-circle',
+            warning: 'fas fa-exclamation-triangle',
+            error: 'fas fa-times-circle'
+        };
+        
+        messageIcon.className = icons[type] || icons.info;
+        messageTitle.textContent = title;
+        messageText.textContent = text;
+        messageModal.classList.remove('hidden');
+        
+        // تغيير لون الأيقونة
+        const colors = {
+            info: '#17a2b8',
+            success: '#28a745',
+            warning: '#ffc107',
+            error: '#dc3545'
+        };
+        
+        messageIcon.style.color = colors[type] || colors.info;
     }
 };
