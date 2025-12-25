@@ -22,17 +22,16 @@ import {
     getDownloadURL 
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
 
-import { app } from './firebase.js';
+import { app, storage } from './firebase.js';
 import { showToast } from './cart.js';
 
 let db = null;
-let storage = null;
 let pendingAction = null;
 
 // تهيئة الإدارة
 export function initAdmin() {
+    console.log('تهيئة لوحة الإدارة...');
     if (!db) db = getFirestore(app);
-    if (!storage) storage = getStorage(app);
 }
 
 // ============ التخزين السحابي ============
@@ -67,6 +66,7 @@ export async function loadAllProducts() {
             products.push(product);
         });
         
+        console.log(`تم جلب ${products.length} منتج للإدارة`);
         return products;
     } catch (error) {
         console.error("خطأ في جلب المنتجات:", error);
@@ -84,6 +84,7 @@ export async function addNewProduct(productData) {
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
         });
+        console.log('تم إضافة منتج جديد:', docRef.id);
         return { success: true, id: docRef.id };
     } catch (error) {
         console.error("خطأ في إضافة المنتج:", error);
@@ -100,6 +101,7 @@ export async function updateExistingProduct(productId, productData) {
             ...productData,
             updatedAt: serverTimestamp()
         });
+        console.log('تم تحديث المنتج:', productId);
         return { success: true };
     } catch (error) {
         console.error("خطأ في تحديث المنتج:", error);
@@ -113,6 +115,7 @@ export async function deleteProductById(productId) {
         if (!db) db = getFirestore(app);
         
         await deleteDoc(doc(db, "products", productId));
+        console.log('تم حذف المنتج:', productId);
         return { success: true };
     } catch (error) {
         console.error("خطأ في حذف المنتج:", error);
@@ -160,6 +163,7 @@ export async function updateSiteSettings(settingsData) {
             ...settingsData,
             updatedAt: serverTimestamp()
         }, { merge: true });
+        console.log('تم تحديث إعدادات الموقع');
         return { success: true };
     } catch (error) {
         console.error("خطأ في تحديث الإعدادات:", error);
@@ -183,6 +187,7 @@ export async function getAllUsers() {
             users.push(user);
         });
         
+        console.log(`تم جلب ${users.length} مستخدم`);
         return users;
     } catch (error) {
         console.error("خطأ في جلب المستخدمين:", error);
@@ -199,6 +204,7 @@ export async function updateUserAdminStatus(userId, isAdmin) {
             isAdmin,
             updatedAt: serverTimestamp()
         });
+        console.log('تم تحديث صلاحيات المستخدم:', userId, isAdmin);
         return { success: true };
     } catch (error) {
         console.error("خطأ في تحديث المستخدم:", error);

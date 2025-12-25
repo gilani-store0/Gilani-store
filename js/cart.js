@@ -8,6 +8,7 @@ export const CartState = {
 
 // تهيئة السلة
 export function initCart() {
+    console.log('تهيئة سلة التسوق...');
     const savedCart = localStorage.getItem('jamalek_cart');
     if (savedCart) {
         try {
@@ -18,6 +19,7 @@ export function initCart() {
             CartState.items = [];
         }
     }
+    console.log('سلة التسوق جاهزة:', CartState.items.length, 'عناصر');
 }
 
 // تحديث إحصائيات السلة
