@@ -38,37 +38,6 @@ body {
     display: none !important;
 }
 
-/* عناصر رفع الصور */
-.image-upload-container {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    align-items: flex-start;
-}
-
-.hidden-file-input {
-    width: 0.1px;
-    height: 0.1px;
-    opacity: 0;
-    overflow: hidden;
-    position: absolute;
-    z-index: -1;
-}
-
-.upload-btn {
-    padding: 10px 20px;
-    font-size: 14px;
-    min-width: auto;
-}
-
-.image-preview {
-    max-width: 150px;
-    max-height: 150px;
-    border-radius: var(--radius);
-    object-fit: cover;
-    border: 1px solid var(--border);
-}
-
 /* الأزرار */
 .btn {
     display: inline-flex;
@@ -148,6 +117,7 @@ body {
     justify-content: center;
     z-index: 1000;
     padding: 20px;
+    animation: fadeIn 0.3s ease;
 }
 
 .auth-card {
@@ -711,22 +681,6 @@ body {
     display: block;
 }
 
-/* مؤشر التحميل */
-.loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid var(--light);
-    border-top: 3px solid var(--primary);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 40px auto;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
 /* ==================== لوحة الإدارة ==================== */
 
 .admin-section {
@@ -1097,107 +1051,6 @@ body {
     color: var(--primary);
 }
 
-/* ==================== شاشة التحميل الأولية ==================== */
-.initial-loader {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: var(--white);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2000;
-}
-
-.loader-content {
-    text-align: center;
-}
-
-.loader-content p {
-    margin-top: 15px;
-    color: var(--primary);
-    font-weight: 600;
-}
-
-/* ==================== القائمة المنسدلة للمستخدم ==================== */
-.user-profile-dropdown {
-    position: relative;
-}
-
-.user-avatar-img {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-.dropdown-menu {
-    position: absolute;
-    top: calc(100% + 10px);
-    left: 0;
-    width: 220px;
-    background: var(--white);
-    border-radius: var(--radius);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    padding: 10px 0;
-    z-index: 1000;
-    border: 1px solid var(--border);
-    animation: slideDown 0.3s ease;
-}
-
-.dropdown-header {
-    padding: 15px 20px;
-}
-
-.dropdown-header .user-name {
-    font-weight: 700;
-    color: var(--dark);
-    margin-bottom: 2px;
-}
-
-.dropdown-header .user-email {
-    font-size: 12px;
-    color: var(--gray);
-}
-
-.dropdown-divider {
-    height: 1px;
-    background: var(--border);
-    margin: 8px 0;
-}
-
-.dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 20px;
-    color: var(--dark);
-    text-decoration: none;
-    font-size: 14px;
-    transition: var(--transition);
-    width: 100%;
-    text-align: right;
-    background: none;
-    border: none;
-    cursor: pointer;
-}
-
-.dropdown-item:hover {
-    background: var(--light);
-    color: var(--primary);
-}
-
-.logout-item {
-    color: #dc3545;
-}
-
-.logout-item:hover {
-    background: #fff5f5;
-    color: #dc3545;
-}
-
 /* ==================== صفحة الحساب الشخصي ==================== */
 .profile-section {
     padding: 60px 0;
@@ -1309,9 +1162,20 @@ body {
     margin-top: 2px;
 }
 
-@keyframes slideDown {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { 
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* ==================== سلة التسوق ==================== */
@@ -1564,169 +1428,7 @@ body {
     margin-right: 5px;
 }
 
-/* ==================== تفاصيل الطلب ==================== */
-.order-details-modal {
-    max-width: 700px;
-    margin: 0 auto;
-}
-
-.details-section {
-    margin-bottom: 25px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid var(--border);
-}
-
-.details-section h4 {
-    margin-bottom: 15px;
-    color: var(--dark);
-}
-
-.order-items-list {
-    background: var(--light);
-    border-radius: var(--radius);
-    padding: 15px;
-}
-
-.order-item-detail {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(0,0,0,0.05);
-}
-
-.order-item-detail:last-child {
-    border-bottom: none;
-}
-
-.details-total {
-    background: var(--light);
-    border-radius: var(--radius);
-    padding: 20px;
-    margin-top: 20px;
-}
-
-.total-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-}
-
-.total-row.final {
-    font-weight: bold;
-    font-size: 18px;
-    color: var(--primary);
-    border-top: 2px solid var(--border);
-    margin-top: 10px;
-    padding-top: 15px;
-}
-
-/* للوحة الإدارة */
-.admin-order-info {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-    margin-bottom: 20px;
-    padding: 15px;
-    background: var(--light);
-    border-radius: var(--radius);
-}
-
-.info-row {
-    display: flex;
-    justify-content: space-between;
-}
-
-.items-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 15px 0;
-}
-
-.items-table th {
-    background: #f8f9fa;
-    padding: 12px;
-    text-align: right;
-    font-weight: 600;
-    color: var(--dark);
-    border-bottom: 2px solid var(--border);
-}
-
-.items-table td {
-    padding: 12px;
-    border-bottom: 1px solid var(--border);
-}
-
-.order-summary {
-    background: var(--light);
-    border-radius: var(--radius);
-    padding: 20px;
-    margin-top: 20px;
-}
-
-/* ==================== تواصل معنا ==================== */
-.contact-form-container {
-    max-width: 600px;
-    margin: 40px auto 0;
-    padding: 30px;
-    background: white;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-}
-
-.contact-form-container h3 {
-    text-align: center;
-    margin-bottom: 20px;
-    color: var(--dark);
-}
-
-/* ==================== الفوتر المحسن ==================== */
-.social-links {
-    display: flex;
-    gap: 10px;
-    margin-top: 15px;
-}
-
-.social-link {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.1);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
-    transition: var(--transition);
-}
-
-.social-link:hover {
-    background: var(--primary);
-    transform: translateY(-3px);
-}
-
-.footer-policies {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-    margin-top: 10px;
-}
-
-.footer-policies a {
-    color: rgba(255,255,255,0.7);
-    text-decoration: none;
-    font-size: 14px;
-}
-
-.footer-policies a:hover {
-    color: var(--primary);
-}
-
-.text-link {
-    color: var(--primary);
-    text-decoration: underline;
-}
-
-/* ==================== أنماط الـ Toast ==================== */
+/* أنماط الـ Toast */
 .toast {
     position: fixed;
     top: 20px;
@@ -1753,11 +1455,6 @@ body {
 @keyframes slideDown {
     from { transform: translate(-50%, -20px); opacity: 0; }
     to { transform: translate(-50%, 0); opacity: 1; }
-}
-
-@keyframes slideUp {
-    from { transform: translate(-50%, 0); opacity: 1; }
-    to { transform: translate(-50%, -20px); opacity: 0; }
 }
 
 /* ==================== استجابة للجوال ==================== */
