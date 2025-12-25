@@ -86,11 +86,22 @@ export const UI = {
         document.getElementById('editDisplayName').value = name;
         
         const adminBadge = document.getElementById('adminBadge');
-        if (isAdmin) {
-            adminBadge.classList.remove('hidden');
-        } else {
-            adminBadge.classList.add('hidden');
+        if (adminBadge) {
+            if (isAdmin) {
+                adminBadge.classList.remove('hidden');
+            } else {
+                adminBadge.classList.add('hidden');
+            }
         }
+
+        // تحديث عناصر الأدمن في الهيدر والقائمة
+        document.querySelectorAll('.admin-only').forEach(el => {
+            if (isAdmin) {
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+        });
 
         // تحديث الجوال
         document.getElementById('mobileUserName').textContent = name;

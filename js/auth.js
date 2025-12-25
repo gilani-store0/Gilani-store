@@ -233,7 +233,9 @@ export function onAuthChange(callback) {
     return onAuthStateChanged(auth, async (user) => {
         AuthState.currentUser = user;
         if (user) {
-            AuthState.isAdmin = await checkAdminStatus(user);
+            // جلب البيانات كاملة للتأكد من حالة الأدمن
+            const userData = await getUserData(user);
+            AuthState.isAdmin = userData ? userData.isAdmin === true : false;
         } else {
             AuthState.isAdmin = false;
         }

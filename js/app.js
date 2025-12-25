@@ -248,22 +248,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (state.currentUser) {
             // جلب بيانات المستخدم الإضافية من Firestore
             const userData = await getUserData(state.currentUser);
+            
+            // تحديث واجهة المستخدم ببيانات المستخدم وصلاحياته
+            UI.updateUserUI(state.currentUser, state.isAdmin);
+            
             if (userData) {
                 // تحديث الحقول في صفحة الحساب
                 document.getElementById('editPhone').value = userData.phone || '';
                 document.getElementById('editAddress').value = userData.address || '';
             }
             
-            // تحديث واجهة المستخدم ببيانات المستخدم
-            UI.updateUserUI(state.currentUser, state.isAdmin);
+            // التحكم الفوري في عرض لوحة الإدارة
+            setupAdminControls(state.isAdmin);
             
             // تحميل المنتجات والإعدادات
             await loadProducts();
             UI.renderProducts(ProductsState.filteredProducts);
             UI.showMainApp();
-            
-            // التحكم في عرض لوحة الإدارة
-            setupAdminControls(state.isAdmin);
             
             // تحميل إعدادات المتجر
             updateStoreUI({
