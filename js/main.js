@@ -9,16 +9,13 @@ import {
     signOut,
     signInAsGuest,
     getCurrentUser,
-    isUserAdmin
+    getUserData
 } from './auth.js';
 
 import { 
     initProducts, 
     loadProducts, 
-    filterProducts, 
-    searchProducts,
-    getProductById,
-    ProductsState
+    getProductById
 } from './products.js';
 
 import { 
@@ -35,17 +32,36 @@ import {
 import { 
     initAdmin,
     loadAllProducts,
-    addNewProduct,
-    updateExistingProduct,
     deleteProductById,
-    getSiteSettings,
     updateSiteSettings,
     getStoreStats,
     setupConfirmation,
     clearConfirmation,
-    executePendingAction,
-    showMessage
+    executePendingAction
 } from './admin.js';
+
+// دالة showMessage محلية
+function showMessage(title, message, type = 'info') {
+    console.log(`${title}: ${message}`);
+    
+    // عرض تنبيه مؤقت
+    const toast = document.createElement('div');
+    toast.className = `toast ${type === 'error' ? 'toast-error' : ''}`;
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideUp 0.3s ease forwards';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// دالة isUserAdmin محلية
+function isUserAdmin() {
+    const user = getCurrentUser();
+    return user && user.isAdmin === true;
+}
 
 // واجهة المستخدم
 const UI = {
@@ -68,6 +84,26 @@ const UI = {
         if (yearEl) yearEl.textContent = new Date().getFullYear();
         
         console.log('التطبيق الرئيسي معروض');
+        
+        // تحديث عداد السلة
+        this.updateCartCount();
+    },
+
+    // تحديث عداد السلة
+    updateCartCount() {
+        const count = getCartItemCount();
+        const cartCount = document.getElementById('cartCount');
+        const cartMobileCount = document.getElementById('cartMobileCount');
+        
+        if (cartCount) {
+            cartCount.textContent = count;
+            cartCount.classList.toggle('hidden', count === 0);
+        }
+        
+        if (cartMobileCount) {
+            cartMobileCount.textContent = count;
+            cartMobileCount.classList.toggle('hidden', count === 0);
+        }
     },
 
     // إظهار قسم معين وإخفاء البقية
@@ -117,8 +153,14 @@ const UI = {
 
     // تحميل قسم المنتجات
     async loadProductsSection() {
-        const products = await loadProducts();
-        this.renderProducts(products);
+        try {
+            const products = await loadProducts();
+            this.renderProducts(products);
+        } catch (error) {
+            console.error('خطأ في تحميل المنتجات:', error);
+            // عرض منتجات افتراضية للاختبار
+            this.renderProducts(this.getSampleProducts());
+        }
     },
 
     // تحميل قسم السلة
@@ -129,33 +171,60 @@ const UI = {
 
     // تحميل قسم الإدارة
     async loadAdminSection() {
-        if (!isUserAdmin()) return;
+        if (!isUserAdmin()) {
+            showMessage('غير مصرح', 'ليس لديك صلاحية للوصول إلى لوحة الإدارة', 'error');
+            return;
+        }
         
-        const stats = await getStoreStats();
-        this.updateAdminStats(stats);
-        
-        const products = await loadAllProducts();
-        this.renderAdminProducts(products);
-        
-        const settings = await getSiteSettings();
-        this.loadSiteSettings(settings);
-    },
-
-    // تحميل قسم الملف الشخصي
-    loadProfileSection() {
-        const user = getCurrentUser();
-        if (user) {
-            // يمكنك إضافة تحميل بيانات إضافية هنا
+        try {
+            const stats = await getStoreStats();
+            this.updateAdminStats(stats);
+            
+            const products = await loadAllProducts();
+            this.renderAdminProducts(products);
+        } catch (error) {
+            console.error('خطأ في تحميل قسم الإدارة:', error);
+            showMessage('خطأ', 'تعذر تحميل بيانات الإدارة', 'error');
         }
     },
 
+    // تحميل قسم الملف الشخصي
+    async loadProfileSection() {
+        const user = getCurrentUser();
+        if (user) {
+            try {
+                const userData = await getUserData(user);
+                this.updateProfileSection(userData || user);
+            } catch (error) {
+                console.error('خطأ في تحميل بيانات المستخدم:', error);
+            }
+        }
+    },
+
+    // تحديث قسم الملف الشخصي
+    updateProfileSection(userData) {
+        const profileName = document.getElementById('profileName');
+        const profileEmail = document.getElementById('profileEmail');
+        const profileAvatar = document.getElementById('profileAvatar');
+        const editDisplayName = document.getElementById('editDisplayName');
+        
+        if (profileName) profileName.textContent = userData.displayName || 'مستخدم';
+        if (profileEmail) profileEmail.textContent = userData.email || 'غير محدد';
+        if (profileAvatar) {
+            profileAvatar.src = userData.photoURL || 
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.displayName || 'User')}&background=C89B3C&color=fff`;
+        }
+        if (editDisplayName) editDisplayName.value = userData.displayName || '';
+    },
+
     // تحديث واجهة المستخدم ببيانات المستخدم
-    updateUserUI(user, isAdmin) {
+    updateUserUI(user, isAdmin = false) {
         if (!user) return;
 
         const name = user.displayName || 'مستخدم';
         const email = user.email || '';
-        const photo = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=C89B3C&color=fff`;
+        const photo = user.photoURL || 
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=C89B3C&color=fff`;
 
         // تحديث الهيدر
         const ordersBtn = document.getElementById('ordersBtn');
@@ -164,25 +233,16 @@ const UI = {
         if (ordersBtn) ordersBtn.classList.remove('hidden');
         if (logoutBtn) logoutBtn.classList.remove('hidden');
 
-        // تحديث صفحة الحساب
-        const profileName = document.getElementById('profileName');
-        const profileEmail = document.getElementById('profileEmail');
-        const profileAvatar = document.getElementById('profileAvatar');
-        const editDisplayName = document.getElementById('editDisplayName');
-        
-        if (profileName) profileName.textContent = name;
-        if (profileEmail) profileEmail.textContent = email;
-        if (profileAvatar) profileAvatar.src = photo;
-        if (editDisplayName) editDisplayName.value = name;
-        
         // تحديث الجوال
         const mobileUserName = document.getElementById('mobileUserName');
         const mobileUserEmail = document.getElementById('mobileUserEmail');
         const mobileUserAvatar = document.getElementById('mobileUserAvatar');
+        const mobileUserInfo = document.getElementById('mobileUserInfo');
         
         if (mobileUserName) mobileUserName.textContent = name;
         if (mobileUserEmail) mobileUserEmail.textContent = email;
         if (mobileUserAvatar) mobileUserAvatar.src = photo;
+        if (mobileUserInfo) mobileUserInfo.classList.remove('hidden');
 
         // تحديث بادجة الأدمن
         const adminBadge = document.getElementById('adminBadge');
@@ -201,24 +261,13 @@ const UI = {
         // تحديث أزرار الجوال
         const mobileAuthBtn = document.getElementById('mobileAuthBtn');
         const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
-        const mobileUserInfo = document.getElementById('mobileUserInfo');
         const cartMobileBtn = document.getElementById('cartMobileBtn');
         const ordersMobileBtn = document.getElementById('ordersMobileBtn');
         
         if (mobileAuthBtn) mobileAuthBtn.classList.add('hidden');
         if (mobileLogoutBtn) mobileLogoutBtn.classList.remove('hidden');
-        if (mobileUserInfo) mobileUserInfo.classList.remove('hidden');
         if (cartMobileBtn) cartMobileBtn.classList.remove('hidden');
         if (ordersMobileBtn) ordersMobileBtn.classList.remove('hidden');
-    },
-
-    // تبديل قائمة الجوال
-    toggleMobileNav() {
-        const nav = document.getElementById('mobileNav');
-        if (nav) {
-            nav.classList.toggle('active');
-            document.body.style.overflow = nav.classList.contains('active') ? 'hidden' : 'auto';
-        }
     },
 
     // إغلاق قائمة الجوال
@@ -228,88 +277,6 @@ const UI = {
             nav.classList.remove('active');
             document.body.style.overflow = 'auto';
         }
-    },
-
-    // تبديل عرض كلمة المرور
-    togglePasswordVisibility() {
-        const passwordInput = document.getElementById('passwordInput');
-        const toggleBtn = document.getElementById('togglePassword');
-        
-        if (passwordInput && toggleBtn) {
-            const icon = toggleBtn.querySelector('i');
-            
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                icon.classList.replace('fa-eye', 'fa-eye-slash');
-            } else {
-                passwordInput.type = 'password';
-                icon.classList.replace('fa-eye-slash', 'fa-eye');
-            }
-        }
-    },
-
-    // تبديل وضع التسجيل/الدخول
-    toggleAuthMode() {
-        const displayNameInput = document.getElementById('displayNameInput');
-        const signInBtn = document.getElementById('signInWithEmailBtn');
-        const toggleBtn = document.getElementById('toggleSignUpMode');
-        
-        if (displayNameInput && signInBtn && toggleBtn) {
-            const isSignUpMode = displayNameInput.classList.toggle('hidden');
-            
-            if (isSignUpMode) {
-                signInBtn.innerHTML = '<i class="fas fa-user-plus"></i> إنشاء حساب';
-                toggleBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> تسجيل الدخول';
-            } else {
-                signInBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> تسجيل الدخول';
-                toggleBtn.innerHTML = '<i class="fas fa-user-plus"></i> إنشاء حساب جديد';
-            }
-        }
-    },
-
-    // إظهار نموذج البريد
-    showEmailForm() {
-        const authOptions = document.getElementById('authOptions');
-        const emailAuthSection = document.getElementById('emailAuthSection');
-        const emailAuthForm = document.getElementById('emailAuthForm');
-        const resetPasswordSection = document.getElementById('resetPasswordSection');
-        
-        if (authOptions) authOptions.classList.add('hidden');
-        if (emailAuthSection) emailAuthSection.classList.remove('hidden');
-        if (emailAuthForm) emailAuthForm.classList.remove('hidden');
-        if (resetPasswordSection) resetPasswordSection.classList.add('hidden');
-        
-        // التأكد من أننا في وضع تسجيل الدخول عند العودة
-        const displayNameInput = document.getElementById('displayNameInput');
-        if (displayNameInput && !displayNameInput.classList.contains('hidden')) {
-            this.toggleAuthMode();
-        }
-    },
-
-    // إظهار نموذج استعادة كلمة المرور
-    showResetPasswordForm() {
-        const authOptions = document.getElementById('authOptions');
-        const emailAuthSection = document.getElementById('emailAuthSection');
-        const emailAuthForm = document.getElementById('emailAuthForm');
-        const resetPasswordSection = document.getElementById('resetPasswordSection');
-        
-        if (authOptions) authOptions.classList.add('hidden');
-        if (emailAuthSection) emailAuthSection.classList.remove('hidden');
-        if (emailAuthForm) emailAuthForm.classList.add('hidden');
-        if (resetPasswordSection) resetPasswordSection.classList.remove('hidden');
-    },
-
-    // العودة للخيارات
-    backToOptions() {
-        const emailAuthSection = document.getElementById('emailAuthSection');
-        const authOptions = document.getElementById('authOptions');
-        const resetPasswordSection = document.getElementById('resetPasswordSection');
-        const emailAuthForm = document.getElementById('emailAuthForm');
-        
-        if (emailAuthSection) emailAuthSection.classList.add('hidden');
-        if (authOptions) authOptions.classList.remove('hidden');
-        if (resetPasswordSection) resetPasswordSection.classList.add('hidden');
-        if (emailAuthForm) emailAuthForm.classList.remove('hidden');
     },
 
     // عرض المنتجات
@@ -349,9 +316,11 @@ const UI = {
         grid.querySelectorAll('.add-to-cart-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const productId = e.target.closest('.add-to-cart-btn').dataset.id;
-                const product = getProductById(productId);
+                const product = getProductById(productId) || this.getSampleProduct(productId);
                 if (product) {
                     addToCart(product, 1);
+                    this.updateCartCount();
+                    showMessage('تمت الإضافة', `تم إضافة "${product.name}" إلى السلة`, 'success');
                 }
             });
         });
@@ -445,6 +414,7 @@ const UI = {
                 const productId = e.target.closest('.quantity-btn').dataset.id;
                 updateCartQuantity(productId, 1);
                 this.loadCartSection();
+                this.updateCartCount();
             });
         });
         
@@ -454,6 +424,7 @@ const UI = {
                 const productId = e.target.closest('.quantity-btn').dataset.id;
                 updateCartQuantity(productId, -1);
                 this.loadCartSection();
+                this.updateCartCount();
             });
         });
         
@@ -463,6 +434,7 @@ const UI = {
                 const productId = e.target.closest('.remove-item-btn').dataset.id;
                 removeFromCart(productId);
                 this.loadCartSection();
+                this.updateCartCount();
             });
         });
         
@@ -472,6 +444,8 @@ const UI = {
             clearCartBtn.addEventListener('click', () => {
                 clearCart();
                 this.loadCartSection();
+                this.updateCartCount();
+                showMessage('تم', 'تم تفريغ سلة التسوق', 'success');
             });
         }
         
@@ -482,13 +456,6 @@ const UI = {
                 showMessage('قريباً', 'نظام الدفع قيد التطوير وسيكون متاحاً قريباً', 'info');
             });
         }
-    },
-
-    // تحديث أزرار التصفية
-    updateFilterButtons(activeFilter) {
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.filter === activeFilter);
-        });
     },
 
     // تحديث إحصائيات الإدارة
@@ -556,25 +523,6 @@ const UI = {
         this.setupAdminEventListeners();
     },
 
-    // تحميل إعدادات الموقع
-    loadSiteSettings(settings) {
-        const storeNameInput = document.getElementById('storeNameInput');
-        const logoInput = document.getElementById('logoInput');
-        const emailInput = document.getElementById('emailInput');
-        const phone1Input = document.getElementById('phone1Input');
-        const phone2Input = document.getElementById('phone2Input');
-        const deliveryTimeInput = document.getElementById('deliveryTimeInput');
-        const shippingCostInput = document.getElementById('shippingCostInput');
-        
-        if (storeNameInput) storeNameInput.value = settings.storeName || '';
-        if (logoInput) logoInput.value = settings.logoUrl || '';
-        if (emailInput) emailInput.value = settings.email || '';
-        if (phone1Input) phone1Input.value = settings.phone1 || '';
-        if (phone2Input) phone2Input.value = settings.phone2 || '';
-        if (deliveryTimeInput) deliveryTimeInput.value = settings.deliveryTime || 5;
-        if (shippingCostInput) shippingCostInput.value = settings.shippingCost || 0;
-    },
-
     // إعداد مستمعي أحداث الإدارة
     setupAdminEventListeners() {
         // أزرار حذف المنتجات
@@ -593,38 +541,64 @@ const UI = {
             });
         });
         
-        // زر إضافة منتج جديد
-        const addProductBtn = document.getElementById('addProductBtn');
-        if (addProductBtn) {
-            addProductBtn.addEventListener('click', () => {
-                this.showProductModal();
-            });
-        }
-        
         // حفظ إعدادات الموقع
         const siteSettingsForm = document.getElementById('siteSettingsForm');
         if (siteSettingsForm) {
             siteSettingsForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                
-                const settings = {
-                    storeName: document.getElementById('storeNameInput').value,
-                    logoUrl: document.getElementById('logoInput').value,
-                    email: document.getElementById('emailInput').value,
-                    phone1: document.getElementById('phone1Input').value,
-                    phone2: document.getElementById('phone2Input').value,
-                    deliveryTime: parseInt(document.getElementById('deliveryTimeInput').value),
-                    shippingCost: parseFloat(document.getElementById('shippingCostInput').value) || 0
-                };
-                
-                const result = await updateSiteSettings(settings);
-                if (result.success) {
-                    showMessage('نجاح', 'تم حفظ إعدادات الموقع بنجاح', 'success');
-                } else {
-                    showMessage('خطأ', 'فشل في حفظ الإعدادات', 'error');
-                }
+                showMessage('تطوير', 'ميزة حفظ الإعدادات قيد التطوير', 'info');
             });
         }
+    },
+
+    // منتجات افتراضية للاختبار
+    getSampleProducts() {
+        return [
+            {
+                id: '1',
+                name: 'عطر فاخر',
+                description: 'عطر فاخر برائحة عطرية مميزة',
+                price: 150,
+                image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=300&h=300&fit=crop',
+                isNew: true
+            },
+            {
+                id: '2',
+                name: 'مكياج سائل',
+                description: 'مكياج سائل عالي الجودة',
+                price: 85,
+                oldPrice: 120,
+                image: 'https://images.unsplash.com/photo-1526947425960-945c6e72858f?q=80&w=300&h=300&fit=crop',
+                isSale: true
+            },
+            {
+                id: '3',
+                name: 'عطر نسائي',
+                description: 'عطر نسائي برائحة زهرية',
+                price: 200,
+                image: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?q=80&w=300&h=300&fit=crop',
+                isBest: true
+            },
+            {
+                id: '4',
+                name: 'كريم ترطيب',
+                description: 'كريم ترطيب للبشرة',
+                price: 65,
+                image: 'https://images.unsplash.com/photo-1556228578-9c360e1d8d34?q=80&w=300&h=300&fit=crop'
+            }
+        ];
+    },
+
+    // منتج افتراضي للاختبار
+    getSampleProduct(id) {
+        const products = this.getSampleProducts();
+        return products.find(p => p.id === id) || {
+            id: id,
+            name: 'منتج افتراضي',
+            description: 'منتج للاختبار',
+            price: 50,
+            image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=300&h=300&fit=crop'
+        };
     }
 };
 
@@ -632,34 +606,29 @@ const UI = {
 async function initApp() {
     console.log('بدء تشغيل المتجر...');
     
-    // 1. إظهار شاشة تسجيل الدخول مباشرة
-    UI.showAuthScreen();
-    
-    // 2. تهيئة وحدات التطبيق الأساسية
+    // تهيئة وحدات التطبيق الأساسية
     initProducts();
     initCart();
     initAdmin();
     
-    // 3. التحقق من حالة المصادقة الحالية
     try {
         const authResult = await initAuth();
         
         if (authResult.success && authResult.user) {
             console.log('مستخدم مسجل مسبقاً:', authResult.user.email);
-            
-            // تحديث واجهة المستخدم
             UI.updateUserUI(authResult.user, authResult.isAdmin || false);
             UI.showMainApp();
-            
-            // تحميل المنتجات
             await UI.loadProductsSection();
+        } else {
+            // إظهار شاشة تسجيل الدخول إذا لم يكن هناك مستخدم
+            UI.showAuthScreen();
         }
-        // إذا لم يكن هناك مستخدم، تبقى شاشة تسجيل الدخول معروضة
     } catch (error) {
         console.error('خطأ في التحقق من المصادقة:', error);
+        UI.showAuthScreen();
     }
     
-    // 4. إعداد كل مستمعي الأحداث
+    // إعداد كل مستمعي الأحداث
     setupEventListeners();
 }
 
@@ -667,73 +636,16 @@ async function initApp() {
 function setupEventListeners() {
     console.log('إعداد مستمعي الأحداث...');
     
-    // مصادقة Google
-    const googleBtn = document.getElementById('googleSignInBtn');
-    if (googleBtn) {
-        googleBtn.addEventListener('click', async () => {
-            const result = await signInWithGoogle();
-            if (result.success && result.user) {
-                UI.updateUserUI(result.user, false);
-                UI.showMainApp();
-                await UI.loadProductsSection();
-            } else {
-                showMessage('خطأ', result.error || 'حدث خطأ في التسجيل', 'error');
-            }
-        });
-    }
-
-    // إظهار نموذج البريد
-    const showEmailBtn = document.getElementById('showEmailFormBtn');
-    if (showEmailBtn) {
-        showEmailBtn.addEventListener('click', UI.showEmailForm);
-    }
-
-    // التسجيل كضيف
-    const guestBtn = document.getElementById('guestSignInBtn');
-    if (guestBtn) {
-        guestBtn.addEventListener('click', () => {
-            const result = signInAsGuest();
-            if (result.success) {
-                UI.updateUserUI(result.user, false);
-                UI.showMainApp();
-                UI.loadProductsSection();
-            }
-        });
-    }
-
-    // تبديل عرض كلمة المرور
-    const togglePassBtn = document.getElementById('togglePassword');
-    if (togglePassBtn) {
-        togglePassBtn.addEventListener('click', UI.togglePasswordVisibility);
-    }
-
-    // تبديل وضع التسجيل/الدخول
-    const toggleAuthBtn = document.getElementById('toggleSignUpMode');
-    if (toggleAuthBtn) {
-        toggleAuthBtn.addEventListener('click', UI.toggleAuthMode);
-    }
-
-    // استعادة كلمة المرور
-    const forgotPassBtn = document.getElementById('forgotPasswordBtn');
-    if (forgotPassBtn) {
-        forgotPassBtn.addEventListener('click', UI.showResetPasswordForm);
-    }
-
-    // العودة للخيارات
-    const backToOptionsBtn = document.getElementById('backToOptions');
-    if (backToOptionsBtn) {
-        backToOptionsBtn.addEventListener('click', UI.backToOptions);
-    }
-
-    const backToSignInBtn = document.getElementById('backToSignIn');
-    if (backToSignInBtn) {
-        backToSignInBtn.addEventListener('click', UI.backToOptions);
-    }
-
     // القائمة المتنقلة
     const menuToggle = document.getElementById('menuToggle');
     if (menuToggle) {
-        menuToggle.addEventListener('click', UI.toggleMobileNav);
+        menuToggle.addEventListener('click', () => {
+            const nav = document.getElementById('mobileNav');
+            if (nav) {
+                nav.classList.toggle('active');
+                document.body.style.overflow = nav.classList.contains('active') ? 'hidden' : 'auto';
+            }
+        });
     }
 
     const closeNav = document.getElementById('closeNav');
@@ -802,53 +714,6 @@ function setupEventListeners() {
         });
     }
 
-    // نموذج تسجيل الدخول/التسجيل
-    const emailAuthForm = document.getElementById('emailAuthForm');
-    if (emailAuthForm) {
-        emailAuthForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = document.getElementById('emailInput').value;
-            const password = document.getElementById('passwordInput').value;
-            const displayNameInput = document.getElementById('displayNameInput');
-            
-            let result;
-            
-            if (displayNameInput && displayNameInput.classList.contains('hidden')) {
-                result = await signInWithEmail(email, password);
-            } else {
-                const displayName = displayNameInput.value;
-                result = await signUpWithEmail(email, password, displayName);
-            }
-            
-            if (result.success && result.user) {
-                UI.updateUserUI(result.user, false);
-                UI.showMainApp();
-                await UI.loadProductsSection();
-            } else {
-                showMessage('خطأ', result.error || 'حدث خطأ', 'error');
-            }
-        });
-    }
-
-    // نموذج استعادة كلمة المرور
-    const resetPasswordForm = document.getElementById('resetPasswordForm');
-    if (resetPasswordForm) {
-        resetPasswordForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = document.getElementById('resetEmailInput').value;
-            const result = await resetPassword(email);
-            
-            if (result.success) {
-                showMessage('تم الإرسال', 'تم إرسال رابط إعادة التعيين إلى بريدك الإلكتروني', 'success');
-                UI.backToOptions();
-            } else {
-                showMessage('خطأ', result.error, 'error');
-            }
-        });
-    }
-
     // زر التأكيد في مودال التأكيد
     const confirmBtn = document.getElementById('confirmBtn');
     if (confirmBtn) {
@@ -860,10 +725,74 @@ function setupEventListeners() {
     if (cancelBtn) {
         cancelBtn.addEventListener('click', clearConfirmation);
     }
+    
+    // أزرار المصادقة
+    const googleSignInBtn = document.getElementById('googleSignInBtn');
+    if (googleSignInBtn) {
+        googleSignInBtn.addEventListener('click', async () => {
+            const result = await signInWithGoogle();
+            if (result.success) {
+                UI.updateUserUI(result.user, result.user.isAdmin || false);
+                UI.showMainApp();
+                await UI.loadProductsSection();
+            } else {
+                showMessage('خطأ', result.error || 'فشل تسجيل الدخول', 'error');
+            }
+        });
+    }
+    
+    const guestSignInBtn = document.getElementById('guestSignInBtn');
+    if (guestSignInBtn) {
+        guestSignInBtn.addEventListener('click', async () => {
+            const result = await signInAsGuest();
+            if (result.success) {
+                UI.updateUserUI(result.user, false);
+                UI.showMainApp();
+                await UI.loadProductsSection();
+            } else {
+                showMessage('خطأ', result.error || 'فشل تسجيل الدخول كضيف', 'error');
+            }
+        });
+    }
+    
+    // زر عرض نموذج البريد
+    const showEmailFormBtn = document.getElementById('showEmailFormBtn');
+    if (showEmailFormBtn) {
+        showEmailFormBtn.addEventListener('click', () => {
+            document.getElementById('authOptions').classList.add('hidden');
+            document.getElementById('emailAuthSection').classList.remove('hidden');
+        });
+    }
+    
+    // زر العودة للخيارات
+    const backToOptions = document.getElementById('backToOptions');
+    if (backToOptions) {
+        backToOptions.addEventListener('click', () => {
+            document.getElementById('emailAuthSection').classList.add('hidden');
+            document.getElementById('authOptions').classList.remove('hidden');
+        });
+    }
+    
+    // زر تبديل كلمة المرور
+    const togglePassword = document.getElementById('togglePassword');
+    if (togglePassword) {
+        togglePassword.addEventListener('click', function() {
+            const passwordInput = document.getElementById('passwordInput');
+            const icon = this.querySelector('i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        });
+    }
 }
 
 // بدء التطبيق عند تحميل الصفحة
 document.addEventListener('DOMContentLoaded', initApp);
 
 // تصدير UI للاستخدام في الملفات الأخرى
-export { UI };
+export { UI, showMessage };
