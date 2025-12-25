@@ -90,8 +90,10 @@ export const UI = {
                      class="product-image">
                 <div class="product-info">
                     <h3 class="product-name">${product.name || 'منتج بدون اسم'}</h3>
+                    ${product.description ? `<p class="product-description">${product.description.substring(0, 60)}...</p>` : ''}
                     <div class="product-price">
                         <span class="current-price">${product.price || 0} ر.س</span>
+                        ${product.oldPrice ? `<span class="old-price">${product.oldPrice} ر.س</span>` : ''}
                     </div>
                     <button class="btn primary-btn add-to-cart-btn" data-id="${product.id}">
                         <i class="fas fa-cart-plus"></i> أضف للسلة

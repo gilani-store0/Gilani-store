@@ -67,15 +67,25 @@ export async function signInWithGoogle() {
 // إنشاء حساب جديد
 async function createUserRecord(user) {
     try {
-        await setDoc(doc(db, 'users', user.uid), {
-            uid: user.uid,
-            email: user.email || null,
-            displayName: user.displayName || 'مستخدم',
-            photoURL: user.photoURL || null,
-            isAdmin: false,
-            createdAt: serverTimestamp(),
-            lastLogin: serverTimestamp()
-        });
+        const userRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
+        
+        if (!userDoc.exists()) {
+            await setDoc(userRef, {
+                uid: user.uid,
+                email: user.email || null,
+                displayName: user.displayName || 'مستخدم',
+                photoURL: user.photoURL || null,
+                isAdmin: false,
+                createdAt: serverTimestamp(),
+                lastLogin: serverTimestamp()
+            });
+        } else {
+            // تحديث آخر دخول فقط
+            await setDoc(userRef, {
+                lastLogin: serverTimestamp()
+            }, { merge: true });
+        }
     } catch (error) {
         console.error('خطأ في إنشاء حساب:', error);
     }
@@ -84,6 +94,8 @@ async function createUserRecord(user) {
 // التحقق من صلاحية الأدمن
 export async function checkAdminStatus(user) {
     try {
+        if (!user) return false;
+        
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         if (userDoc.exists()) {
             const userData = userDoc.data();
@@ -110,6 +122,7 @@ export async function signInWithEmail(email, password) {
 
     try {
         const result = await signInWithEmailAndPassword(auth, email, password);
+        await createUserRecord(result.user);
         return result.user;
     } catch (error) {
         Utils.showError('البريد أو كلمة المرور غير صحيحة');

@@ -4,8 +4,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
 import { initAuth, signInWithGoogle, signInWithEmail, createAccount, signInAsGuest, logout, onAuthChange, AuthState } from './auth.js';
 import { initProducts, loadProducts, filterProducts, searchProducts, updateStoreUI, ProductsState } from './products.js';
 import { UI } from './ui.js';
-import { initAdmin } from './admin.js';
-import { AdminUI } from './admin-ui.js';
 
 // تكوين Firebase
 const firebaseConfig = {
@@ -22,7 +20,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 initAuth(app);
 initProducts(app);
-initAdmin(app);
 
 // إعداد الأحداث
 function setupEventListeners() {
@@ -129,45 +126,6 @@ function showToast(message, type = 'success') {
     }, 3000);
 }
 
-// التحكم في عرض الأدمن
-function setupAdminControls(isAdmin) {
-    if (isAdmin) {
-        // إظهار عناصر الأدمن
-        document.querySelectorAll('.admin-only').forEach(el => {
-            el.classList.remove('hidden');
-        });
-        
-        // تهيئة لوحة الإدارة
-        AdminUI.init();
-        
-        // حدث زر الأدمن في الهيدر
-        const adminToggle = document.getElementById('adminToggle');
-        if (adminToggle) {
-            adminToggle.addEventListener('click', () => {
-                const adminSection = document.getElementById('adminSection');
-                const isHidden = adminSection.classList.contains('hidden');
-                
-                adminSection.classList.toggle('hidden');
-                
-                if (!isHidden) {
-                    // إذا كانت مخفية، اظهرها
-                    adminSection.scrollIntoView({ behavior: 'smooth' });
-                }
-                
-                // إغلاق قائمة الجوال إذا كانت مفتوحة
-                UI.closeMobileNav();
-            });
-        }
-        
-    } else {
-        // إخفاء عناصر الأدمن
-        document.querySelectorAll('.admin-only').forEach(el => {
-            el.classList.add('hidden');
-        });
-        document.getElementById('adminSection')?.classList.add('hidden');
-    }
-}
-
 // عند تحميل الصفحة
 document.addEventListener('DOMContentLoaded', () => {
     console.log('تطبيق المتجر يعمل...');
@@ -180,21 +138,15 @@ document.addEventListener('DOMContentLoaded', () => {
             UI.renderProducts(ProductsState.filteredProducts);
             UI.showMainApp();
             
-            // التحكم في عرض لوحة الإدارة
-            setupAdminControls(state.isAdmin);
-            
-            // تحميل إعدادات المتجر
+            // تحميل إعدادات المتجر (يمكن إضافتها لاحقاً)
             updateStoreUI({
                 storeName: 'جمالك',
                 description: 'متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية',
                 phone: '+249 123 456 789',
                 whatsapp: '249123456789'
             });
-            
         } else {
             UI.showAuthScreen();
-            // إخفاء عناصر الأدمن عند تسجيل الخروج
-            setupAdminControls(false);
         }
     });
     

@@ -53,24 +53,27 @@ function loadDefaultProducts() {
             name: 'عطر الورد الجوري', 
             price: 150, 
             image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=300&h=300&fit=crop', 
+            description: 'عطر نسائي برائحة الورد الجوري الفاخرة',
             isNew: true,
-            category: 'new'
+            category: 'perfume'
         },
         { 
             id: 'p2', 
             name: 'أحمر شفاه ناعم', 
             price: 50, 
             image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=300&h=300&fit=crop', 
+            description: 'أحمر شفاه طويل الأمد بنسيج ناعم',
             isNew: true,
-            category: 'new'
+            category: 'makeup'
         },
         { 
             id: 'p3', 
             name: 'كريم أساس طبيعي', 
             price: 200, 
             image: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?q=80&w=300&h=300&fit=crop', 
+            description: 'كريم أساس طبيعي للحصول على بشرة متألقة',
             isSale: true,
-            category: 'sale'
+            category: 'skincare'
         }
     ];
     
@@ -96,7 +99,8 @@ export function filterProducts(filter = 'all') {
     if (ProductsState.searchQuery) {
         const query = ProductsState.searchQuery.toLowerCase();
         filtered = filtered.filter(product => 
-            product.name?.toLowerCase().includes(query)
+            product.name?.toLowerCase().includes(query) ||
+            product.description?.toLowerCase().includes(query)
         );
     }
     
