@@ -7,7 +7,7 @@
     <meta name="description" content="متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية">
     <title>جمالك | متجر مستحضرات التجميل والعطور</title>
     
-    <!-- خط Cairo فقط -->
+    <!-- خط Cairo -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -114,7 +114,7 @@
             </div>
 
             <div class="auth-footer">
-                <p>بالمتابعة، أنت توافق على شروط الخدمة وسياسة الخصوصية.</p>
+                <p>بالمتابعة، أنت توافق على <a href="#" class="text-link">شروط الخدمة</a> و <a href="#" class="text-link">سياسة الخصوصية</a>.</p>
             </div>
         </div>
     </div>
@@ -125,9 +125,11 @@
         <header class="main-header">
             <div class="container">
                 <div class="header-content">
-                    <!-- أقصى اليمين: قائمة الخيارات (الثلاث خطوط) والاسم/اللوجو -->
+                    <!-- أقصى اليمين: قائمة الخيارات واللوجو -->
                     <div class="header-group-right">
-                        <button id="menuToggle" class="icon-btn" title="القائمة"><i class="fas fa-bars"></i></button>
+                        <button id="menuToggle" class="icon-btn" title="القائمة">
+                            <i class="fas fa-bars"></i>
+                        </button>
                         <div class="logo">
                             <i class="fas fa-spa"></i>
                             <span class="store-name">جمالك</span>
@@ -140,18 +142,28 @@
                         <input type="text" id="productSearch" placeholder="ابحث عن منتج...">
                     </div>
 
-                    <!-- أقصى اليسار: السلة -->
+                    <!-- أقصى اليسار: الأزرار -->
                     <div class="header-group-left">
-                        <button id="ordersLink" class="icon-btn hidden" title="السلة">
+                        <!-- زر السلة -->
+                        <button id="cartBtn" class="icon-btn" title="سلة التسوق">
                             <i class="fas fa-shopping-cart"></i>
+                            <span id="cartCount" class="cart-count hidden">0</span>
                         </button>
-                    </div>
-                    
-                    <!-- العناصر القديمة التي تم نقلها أو إخفاؤها (للتأكد من عدم وجودها) -->
-                    <div class="user-actions hidden">
-                        <button id="adminToggle" class="icon-btn admin-only hidden" title="لوحة التحكم"></button>
-                        <button id="logoutBtn" class="icon-btn logout-item hidden" title="تسجيل الخروج"></button>
-                        <button id="userToggle" class="icon-btn" title="حسابي"></button>
+                        
+                        <!-- زر الطلبات -->
+                        <button id="ordersBtn" class="icon-btn hidden" title="طلباتي">
+                            <i class="fas fa-shopping-bag"></i>
+                        </button>
+                        
+                        <!-- زر الحساب -->
+                        <button id="userToggle" class="icon-btn" title="حسابي">
+                            <i class="far fa-user"></i>
+                        </button>
+                        
+                        <!-- زر تسجيل الخروج -->
+                        <button id="logoutBtn" class="icon-btn hidden" title="تسجيل الخروج">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -164,28 +176,60 @@
                     <i class="fas fa-spa"></i>
                     <span class="store-name">جمالك</span>
                 </div>
-                <button class="close-nav" id="closeNav"><i class="fas fa-times"></i></button>
+                <button class="close-nav" id="closeNav">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
+            
             <div class="nav-links">
-                <a href="#home" class="nav-link"><i class="fas fa-home"></i> الرئيسية</a>
-                <a href="#products" class="nav-link"><i class="fas fa-store"></i> المنتجات</a>
-                <a href="#contact" class="nav-link"><i class="fas fa-phone"></i> اتصل بنا</a>
-                <a href="#adminSection" class="nav-link admin-only hidden"><i class="fas fa-cog"></i> لوحة التحكم</a>
+                <a href="#" class="nav-link" data-section="home">
+                    <i class="fas fa-home"></i> الرئيسية
+                </a>
+                <a href="#" class="nav-link" data-section="products">
+                    <i class="fas fa-store"></i> المنتجات
+                </a>
+                <a href="#" class="nav-link" data-section="contact">
+                    <i class="fas fa-phone"></i> اتصل بنا
+                </a>
+                
+                <!-- أقسام المستخدم المسجل -->
+                <a href="#" id="cartMobileBtn" class="nav-link hidden" data-section="cart">
+                    <i class="fas fa-shopping-cart"></i> سلة التسوق
+                    <span id="cartMobileCount" class="cart-count-mobile hidden">0</span>
+                </a>
+                <a href="#" id="ordersMobileBtn" class="nav-link hidden" data-section="orders">
+                    <i class="fas fa-shopping-bag"></i> طلباتي
+                </a>
+                
+                <!-- قسم الأدمن -->
+                <a href="#" id="adminMobileBtn" class="nav-link admin-only hidden" data-section="admin">
+                    <i class="fas fa-cog"></i> لوحة التحكم
+                </a>
             </div>
+            
             <div class="nav-actions">
-                <!-- الأزرار المنقولة من الهيدر -->
-                <a href="#" id="adminToggleNav" class="nav-link admin-only hidden"><i class="fas fa-cog"></i> لوحة التحكم</a>
-                <a href="#" id="userToggleNav" class="nav-link"><i class="far fa-user"></i> حسابي</a>
-                <a href="#" id="logoutBtnNav" class="nav-link logout-item hidden"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a>
+                <!-- معلومات المستخدم -->
                 <div id="mobileUserInfo" class="mobile-user-info hidden">
-                    <img id="mobileUserAvatar" src="" alt="" class="user-avatar-img">
+                    <img id="mobileUserAvatar" src="" alt="صورة المستخدم" class="user-avatar-img">
                     <div class="user-details">
                         <p id="mobileUserName">مستخدم</p>
-                        <button id="mobileLogoutBtn" class="text-btn">تسجيل الخروج</button>
+                        <p id="mobileUserEmail" class="user-email">user@example.com</p>
                     </div>
                 </div>
-                <button id="mobileUserBtn" class="btn outline-btn">
-                    <i class="fas fa-user"></i> تسجيل الدخول
+                
+                <!-- زر الحساب -->
+                <a href="#" id="profileMobileBtn" class="nav-link" data-section="profile">
+                    <i class="far fa-user"></i> حسابي
+                </a>
+                
+                <!-- زر تسجيل الدخول/الخروج -->
+                <button id="mobileAuthBtn" class="btn outline-btn w-100">
+                    <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
+                </button>
+                
+                <!-- زر تسجيل الخروج -->
+                <button id="mobileLogoutBtn" class="btn danger-btn w-100 hidden">
+                    <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
                 </button>
             </div>
         </nav>
@@ -199,16 +243,19 @@
                         <h1 class="hero-title">جمالك <span class="highlight">بأفضل العطور</span></h1>
                         <p class="hero-description">اكتشف تشكيلتنا الحصرية من أفضل العطور ومستحضرات التجميل الأصلية</p>
                         <div class="hero-buttons">
-                            <a href="#products" class="btn primary-btn">
+                            <a href="#" class="btn primary-btn" data-section="products">
                                 <i class="fas fa-shopping-bag"></i> تصفح المنتجات
                             </a>
+                            <button id="startShoppingBtn" class="btn outline-btn">
+                                <i class="fas fa-star"></i> ابدأ التسوق
+                            </button>
                         </div>
                     </div>
                 </div>
             </section>
 
             <!-- المنتجات -->
-            <section class="products-section" id="products">
+            <section class="products-section" id="productsSection">
                 <div class="container">
                     <div class="section-header">
                         <h2 class="section-title">منتجاتنا المميزة</h2>
@@ -220,17 +267,66 @@
                             <button class="filter-btn active" data-filter="all">الكل</button>
                             <button class="filter-btn" data-filter="new">جديد</button>
                             <button class="filter-btn" data-filter="sale">عروض</button>
+                            <button class="filter-btn" data-filter="best">الأفضل</button>
                         </div>
                         <select class="sort-select" id="productSort">
                             <option value="newest">الأحدث</option>
                             <option value="price-low">الأقل سعراً</option>
                             <option value="price-high">الأعلى سعراً</option>
+                            <option value="popular">الأكثر مبيعاً</option>
                         </select>
                     </div>
                     
                     <div class="products-grid" id="productsGrid">
-                        <!-- المنتجات تحمل هنا -->
                         <div class="loading-spinner"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- سلة التسوق -->
+            <section id="cartSection" class="cart-section hidden">
+                <div class="container">
+                    <h2 class="section-title">
+                        <i class="fas fa-shopping-cart"></i> سلة التسوق
+                    </h2>
+                    <p class="section-subtitle">المنتجات المضافة إلى سلة التسوق</p>
+                    
+                    <div id="cartContent" class="cart-content">
+                        <div class="cart-items" id="cartItems">
+                            <div class="empty-state">
+                                <i class="fas fa-shopping-cart"></i>
+                                <p>سلة التسوق فارغة</p>
+                                <a href="#" class="btn primary-btn" data-section="products">
+                                    <i class="fas fa-store"></i> تصفح المنتجات
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="cart-summary" id="cartSummary">
+                            <div class="summary-card">
+                                <h3>ملخص الطلب</h3>
+                                <div class="summary-row">
+                                    <span>عدد المنتجات:</span>
+                                    <span id="cartTotalItems">0</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span>المجموع:</span>
+                                    <span id="cartSubtotal">0 ر.س</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span>التوصيل:</span>
+                                    <span id="cartShipping">مجاني</span>
+                                </div>
+                                <div class="summary-row total">
+                                    <span>الإجمالي:</span>
+                                    <span id="cartTotal">0 ر.س</span>
+                                </div>
+                                <button id="checkoutBtn" class="btn primary-btn w-100" disabled>
+                                    <i class="fas fa-lock"></i> اتمام الشراء
+                                </button>
+                                <p class="summary-note">سيتم تفعيل نظام الدفع في التحديث القادم</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -238,13 +334,25 @@
             <!-- صفحة الطلبات -->
             <section id="ordersSection" class="orders-section hidden">
                 <div class="container">
-                    <h2 class="section-title"><i class="fas fa-shopping-bag"></i> طلباتي</h2>
+                    <h2 class="section-title">
+                        <i class="fas fa-shopping-bag"></i> طلباتي
+                    </h2>
                     <p class="section-subtitle">تتبع حالة طلباتك السابقة والحالية</p>
+                    
+                    <div class="orders-tabs">
+                        <button class="orders-tab active" data-status="all">جميع الطلبات</button>
+                        <button class="orders-tab" data-status="pending">قيد الانتظار</button>
+                        <button class="orders-tab" data-status="processing">قيد التجهيز</button>
+                        <button class="orders-tab" data-status="completed">مكتملة</button>
+                    </div>
                     
                     <div id="ordersList" class="orders-list">
                         <div class="empty-state">
                             <i class="fas fa-box-open"></i>
                             <p>لم تقم بتقديم أي طلبات بعد.</p>
+                            <a href="#" class="btn primary-btn" data-section="products">
+                                <i class="fas fa-store"></i> تصفح المنتجات
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -256,13 +364,17 @@
                     <div class="profile-card">
                         <div class="profile-header">
                             <div class="profile-avatar-container">
-                                <img id="profileAvatar" src="https://ui-avatars.com/api/?name=User&background=C89B3C&color=fff" alt="User Avatar">
-                                <button id="changeAvatarBtn" class="change-avatar-btn"><i class="fas fa-camera"></i></button>
+                                <img id="profileAvatar" src="https://ui-avatars.com/api/?name=User&background=C89B3C&color=fff" alt="صورة المستخدم">
+                                <button id="changeAvatarBtn" class="change-avatar-btn">
+                                    <i class="fas fa-camera"></i>
+                                </button>
                             </div>
                             <h2 id="profileName">اسم المستخدم</h2>
                             <p id="profileEmail">user@example.com</p>
                             <span id="adminBadge" class="badge admin-badge hidden">مسؤول</span>
+                            <p id="profileJoinDate" class="join-date">تاريخ الانضمام: غير محدد</p>
                         </div>
+                        
                         <div class="profile-body">
                             <form id="profileForm">
                                 <div class="form-group">
@@ -275,10 +387,22 @@
                                 </div>
                                 <div class="form-group">
                                     <label>العنوان</label>
-                                    <textarea id="editAddress" placeholder="العنوان بالتفصيل"></textarea>
+                                    <textarea id="editAddress" placeholder="العنوان بالتفصيل" rows="3"></textarea>
                                 </div>
-                                <button type="submit" class="btn primary-btn w-100">حفظ التغييرات</button>
+                                <button type="submit" class="btn primary-btn w-100">
+                                    <i class="fas fa-save"></i> حفظ التغييرات
+                                </button>
                             </form>
+                            
+                            <div class="profile-actions">
+                                <h3>الإعدادات</h3>
+                                <button id="changePasswordBtn" class="btn outline-btn w-100">
+                                    <i class="fas fa-key"></i> تغيير كلمة المرور
+                                </button>
+                                <button id="deleteAccountBtn" class="btn danger-btn w-100">
+                                    <i class="fas fa-trash"></i> حذف الحساب
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -323,6 +447,15 @@
                                 <p>المستخدمين</p>
                             </div>
                         </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="totalRevenue">0 ر.س</h3>
+                                <p>الإيرادات</p>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- تبويبات الإدارة -->
@@ -345,7 +478,7 @@
                     <div class="admin-tab-content">
                         
                         <!-- تبويب إعدادات الموقع -->
-                        <div id="settingsTab" class="tab-pane hidden">
+                        <div id="settingsTab" class="tab-pane">
                             <div class="tab-header">
                                 <h3>تعديل بيانات الموقع</h3>
                             </div>
@@ -356,7 +489,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="logoInput">شعار المتجر (URL)</label>
-                                    <input type="text" id="logoInput" placeholder="رابط الشعار (سيتم استبداله لاحقاً برفع من الاستوديو)">
+                                    <input type="text" id="logoInput" placeholder="رابط الشعار">
                                 </div>
                                 <div class="form-group">
                                     <label for="emailInput">البريد الإلكتروني للتواصل</label>
@@ -374,7 +507,13 @@
                                     <label for="deliveryTimeInput">مدة التوصيل (بالأيام)</label>
                                     <input type="number" id="deliveryTimeInput" placeholder="مثال: 3-5 أيام" required>
                                 </div>
-                                <button type="submit" class="btn primary-btn w-100">حفظ إعدادات الموقع</button>
+                                <div class="form-group">
+                                    <label for="shippingCostInput">رسوم التوصيل (ر.س)</label>
+                                    <input type="number" id="shippingCostInput" placeholder="0 للتوصيل المجاني">
+                                </div>
+                                <button type="submit" class="btn primary-btn w-100">
+                                    <i class="fas fa-save"></i> حفظ إعدادات الموقع
+                                </button>
                             </form>
                         </div>
                         
@@ -394,6 +533,7 @@
                                             <th>الصورة</th>
                                             <th>المنتج</th>
                                             <th>السعر</th>
+                                            <th>المخزون</th>
                                             <th>الحالة</th>
                                             <th>التاريخ</th>
                                             <th>الإجراءات</th>
@@ -401,7 +541,7 @@
                                     </thead>
                                     <tbody id="productsTable">
                                         <tr>
-                                            <td colspan="6" class="text-center">جاري التحميل...</td>
+                                            <td colspan="7" class="text-center">جاري التحميل...</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -416,6 +556,7 @@
                             <div id="ordersTable" class="empty-state">
                                 <i class="fas fa-shopping-cart"></i>
                                 <p>لا توجد طلبات حتى الآن</p>
+                                <small>ستظهر الطلبات هنا عندما يقوم العملاء بالشراء</small>
                             </div>
                         </div>
 
@@ -426,7 +567,7 @@
                             </div>
                             <div id="usersTable" class="empty-state">
                                 <i class="fas fa-users"></i>
-                                <p>لا يوجد مستخدمين مسجلين</p>
+                                <p>جاري تحميل بيانات المستخدمين...</p>
                             </div>
                         </div>
                     </div>
@@ -452,12 +593,17 @@
                             <h3>دعم فني</h3>
                             <p>خدمة عملاء على مدار الساعة</p>
                         </div>
+                        <div class="service-card">
+                            <i class="fas fa-undo"></i>
+                            <h3>إرجاع سهل</h3>
+                            <p>إمكانية الإرجاع خلال 14 يوم</p>
+                        </div>
                     </div>
                 </div>
             </section>
 
             <!-- التواصل -->
-            <section class="contact-section" id="contact">
+            <section class="contact-section" id="contactSection">
                 <div class="container">
                     <div class="contact-content">
                         <h2 class="section-title">تواصل معنا</h2>
@@ -474,8 +620,35 @@
                             </div>
                             <div class="contact-item">
                                 <i class="fas fa-envelope"></i>
-                                <span>info@jamalek.com</span>
+                                <span id="contactEmail">info@jamalek.com</span>
                             </div>
+                            <div class="contact-item">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span id="contactAddress">السعودية - الرياض</span>
+                            </div>
+                        </div>
+                        
+                        <div class="contact-form-container">
+                            <h3>أرسل رسالة</h3>
+                            <form id="contactForm">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <input type="text" id="contactName" placeholder="اسمك" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="email" id="contactEmailInput" placeholder="بريدك الإلكتروني" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <input type="text" id="contactSubject" placeholder="الموضوع">
+                                </div>
+                                <div class="form-group">
+                                    <textarea id="contactMessage" placeholder="رسالتك" rows="4" required></textarea>
+                                </div>
+                                <button type="submit" class="btn primary-btn w-100">
+                                    <i class="fas fa-paper-plane"></i> إرسال الرسالة
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -489,15 +662,35 @@
                     <div class="footer-info">
                         <h3 class="store-name">جمالك</h3>
                         <p id="storeDescription">متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية</p>
+                        <div class="social-links">
+                            <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                            <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                            <a href="#" class="social-link"><i class="fab fa-facebook"></i></a>
+                            <a href="#" class="social-link"><i class="fab fa-tiktok"></i></a>
+                        </div>
                     </div>
                     <div class="footer-links">
-                        <a href="#home">الرئيسية</a>
-                        <a href="#products">المنتجات</a>
-                        <a href="#contact">اتصل بنا</a>
+                        <h4>روابط سريعة</h4>
+                        <a href="#" data-section="home">الرئيسية</a>
+                        <a href="#" data-section="products">المنتجات</a>
+                        <a href="#" data-section="contact">اتصل بنا</a>
+                        <a href="#" id="footerCartLink" data-section="cart">سلة التسوق</a>
+                        <a href="#" id="footerOrdersLink" data-section="orders">طلباتي</a>
+                    </div>
+                    <div class="footer-contact">
+                        <h4>معلومات التواصل</h4>
+                        <p><i class="fas fa-clock"></i> من الأحد إلى الخميس: 9 صباحاً - 10 مساءً</p>
+                        <p><i class="fas fa-phone"></i> <span id="footerPhone">+249 123 456 789</span></p>
+                        <p><i class="fas fa-envelope"></i> <span id="footerEmail">info@jamalek.com</span></p>
                     </div>
                 </div>
                 <div class="footer-bottom">
-                    <p>&copy; <span id="currentYear"></span> جميع الحقوق محفوظة</p>
+                    <p>&copy; <span id="currentYear"></span> جميع الحقوق محفوظة لـ <span class="store-name">جمالك</span></p>
+                    <div class="footer-policies">
+                        <a href="#">سياسة الخصوصية</a>
+                        <a href="#">شروط الاستخدام</a>
+                        <a href="#">سياسة الإرجاع</a>
+                    </div>
                 </div>
             </div>
         </footer>
@@ -525,22 +718,22 @@
                         </div>
                     </div>
 
-<div class="form-group">
-    <label for="productImageFile">صورة المنتج</label>
-    <div class="image-upload-container">
-        <input type="file" id="productImageFile" accept="image/*" class="hidden-file-input">
-        <label for="productImageFile" class="btn outline-btn upload-btn">
-            <i class="fas fa-upload"></i> اختيار صورة من الاستوديو
-        </label>
-        <img id="productImagePreview" src="" alt="معاينة الصورة" class="image-preview hidden">
-        <input type="hidden" id="productImage" value=""> <!-- للحفاظ على URL الصورة الحالية -->
-    </div>
-    <small>اتركه فارغاً لاستخدام صورة افتراضية</small>
-</div>
+                    <div class="form-group">
+                        <label for="productImageFile">صورة المنتج</label>
+                        <div class="image-upload-container">
+                            <input type="file" id="productImageFile" accept="image/*" class="hidden-file-input">
+                            <label for="productImageFile" class="btn outline-btn upload-btn">
+                                <i class="fas fa-upload"></i> اختيار صورة
+                            </label>
+                            <img id="productImagePreview" src="" alt="معاينة الصورة" class="image-preview hidden">
+                            <input type="hidden" id="productImage" value="">
+                        </div>
+                        <small>الحجم المسموح: حتى 5MB | الصيغ: JPG, PNG, GIF</small>
+                    </div>
 
                     <div class="form-group">
                         <label for="productDescription">الوصف</label>
-                        <textarea id="productDescription" rows="3"></textarea>
+                        <textarea id="productDescription" rows="3" placeholder="وصف مختصر للمنتج..."></textarea>
                     </div>
 
                     <div class="form-row">
@@ -550,11 +743,24 @@
                                 <option value="perfume">عطور</option>
                                 <option value="makeup">مكياج</option>
                                 <option value="skincare">عناية بالبشرة</option>
+                                <option value="haircare">عناية بالشعر</option>
+                                <option value="other">أخرى</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="productStock">الكمية</label>
-                            <input type="number" id="productStock" min="0" value="10">
+                            <label for="productStock">الكمية *</label>
+                            <input type="number" id="productStock" min="0" value="10" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productSKU">كود المنتج (SKU)</label>
+                            <input type="text" id="productSKU" placeholder="مثال: PRD-001">
+                        </div>
+                        <div class="form-group">
+                            <label for="productBrand">العلامة التجارية</label>
+                            <input type="text" id="productBrand" placeholder="اسم العلامة التجارية">
                         </div>
                     </div>
 
@@ -573,17 +779,17 @@
                         </label>
                         <label class="checkbox-label">
                             <input type="checkbox" id="isActive" checked>
-                            نشط
+                            نشط للبيع
                         </label>
                     </div>
                 </div>
 
                 <div class="modal-footer">
                     <button type="submit" class="btn primary-btn">
-                        <i class="fas fa-save"></i> حفظ
+                        <i class="fas fa-save"></i> حفظ المنتج
                     </button>
                     <button type="button" class="btn gray-btn close-modal">
-                        إلغاء
+                        <i class="fas fa-times"></i> إلغاء
                     </button>
                 </div>
             </form>
@@ -596,11 +802,25 @@
             <div class="modal-body text-center">
                 <i class="fas fa-exclamation-triangle warning-icon"></i>
                 <h4 id="confirmMessage">هل أنت متأكد من الحذف؟</h4>
-                <p>هذا الإجراء لا يمكن التراجع عنه</p>
+                <p id="confirmDetails">هذا الإجراء لا يمكن التراجع عنه</p>
             </div>
             <div class="modal-footer">
                 <button id="confirmBtn" class="btn danger-btn">نعم، تأكيد</button>
                 <button id="cancelBtn" class="btn gray-btn">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال الرسائل -->
+    <div id="messageModal" class="modal hidden">
+        <div class="modal-content small">
+            <div class="modal-body text-center">
+                <i id="messageIcon" class="fas fa-info-circle"></i>
+                <h4 id="messageTitle">عنوان الرسالة</h4>
+                <p id="messageText">نص الرسالة</p>
+            </div>
+            <div class="modal-footer">
+                <button id="messageCloseBtn" class="btn primary-btn">موافق</button>
             </div>
         </div>
     </div>
@@ -611,6 +831,9 @@
     <script type="module" src="js/ui.js"></script>
     <script type="module" src="js/admin.js"></script>
     <script type="module" src="js/admin-ui.js"></script>
+    <script type="module" src="js/cart.js"></script>
+    <script type="module" src="js/orders.js"></script>
+    <script type="module" src="js/orders-ui.js"></script>
     <script type="module" src="js/app.js"></script>
 </body>
 </html>
