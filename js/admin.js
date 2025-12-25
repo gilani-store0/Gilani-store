@@ -9,14 +9,40 @@ import {
     doc,
     query,
     orderBy,
-    serverTimestamp
+    serverTimestamp,
+    getDoc, // تم إضافة getDoc
+    setDoc // تم إضافة setDoc
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
+import { 
+    getStorage, 
+    ref, 
+    uploadBytes, 
+    getDownloadURL 
+} from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
+
 let db;
+let storage;
 let pendingAction = null;
 
 export function initAdmin(firebaseApp) {
     db = getFirestore(firebaseApp);
+    storage = getStorage(firebaseApp);
+}
+
+// ============ التخزين السحابي ============
+
+// رفع ملف إلى التخزين السحابي
+export async function uploadFile(file, path) {
+    try {
+        const storageRef = ref(storage, path);
+        const snapshot = await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        return { success: true, url: downloadURL };
+    } catch (error) {
+        console.error("خطأ في رفع الملف:", error);
+        return { success: false, error: error.message };
+    }
 }
 
 // ============ المنتجات ============
@@ -77,6 +103,48 @@ export async function deleteProductById(productId) {
         return { success: true };
     } catch (error) {
         console.error("خطأ في حذف المنتج:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+// ============ إعدادات الموقع ============
+
+// جلب إعدادات الموقع
+export async function getSiteSettings() {
+    try {
+        const docRef = doc(db, "settings", "site_config");
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+            return docSnap.data();
+        } else {
+            // إعدادات افتراضية
+            return {
+                storeName: "جمالك",
+                logoUrl: "https://ui-avatars.com/api/?name=J&background=C89B3C&color=fff",
+                email: "support@jamalek.com",
+                phone1: "00966500000000",
+                phone2: "",
+                deliveryTime: 5
+            };
+        }
+    } catch (error) {
+        console.error("خطأ في جلب الإعدادات:", error);
+        return {};
+    }
+}
+
+// تحديث إعدادات الموقع
+export async function updateSiteSettings(settingsData) {
+    try {
+        const docRef = doc(db, "settings", "site_config");
+        await setDoc(docRef, {
+            ...settingsData,
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+        return { success: true };
+    } catch (error) {
+        console.error("خطأ في تحديث الإعدادات:", error);
         return { success: false, error: error.message };
     }
 }

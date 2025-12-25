@@ -7,6 +7,8 @@ import {
     getAllUsers, 
     updateUserAdminStatus, 
     getStoreStats,
+    getSiteSettings, // إضافة جلب الإعدادات
+    updateSiteSettings, // إضافة تحديث الإعدادات
     formatDate,
     getProductImageUrl,
     setupConfirmation,
@@ -25,6 +27,11 @@ export const AdminUI = {
 
     setupEventListeners() {
         // تبديل التبويبات
+
+        // معاينة الصورة عند اختيار ملف
+        document.getElementById('productImageFile')?.addEventListener('change', (e) => {
+            this.previewImage(e.target.files[0]);
+        });
         document.querySelectorAll('.admin-tab').forEach(tab => {
             tab.addEventListener('click', (e) => {
                 const tabName = e.currentTarget.dataset.tab;
@@ -54,6 +61,12 @@ export const AdminUI = {
         // تأكيد الحذف
         document.getElementById('confirmBtn')?.addEventListener('click', () => {
             executePendingAction();
+        });
+
+        // حفظ إعدادات الموقع
+        document.getElementById('siteSettingsForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await this.handleSiteSettingsSubmit();
         });
 
         document.getElementById('cancelBtn')?.addEventListener('click', () => {
@@ -88,6 +101,9 @@ export const AdminUI = {
             case 'orders':
                 // يمكن إضافة إدارة الطلبات لاحقاً
                 break;
+            case 'settings':
+                await this.renderSiteSettings();
+                break;
         }
     },
 
@@ -96,6 +112,38 @@ export const AdminUI = {
         document.getElementById('totalProducts').textContent = stats.totalProducts;
         document.getElementById('totalUsers').textContent = stats.totalUsers;
         document.getElementById('totalOrders').textContent = stats.totalOrders;
+    },
+
+    // ============ إعدادات الموقع ============
+
+    async renderSiteSettings() {
+        const settings = await getSiteSettings();
+        document.getElementById('storeNameInput').value = settings.storeName || '';
+        document.getElementById('logoInput').value = settings.logoUrl || '';
+        document.getElementById('emailInput').value = settings.email || '';
+        document.getElementById('phone1Input').value = settings.phone1 || '';
+        document.getElementById('phone2Input').value = settings.phone2 || '';
+        document.getElementById('deliveryTimeInput').value = settings.deliveryTime || 5;
+    },
+
+    async handleSiteSettingsSubmit() {
+        const settingsData = {
+            storeName: document.getElementById('storeNameInput').value,
+            logoUrl: document.getElementById('logoInput').value,
+            email: document.getElementById('emailInput').value,
+            phone1: document.getElementById('phone1Input').value,
+            phone2: document.getElementById('phone2Input').value,
+            deliveryTime: parseInt(document.getElementById('deliveryTimeInput').value)
+        };
+
+        const result = await updateSiteSettings(settingsData);
+
+        if (result.success) {
+            alert('تم حفظ إعدادات الموقع بنجاح!');
+            // يمكن تحديث الواجهة الرئيسية هنا إذا لزم الأمر
+        } else {
+            alert('حدث خطأ أثناء حفظ الإعدادات: ' + result.error);
+        }
     },
 
     async renderProductsTable() {
@@ -244,6 +292,12 @@ export const AdminUI = {
             document.getElementById('isSale').checked = productData.isSale || false;
             document.getElementById('isBest').checked = productData.isBest || false;
             document.getElementById('isActive').checked = productData.isActive !== false;
+
+            // عرض الصورة الحالية
+            this.displayImagePreview(productData.image);
+        } else {
+            // مسح المعاينة عند إضافة منتج جديد
+            this.displayImagePreview(null);
         }
 
         modal.classList.remove('hidden');
@@ -251,10 +305,24 @@ export const AdminUI = {
 
     async handleProductSubmit() {
         const productId = document.getElementById('editProductId').value;
+        const imageFile = document.getElementById('productImageFile').files[0];
+        let imageUrl = document.getElementById('productImage').value; // URL الصورة الحالية أو القديمة
+
+        // 1. رفع الصورة الجديدة إذا وجدت
+        if (imageFile) {
+            const uploadResult = await this.uploadProductImage(imageFile);
+            if (uploadResult.success) {
+                imageUrl = uploadResult.url;
+            } else {
+                alert('فشل رفع الصورة: ' + uploadResult.error);
+                return;
+            }
+        }
+
         const productData = {
             name: document.getElementById('productName').value,
             price: parseFloat(document.getElementById('productPrice').value),
-            image: document.getElementById('productImage').value,
+            image: imageUrl, // استخدام URL الصورة المحدث
             description: document.getElementById('productDescription').value,
             category: document.getElementById('productCategory').value,
             stock: parseInt(document.getElementById('productStock').value),
@@ -278,5 +346,36 @@ export const AdminUI = {
         } else {
             alert('حدث خطأ: ' + result.error);
         }
+    },
+
+    // دوال مساعدة لرفع ومعاينة الصور
+    previewImage(file) {
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                this.displayImagePreview(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            this.displayImagePreview(null);
+        }
+    },
+
+    displayImagePreview(url) {
+        const preview = document.getElementById('productImagePreview');
+        if (url) {
+            preview.src = url;
+            preview.classList.remove('hidden');
+        } else {
+            preview.src = '';
+            preview.classList.add('hidden');
+        }
+    },
+
+    async uploadProductImage(file) {
+        const fileName = `${Date.now()}_${file.name}`;
+        const path = `product_images/${fileName}`;
+        const { uploadFile } = await import('./admin.js'); // استيراد دالة الرفع
+        return uploadFile(file, path);
     }
 };
