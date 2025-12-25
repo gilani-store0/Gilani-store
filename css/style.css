@@ -1102,3 +1102,206 @@ body {
         grid-template-columns: 1fr;
     }
 }
+/* ==================== شاشة التحميل الأولية ==================== */
+.initial-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.loader-content {
+    text-align: center;
+}
+
+.loader-content p {
+    margin-top: 15px;
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* ==================== القائمة المنسدلة للمستخدم ==================== */
+.user-profile-dropdown {
+    position: relative;
+}
+
+.user-avatar-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    width: 220px;
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    padding: 10px 0;
+    z-index: 1000;
+    border: 1px solid var(--border);
+    animation: slideDown 0.3s ease;
+}
+
+.dropdown-header {
+    padding: 15px 20px;
+}
+
+.dropdown-header .user-name {
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 2px;
+}
+
+.dropdown-header .user-email {
+    font-size: 12px;
+    color: var(--gray);
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 8px 0;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    color: var(--dark);
+    text-decoration: none;
+    font-size: 14px;
+    transition: var(--transition);
+    width: 100%;
+    text-align: right;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.dropdown-item:hover {
+    background: var(--light);
+    color: var(--primary);
+}
+
+.logout-item {
+    color: #dc3545;
+}
+
+.logout-item:hover {
+    background: #fff5f5;
+    color: #dc3545;
+}
+
+/* ==================== صفحة الحساب الشخصي ==================== */
+.profile-section {
+    padding: 60px 0;
+    background: #f8f9fa;
+}
+
+.profile-card {
+    max-width: 600px;
+    margin: 0 auto;
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.profile-header {
+    padding: 40px 20px;
+    text-align: center;
+    background: linear-gradient(135deg, var(--dark) 0%, #333 100%);
+    color: var(--white);
+}
+
+.profile-avatar-container {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 20px;
+}
+
+#profileAvatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--primary);
+}
+
+.change-avatar-btn {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 36px;
+    height: 36px;
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 10px;
+}
+
+.admin-badge {
+    background: var(--primary);
+    color: var(--white);
+}
+
+.profile-body {
+    padding: 30px;
+}
+
+.w-100 {
+    width: 100%;
+}
+
+/* ==================== معلومات المستخدم في الجوال ==================== */
+.mobile-user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: var(--light);
+    border-radius: var(--radius);
+    margin-bottom: 15px;
+}
+
+.mobile-user-info .user-details p {
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.mobile-user-info .user-details .text-btn {
+    padding: 0;
+    font-size: 12px;
+    color: #dc3545;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
