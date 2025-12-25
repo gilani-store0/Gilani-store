@@ -38,6 +38,37 @@ body {
     display: none !important;
 }
 
+/* عناصر رفع الصور */
+.image-upload-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.hidden-file-input {
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+}
+
+.upload-btn {
+    padding: 10px 20px;
+    font-size: 14px;
+    min-width: auto;
+}
+
+.image-preview {
+    max-width: 150px;
+    max-height: 150px;
+    border-radius: var(--radius);
+    object-fit: cover;
+    border: 1px solid var(--border);
+}
+
 /* الأزرار */
 .btn {
     display: inline-flex;
@@ -204,20 +235,27 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 20px; /* مسافة بين العناصر */
+}
+
+.header-group-right, .header-group-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
 .logo {
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 20px;
+    font-size: 24px; /* زيادة حجم الخط للوضوح */
     font-weight: 700;
     color: var(--primary);
 }
 
 .search-container {
     flex: 1;
-    max-width: 400px;
+    max-width: 500px; /* زيادة العرض قليلاً */
     margin: 0 20px;
     position: relative;
 }
