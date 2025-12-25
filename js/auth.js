@@ -54,12 +54,21 @@ const Utils = {
 export async function signInWithGoogle() {
     try {
         const provider = new GoogleAuthProvider();
+        // إضافة نطاق البريد الإلكتروني لضمان الحصول عليه
+        provider.addScope('email'); 
         const result = await signInWithPopup(auth, provider);
         await createUserRecord(result.user);
         return result.user;
     } catch (error) {
-        console.error('خطأ في تسجيل الدخول:', error);
-        Utils.showError('فشل تسجيل الدخول');
+        console.error('خطأ في تسجيل الدخول بجوجل:', error);
+        // تحسين رسائل الخطأ
+        if (error.code === 'auth/popup-closed-by-user') {
+            Utils.showError('تم إغلاق نافذة تسجيل الدخول');
+        } else if (error.code === 'auth/cancelled-popup-request') {
+            Utils.showError('تم إلغاء طلب تسجيل الدخول');
+        } else {
+            Utils.showError('فشل تسجيل الدخول بجوجل. يرجى المحاولة مرة أخرى.');
+        }
         return null;
     }
 }
@@ -177,14 +186,18 @@ export async function createAccount(email, password, displayName) {
 
     try {
         const result = await createUserWithEmailAndPassword(auth, email, password);
+        // التأكد من تحديث الملف الشخصي قبل إنشاء سجل المستخدم
         await updateProfile(result.user, { displayName });
         await createUserRecord(result.user);
         return result.user;
     } catch (error) {
+        console.error('خطأ في إنشاء الحساب:', error);
         if (error.code === 'auth/email-already-in-use') {
             Utils.showError('هذا البريد مستخدم بالفعل');
+        } else if (error.code === 'auth/weak-password') {
+            Utils.showError('كلمة المرور ضعيفة جداً (يجب أن تكون 6 أحرف على الأقل)');
         } else {
-            Utils.showError('فشل إنشاء الحساب');
+            Utils.showError('فشل إنشاء الحساب. يرجى التحقق من البيانات.');
         }
         return null;
     }

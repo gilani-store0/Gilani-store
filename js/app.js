@@ -1,7 +1,7 @@
 // js/app.js - التطبيق الرئيسي
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-import { initAuth, signInWithGoogle, signInWithEmail, createAccount, signInAsGuest, logout, onAuthChange, AuthState, updateUserData, getUserData } from './auth.js';
+import { initAuth, signInWithGoogle, signInWithEmail, createAccount, signInAsGuest, logout, onAuthChange, AuthState, updateUserData, getUserData, resetPassword } from './auth.js';
 import { initProducts, loadProducts, filterProducts, searchProducts, updateStoreUI, ProductsState } from './products.js';
 import { UI } from './ui.js';
 import { initAdmin } from './admin.js';
@@ -59,6 +59,23 @@ function setupEventListeners() {
 
     // العودة للخيارات
     document.getElementById('backToOptions')?.addEventListener('click', UI.backToOptions);
+
+    // استعادة كلمة المرور
+    document.getElementById('forgotPasswordBtn')?.addEventListener('click', UI.showResetPasswordForm);
+    document.getElementById('backToSignIn')?.addEventListener('click', UI.showEmailForm);
+
+    // إرسال رابط استعادة كلمة المرور
+    document.getElementById('resetPasswordForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('resetEmailInput').value;
+        const success = await resetPassword(email);
+        if (success) {
+            showToast('تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني.');
+            UI.showEmailForm(); // العودة إلى شاشة تسجيل الدخول
+        } else {
+            // رسالة الخطأ يتم عرضها بالفعل داخل resetPassword في auth.js
+        }
+    });
 
     // تبديل عرض كلمة المرور
     document.getElementById('togglePassword')?.addEventListener('click', UI.togglePasswordVisibility);

@@ -147,16 +147,36 @@ export const UI = {
         }
     },
 
-    // إظهار نموذج البريد
+    // إظهار نموذج البريد (تسجيل الدخول/التسجيل)
     showEmailForm() {
         document.getElementById('authOptions').classList.add('hidden');
         document.getElementById('emailAuthSection').classList.remove('hidden');
+        document.getElementById('emailAuthForm').classList.remove('hidden');
+        document.getElementById('resetPasswordSection').classList.add('hidden');
+        
+        // التأكد من أننا في وضع تسجيل الدخول عند العودة
+        if (document.getElementById('displayNameInput').classList.contains('hidden')) {
+            // لا تفعل شيئاً، نحن في وضع تسجيل الدخول
+        } else {
+            // إذا كنا في وضع التسجيل، نعود لوضع تسجيل الدخول
+            this.toggleAuthMode();
+        }
+    },
+
+    // إظهار نموذج استعادة كلمة المرور
+    showResetPasswordForm() {
+        document.getElementById('authOptions').classList.add('hidden');
+        document.getElementById('emailAuthSection').classList.remove('hidden');
+        document.getElementById('emailAuthForm').classList.add('hidden');
+        document.getElementById('resetPasswordSection').classList.remove('hidden');
     },
 
     // العودة للخيارات
     backToOptions() {
         document.getElementById('emailAuthSection').classList.add('hidden');
         document.getElementById('authOptions').classList.remove('hidden');
+        document.getElementById('resetPasswordSection').classList.add('hidden');
+        document.getElementById('emailAuthForm').classList.remove('hidden');
     },
 
     // عرض المنتجات
