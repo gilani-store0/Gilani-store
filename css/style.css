@@ -1583,3 +1583,87 @@ body {
         flex-wrap: wrap;
     }
 }
+/* منع التكبير في الشاشات الصغيرة */
+@media (max-width: 768px) {
+    body {
+        touch-action: pan-y;
+        -webkit-text-size-adjust: 100%;
+    }
+    
+    .auth-screen {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        user-select: none;
+    }
+    
+    .auth-option-btn, 
+    .btn {
+        min-height: 54px;
+        font-size: 17px;
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* منع التكبير على حقول الإدخال */
+    input, textarea, select {
+        font-size: 16px !important;
+        max-height: 44px;
+    }
+}
+
+/* تحسين تجربة اللمس */
+.btn, .icon-btn, .auth-option-btn {
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+}
+
+/* ============ تحسينات نهائية للأزرار ============ */
+
+/* تحسين استجابة الأزرار لللمس */
+.btn, .icon-btn, .auth-option-btn {
+    cursor: pointer !important;
+    position: relative !important;
+    transition: all 0.2s ease !important;
+    -webkit-tap-highlight-color: transparent !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+}
+
+.btn:active, .icon-btn:active {
+    transform: scale(0.98) !important;
+}
+
+/* تحسين الأزرار على الجوال */
+@media (max-width: 768px) {
+    .btn, .auth-option-btn {
+        min-height: 50px !important;
+        font-size: 16px !important;
+    }
+    
+    .icon-btn {
+        width: 44px !important;
+        height: 44px !important;
+    }
+}
+
+/* تحسين تجربة المستخدم للعناصر النقر */
+.nav-link, .product-card, .filter-btn, 
+.orders-tab, .admin-tab, .service-card {
+    cursor: pointer !important;
+    user-select: none !important;
+}
+
+/* تحسين شاشة المصادقة */
+.auth-screen {
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    user-select: none !important;
+    touch-action: pan-y !important;
+}
+
+/* تحسين حقول الإدخال */
+input, textarea, select {
+    font-size: 16px !important; /* منع التكبير على iOS */
+}
