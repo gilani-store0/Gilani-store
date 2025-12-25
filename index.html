@@ -102,6 +102,9 @@
                         <input type="text" id="productSearch" placeholder="ابحث عن منتج...">
                     </div>
                     <div class="user-actions">
+                        <button id="adminToggle" class="icon-btn admin-only hidden" title="لوحة التحكم">
+                            <i class="fas fa-cog"></i>
+                        </button>
                         <button id="userToggle" class="icon-btn"><i class="far fa-user"></i></button>
                         <button id="menuToggle" class="icon-btn mobile-only"><i class="fas fa-bars"></i></button>
                     </div>
@@ -122,6 +125,7 @@
                 <a href="#home" class="nav-link"><i class="fas fa-home"></i> الرئيسية</a>
                 <a href="#products" class="nav-link"><i class="fas fa-store"></i> المنتجات</a>
                 <a href="#contact" class="nav-link"><i class="fas fa-phone"></i> اتصل بنا</a>
+                <a href="#adminSection" class="nav-link admin-only hidden"><i class="fas fa-cog"></i> لوحة التحكم</a>
             </div>
             <div class="nav-actions">
                 <button id="mobileUserBtn" class="btn outline-btn">
@@ -171,6 +175,118 @@
                     <div class="products-grid" id="productsGrid">
                         <!-- المنتجات تحمل هنا -->
                         <div class="loading-spinner"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- لوحة الإدارة (للأدمن فقط) -->
+            <section id="adminSection" class="admin-section hidden">
+                <div class="container">
+                    <div class="admin-header">
+                        <h2 class="section-title">
+                            <i class="fas fa-cog"></i> لوحة التحكم الإدارية
+                        </h2>
+                        <p class="admin-subtitle">مرحباً بك في لوحة إدارة المتجر</p>
+                    </div>
+
+                    <!-- إحصائيات سريعة -->
+                    <div class="admin-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-box"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="totalProducts">0</h3>
+                                <p>المنتجات</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="totalOrders">0</h3>
+                                <p>الطلبات</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="totalUsers">0</h3>
+                                <p>المستخدمين</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- تبويبات الإدارة -->
+                    <div class="admin-tabs">
+                        <button class="admin-tab active" data-tab="products">
+                            <i class="fas fa-box"></i> المنتجات
+                        </button>
+                        <button class="admin-tab" data-tab="orders">
+                            <i class="fas fa-shopping-cart"></i> الطلبات
+                        </button>
+                        <button class="admin-tab" data-tab="users">
+                            <i class="fas fa-users"></i> المستخدمين
+                        </button>
+                    </div>
+
+                    <!-- محتوى التبويبات -->
+                    <div class="admin-tab-content">
+                        
+                        <!-- تبويب المنتجات -->
+                        <div id="productsTab" class="tab-pane active">
+                            <div class="tab-header">
+                                <h3>إدارة المنتجات</h3>
+                                <button id="addProductBtn" class="btn primary-btn">
+                                    <i class="fas fa-plus"></i> منتج جديد
+                                </button>
+                            </div>
+                            
+                            <div class="table-container">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>الصورة</th>
+                                            <th>المنتج</th>
+                                            <th>السعر</th>
+                                            <th>الحالة</th>
+                                            <th>التاريخ</th>
+                                            <th>الإجراءات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="productsTable">
+                                        <tr>
+                                            <td colspan="6" class="text-center">جاري التحميل...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- تبويب الطلبات -->
+                        <div id="ordersTab" class="tab-pane">
+                            <div class="tab-header">
+                                <h3>إدارة الطلبات</h3>
+                            </div>
+                            <div id="ordersTable" class="empty-state">
+                                <i class="fas fa-shopping-cart"></i>
+                                <p>لا توجد طلبات حتى الآن</p>
+                            </div>
+                        </div>
+
+                        <!-- تبويب المستخدمين -->
+                        <div id="usersTab" class="tab-pane">
+                            <div class="tab-header">
+                                <h3>إدارة المستخدمين</h3>
+                            </div>
+                            <div id="usersTable" class="empty-state">
+                                <i class="fas fa-users"></i>
+                                <p>لا يوجد مستخدمين مسجلين</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -245,10 +361,107 @@
         </footer>
     </div>
 
+    <!-- مودال إضافة/تعديل المنتج -->
+    <div id="productModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">إضافة منتج جديد</h3>
+                <button class="close-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="productForm">
+                <input type="hidden" id="editProductId">
+                
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productName">اسم المنتج *</label>
+                            <input type="text" id="productName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productPrice">السعر (ر.س) *</label>
+                            <input type="number" id="productPrice" min="0" step="0.01" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="productImage">رابط الصورة</label>
+                        <input type="url" id="productImage" placeholder="https://example.com/image.jpg">
+                        <small>اتركه فارغاً لاستخدام صورة افتراضية</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="productDescription">الوصف</label>
+                        <textarea id="productDescription" rows="3"></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productCategory">الفئة</label>
+                            <select id="productCategory">
+                                <option value="perfume">عطور</option>
+                                <option value="makeup">مكياج</option>
+                                <option value="skincare">عناية بالبشرة</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="productStock">الكمية</label>
+                            <input type="number" id="productStock" min="0" value="10">
+                        </div>
+                    </div>
+
+                    <div class="form-checkboxes">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="isNew">
+                            منتج جديد
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="isSale">
+                            عرض خاص
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="isBest">
+                            الأفضل مبيعاً
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="isActive" checked>
+                            نشط
+                        </label>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn primary-btn">
+                        <i class="fas fa-save"></i> حفظ
+                    </button>
+                    <button type="button" class="btn gray-btn close-modal">
+                        إلغاء
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- مودال التأكيد -->
+    <div id="confirmModal" class="modal hidden">
+        <div class="modal-content small">
+            <div class="modal-body text-center">
+                <i class="fas fa-exclamation-triangle warning-icon"></i>
+                <h4 id="confirmMessage">هل أنت متأكد من الحذف؟</h4>
+                <p>هذا الإجراء لا يمكن التراجع عنه</p>
+            </div>
+            <div class="modal-footer">
+                <button id="confirmBtn" class="btn danger-btn">نعم، تأكيد</button>
+                <button id="cancelBtn" class="btn gray-btn">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ملفات JavaScript -->
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/products.js"></script>
     <script type="module" src="js/ui.js"></script>
+    <script type="module" src="js/admin.js"></script>
+    <script type="module" src="js/admin-ui.js"></script>
     <script type="module" src="js/app.js"></script>
 </body>
 </html>
