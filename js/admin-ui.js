@@ -1,155 +1,282 @@
-// js/app.js - التطبيق الرئيسي
+// js/admin-ui.js - واجهة لوحة التحكم
+import { 
+    loadAllProducts, 
+    addNewProduct, 
+    updateExistingProduct, 
+    deleteProductById, 
+    getAllUsers, 
+    updateUserAdminStatus, 
+    getStoreStats,
+    formatDate,
+    getProductImageUrl,
+    setupConfirmation,
+    executePendingAction,
+    clearConfirmation
+} from './admin.js';
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-import { initAuth, signInWithGoogle, signInWithEmail, createAccount, signInAsGuest, logout, onAuthChange, AuthState } from './auth.js';
-import { initProducts, loadProducts, filterProducts, searchProducts, updateStoreUI, ProductsState } from './products.js';
-import { UI } from './ui.js';
+export const AdminUI = {
+    currentTab: 'products',
 
-// تكوين Firebase
-const firebaseConfig = {
-    apiKey: "AIzaSyBdoi5KxlVb6G31cue5SGbaw-VW2UGu4cs",
-    authDomain: "qb-store.firebaseapp.com",
-    projectId: "qb-store",
-    storageBucket: "qb-store.firebasestorage.app",
-    messagingSenderId: "81820788306",
-    appId: "1:81820788306:web:54be52d359ad36c3e0e18b",
-    measurementId: "G-4K0MDY0W5M"
-};
+    init() {
+        this.setupEventListeners();
+        this.loadTabContent('products');
+        this.updateStats();
+    },
 
-// تهيئة التطبيق
-const app = initializeApp(firebaseConfig);
-initAuth(app);
-initProducts(app);
-
-// إعداد الأحداث
-function setupEventListeners() {
-    // مصادقة جوجل
-    document.getElementById('googleSignInBtn')?.addEventListener('click', async () => {
-        await signInWithGoogle();
-    });
-
-    // إظهار نموذج البريد
-    document.getElementById('showEmailFormBtn')?.addEventListener('click', UI.showEmailForm);
-
-    // تسجيل الدخول كضيف
-    document.getElementById('guestSignInBtn')?.addEventListener('click', async () => {
-        await signInAsGuest();
-    });
-
-    // نموذج البريد الإلكتروني
-    document.getElementById('emailAuthForm')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const email = document.getElementById('emailInput').value;
-        const password = document.getElementById('passwordInput').value;
-        
-        if (AuthState.isSignUpMode) {
-            const displayName = document.getElementById('displayNameInput').value;
-            await createAccount(email, password, displayName);
-        } else {
-            await signInWithEmail(email, password);
-        }
-    });
-
-    // تبديل وضع التسجيل
-    document.getElementById('toggleSignUpMode')?.addEventListener('click', UI.toggleAuthMode);
-
-    // العودة للخيارات
-    document.getElementById('backToOptions')?.addEventListener('click', UI.backToOptions);
-
-    // تبديل عرض كلمة المرور
-    document.getElementById('togglePassword')?.addEventListener('click', UI.togglePasswordVisibility);
-
-    // قائمة الجوال
-    document.getElementById('menuToggle')?.addEventListener('click', UI.toggleMobileNav);
-    document.getElementById('closeNav')?.addEventListener('click', UI.closeMobileNav);
-    document.getElementById('mobileUserBtn')?.addEventListener('click', () => {
-        UI.closeMobileNav();
-        // يمكن إضافة فتح صفحة المستخدم هنا
-    });
-
-    // البحث
-    document.getElementById('productSearch')?.addEventListener('input', (e) => {
-        const results = searchProducts(e.target.value);
-        UI.renderProducts(results);
-    });
-
-    // التصفية
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const filter = e.target.dataset.filter;
-            UI.updateFilterButtons(filter);
-            const products = filterProducts(filter);
-            UI.renderProducts(products);
-        });
-    });
-
-    // الترتيب
-    document.getElementById('productSort')?.addEventListener('change', (e) => {
-        ProductsState.currentSort = e.target.value;
-        const products = filterProducts(ProductsState.currentFilter);
-        UI.renderProducts(products);
-    });
-
-    // إضافة للسلة
-    document.addEventListener('click', (e) => {
-        if (e.target.closest('.add-to-cart-btn')) {
-            const productId = e.target.closest('.add-to-cart-btn').dataset.id;
-            showToast('تمت إضافة المنتج إلى السلة');
-        }
-    });
-}
-
-// عرض رسائل Toast
-function showToast(message, type = 'success') {
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.textContent = message;
-    toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: ${type === 'success' ? '#C89B3C' : '#c00'};
-        color: white;
-        padding: 12px 24px;
-        border-radius: 8px;
-        z-index: 1000;
-        animation: slideDown 0.3s ease;
-    `;
-    
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.style.animation = 'slideUp 0.3s ease';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-}
-
-// عند تحميل الصفحة
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('تطبيق المتجر يعمل...');
-    
-    // متابعة حالة المصادقة
-    onAuthChange(async (state) => {
-        if (state.currentUser) {
-            // تحميل المنتجات والإعدادات
-            await loadProducts();
-            UI.renderProducts(ProductsState.filteredProducts);
-            UI.showMainApp();
-            
-            // تحميل إعدادات المتجر (يمكن إضافتها لاحقاً)
-            updateStoreUI({
-                storeName: 'جمالك',
-                description: 'متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية',
-                phone: '+249 123 456 789',
-                whatsapp: '249123456789'
+    setupEventListeners() {
+        // تبديل التبويبات
+        document.querySelectorAll('.admin-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const tabName = e.currentTarget.dataset.tab;
+                this.switchTab(tabName);
             });
-        } else {
-            UI.showAuthScreen();
+        });
+
+        // إضافة منتج
+        document.getElementById('addProductBtn')?.addEventListener('click', () => {
+            this.showProductModal();
+        });
+
+        // إغلاق المودال
+        document.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('productModal').classList.add('hidden');
+                document.getElementById('confirmModal').classList.add('hidden');
+            });
+        });
+
+        // حفظ المنتج
+        document.getElementById('productForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await this.handleProductSubmit();
+        });
+
+        // تأكيد الحذف
+        document.getElementById('confirmBtn')?.addEventListener('click', () => {
+            executePendingAction();
+        });
+
+        document.getElementById('cancelBtn')?.addEventListener('click', () => {
+            clearConfirmation();
+        });
+    },
+
+    async switchTab(tabName) {
+        this.currentTab = tabName;
+        
+        // تحديث الأزرار
+        document.querySelectorAll('.admin-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.tab === tabName);
+        });
+
+        // تحديث المحتوى
+        document.querySelectorAll('.tab-pane').forEach(pane => {
+            pane.classList.toggle('active', pane.id === `${tabName}Tab`);
+        });
+
+        await this.loadTabContent(tabName);
+    },
+
+    async loadTabContent(tabName) {
+        switch(tabName) {
+            case 'products':
+                await this.renderProductsTable();
+                break;
+            case 'users':
+                await this.renderUsersTable();
+                break;
+            case 'orders':
+                // يمكن إضافة إدارة الطلبات لاحقاً
+                break;
         }
-    });
-    
-    // إعداد الأحداث
-    setTimeout(setupEventListeners, 100);
-});
+    },
+
+    async updateStats() {
+        const stats = await getStoreStats();
+        document.getElementById('totalProducts').textContent = stats.totalProducts;
+        document.getElementById('totalUsers').textContent = stats.totalUsers;
+        document.getElementById('totalOrders').textContent = stats.totalOrders;
+    },
+
+    async renderProductsTable() {
+        const tableBody = document.getElementById('productsTable');
+        if (!tableBody) return;
+
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center">جاري التحميل...</td></tr>';
+        
+        const products = await loadAllProducts();
+        
+        if (products.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="6" class="text-center">لا توجد منتجات حالياً</td></tr>';
+            return;
+        }
+
+        tableBody.innerHTML = products.map(product => `
+            <tr>
+                <td><img src="${getProductImageUrl(product.image)}" class="product-thumb" alt=""></td>
+                <td>
+                    <div class="product-info-cell">
+                        <span class="product-name-cell">${product.name}</span>
+                        <small class="product-cat-cell">${product.category || 'بدون فئة'}</small>
+                    </div>
+                </td>
+                <td>${product.price} ر.س</td>
+                <td>
+                    <span class="product-status ${product.isActive !== false ? 'status-active' : 'status-inactive'}">
+                        ${product.isActive !== false ? 'نشط' : 'غير نشط'}
+                    </span>
+                </td>
+                <td>${formatDate(product.createdAt)}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn small-btn primary-btn edit-product" data-id="${product.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn small-btn danger-btn delete-product" data-id="${product.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+
+        // إضافة أحداث الأزرار
+        tableBody.querySelectorAll('.edit-product').forEach(btn => {
+            btn.addEventListener('click', () => this.showProductModal(btn.dataset.id, products.find(p => p.id === btn.dataset.id)));
+        });
+
+        tableBody.querySelectorAll('.delete-product').forEach(btn => {
+            btn.addEventListener('click', () => {
+                setupConfirmation('هل أنت متأكد من حذف هذا المنتج؟', async () => {
+                    const result = await deleteProductById(btn.dataset.id);
+                    if (result.success) {
+                        this.renderProductsTable();
+                        this.updateStats();
+                    }
+                });
+            });
+        });
+    },
+
+    async renderUsersTable() {
+        const container = document.getElementById('usersTable');
+        if (!container) return;
+
+        container.innerHTML = '<div class="loading-spinner"></div>';
+        
+        const users = await getAllUsers();
+        
+        if (users.length === 0) {
+            container.innerHTML = '<p class="text-center">لا يوجد مستخدمين مسجلين</p>';
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>المستخدم</th>
+                            <th>البريد الإلكتروني</th>
+                            <th>الصلاحية</th>
+                            <th>آخر دخول</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${users.map(user => `
+                            <tr>
+                                <td>
+                                    <div class="user-cell">
+                                        <img src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'U')}" class="product-thumb" style="border-radius: 50%">
+                                        <span>${user.displayName || 'مستخدم'}</span>
+                                    </div>
+                                </td>
+                                <td>${user.email || 'بدون بريد'}</td>
+                                <td>
+                                    <span class="product-status ${user.isAdmin ? 'status-active' : 'status-inactive'}">
+                                        ${user.isAdmin ? 'مسؤول' : 'مستخدم'}
+                                    </span>
+                                </td>
+                                <td>${formatDate(user.lastLogin)}</td>
+                                <td>
+                                    <button class="btn small-btn ${user.isAdmin ? 'danger-btn' : 'success-btn'} toggle-admin" data-id="${user.id}" data-admin="${user.isAdmin}">
+                                        ${user.isAdmin ? 'إلغاء مسؤول' : 'تعيين مسؤول'}
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        // إضافة أحداث الأزرار
+        container.querySelectorAll('.toggle-admin').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const userId = btn.dataset.id;
+                const currentIsAdmin = btn.dataset.admin === 'true';
+                const result = await updateUserAdminStatus(userId, !currentIsAdmin);
+                if (result.success) {
+                    this.renderUsersTable();
+                }
+            });
+        });
+    },
+
+    showProductModal(productId = null, productData = null) {
+        const modal = document.getElementById('productModal');
+        const form = document.getElementById('productForm');
+        const title = document.getElementById('modalTitle');
+        
+        form.reset();
+        document.getElementById('editProductId').value = productId || '';
+        title.textContent = productId ? 'تعديل المنتج' : 'إضافة منتج جديد';
+
+        if (productData) {
+            document.getElementById('productName').value = productData.name || '';
+            document.getElementById('productPrice').value = productData.price || '';
+            document.getElementById('productImage').value = productData.image || '';
+            document.getElementById('productDescription').value = productData.description || '';
+            document.getElementById('productCategory').value = productData.category || 'perfume';
+            document.getElementById('productStock').value = productData.stock || 10;
+            document.getElementById('isNew').checked = productData.isNew || false;
+            document.getElementById('isSale').checked = productData.isSale || false;
+            document.getElementById('isBest').checked = productData.isBest || false;
+            document.getElementById('isActive').checked = productData.isActive !== false;
+        }
+
+        modal.classList.remove('hidden');
+    },
+
+    async handleProductSubmit() {
+        const productId = document.getElementById('editProductId').value;
+        const productData = {
+            name: document.getElementById('productName').value,
+            price: parseFloat(document.getElementById('productPrice').value),
+            image: document.getElementById('productImage').value,
+            description: document.getElementById('productDescription').value,
+            category: document.getElementById('productCategory').value,
+            stock: parseInt(document.getElementById('productStock').value),
+            isNew: document.getElementById('isNew').checked,
+            isSale: document.getElementById('isSale').checked,
+            isBest: document.getElementById('isBest').checked,
+            isActive: document.getElementById('isActive').checked
+        };
+
+        let result;
+        if (productId) {
+            result = await updateExistingProduct(productId, productData);
+        } else {
+            result = await addNewProduct(productData);
+        }
+
+        if (result.success) {
+            document.getElementById('productModal').classList.add('hidden');
+            this.renderProductsTable();
+            this.updateStats();
+        } else {
+            alert('حدث خطأ: ' + result.error);
+        }
+    }
+};

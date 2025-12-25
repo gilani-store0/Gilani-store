@@ -121,10 +121,8 @@ export async function updateUserAdminStatus(userId, isAdmin) {
 // جلب الإحصائيات
 export async function getStoreStats() {
     try {
-        const [productsSnapshot, usersSnapshot] = await Promise.all([
-            getDocs(collection(db, "products")),
-            getDocs(collection(db, "users"))
-        ]);
+        const productsSnapshot = await getDocs(collection(db, "products"));
+        const usersSnapshot = await getDocs(collection(db, "users"));
         
         return {
             totalProducts: productsSnapshot.size,

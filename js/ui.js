@@ -1,8 +1,18 @@
 // js/ui.js - معالجة واجهة المستخدم
 
 export const UI = {
+    // إخفاء شاشة التحميل الأولية
+    hideInitialLoader() {
+        const loader = document.getElementById('initialLoader');
+        if (loader) {
+            loader.style.opacity = '0';
+            setTimeout(() => loader.classList.add('hidden'), 300);
+        }
+    },
+
     // إظهار شاشة المصادقة
     showAuthScreen() {
+        this.hideInitialLoader();
         document.getElementById('authScreen').classList.remove('hidden');
         document.getElementById('mainApp').classList.add('hidden');
         document.body.style.overflow = 'hidden';
@@ -10,12 +20,83 @@ export const UI = {
 
     // إظهار التطبيق الرئيسي
     showMainApp() {
+        this.hideInitialLoader();
         document.getElementById('authScreen').classList.add('hidden');
         document.getElementById('mainApp').classList.remove('hidden');
         document.body.style.overflow = 'auto';
         
         // تحميل السنة الحالية
-        document.getElementById('currentYear').textContent = new Date().getFullYear();
+        const yearEl = document.getElementById('currentYear');
+        if (yearEl) yearEl.textContent = new Date().getFullYear();
+    },
+
+    // تبديل القائمة المنسدلة للمستخدم
+    toggleUserDropdown() {
+        const dropdown = document.getElementById('userDropdown');
+        dropdown.classList.toggle('hidden');
+    },
+
+    // إغلاق القائمة المنسدلة للمستخدم
+    closeUserDropdown() {
+        document.getElementById('userDropdown').classList.add('hidden');
+    },
+
+    // إظهار قسم معين وإخفاء البقية
+    showSection(sectionId) {
+        const sections = ['home', 'products', 'adminSection', 'profileSection'];
+        sections.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                if (id === sectionId || (sectionId === 'home' && id === 'products')) {
+                    el.classList.remove('hidden');
+                } else if (id === 'adminSection' || id === 'profileSection') {
+                    el.classList.add('hidden');
+                }
+            }
+        });
+        
+        // التمرير للأعلى عند تغيير القسم
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
+    // تحديث واجهة المستخدم ببيانات المستخدم
+    updateUserUI(user, isAdmin) {
+        if (!user) return;
+
+        const name = user.displayName || 'مستخدم';
+        const email = user.email || '';
+        const photo = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=C89B3C&color=fff`;
+
+        // تحديث الهيدر
+        document.getElementById('dropdownUserName').textContent = name;
+        document.getElementById('dropdownUserEmail').textContent = email;
+        const userAvatar = document.getElementById('userAvatar');
+        const userIcon = document.getElementById('userIcon');
+        
+        if (user.photoURL || user.displayName) {
+            userAvatar.src = photo;
+            userAvatar.classList.remove('hidden');
+            userIcon.classList.add('hidden');
+        }
+
+        // تحديث صفحة الحساب
+        document.getElementById('profileName').textContent = name;
+        document.getElementById('profileEmail').textContent = email;
+        document.getElementById('profileAvatar').src = photo;
+        document.getElementById('editDisplayName').value = name;
+        
+        const adminBadge = document.getElementById('adminBadge');
+        if (isAdmin) {
+            adminBadge.classList.remove('hidden');
+        } else {
+            adminBadge.classList.add('hidden');
+        }
+
+        // تحديث الجوال
+        document.getElementById('mobileUserName').textContent = name;
+        document.getElementById('mobileUserAvatar').src = photo;
+        document.getElementById('mobileUserInfo').classList.remove('hidden');
+        document.getElementById('mobileUserBtn').classList.add('hidden');
     },
 
     // تبديل قائمة الجوال

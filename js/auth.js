@@ -12,7 +12,7 @@ import {
     updateProfile,
     sendPasswordResetEmail 
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
 let auth, db;
 
@@ -91,20 +91,48 @@ async function createUserRecord(user) {
     }
 }
 
-// التحقق من صلاحية الأدمن
-export async function checkAdminStatus(user) {
+// التحقق من صلاحية الأدمن وجلب بيانات المستخدم الإضافية
+export async function getUserData(user) {
     try {
-        if (!user) return false;
+        if (!user) return null;
         
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         if (userDoc.exists()) {
-            const userData = userDoc.data();
-            return userData.isAdmin === true;
+            return userDoc.data();
         }
-        return false;
+        return null;
     } catch (error) {
-        console.error('خطأ في التحقق:', error);
-        return false;
+        console.error('خطأ في جلب بيانات المستخدم:', error);
+        return null;
+    }
+}
+
+// التحقق من صلاحية الأدمن
+export async function checkAdminStatus(user) {
+    const userData = await getUserData(user);
+    return userData ? userData.isAdmin === true : false;
+}
+
+// تحديث بيانات المستخدم
+export async function updateUserData(uid, data) {
+    try {
+        const userRef = doc(db, 'users', uid);
+        await updateDoc(userRef, {
+            ...data,
+            updatedAt: serverTimestamp()
+        });
+        
+        // إذا كان هناك تحديث للاسم في Firebase Auth
+        if (data.displayName && auth.currentUser) {
+            await updateProfile(auth.currentUser, {
+                displayName: data.displayName
+            });
+        }
+        
+        return { success: true };
+    } catch (error) {
+        console.error('خطأ في تحديث بيانات المستخدم:', error);
+        return { success: false, error: error.message };
     }
 }
 

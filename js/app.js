@@ -1,7 +1,7 @@
 // js/app.js - التطبيق الرئيسي
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-import { initAuth, signInWithGoogle, signInWithEmail, createAccount, signInAsGuest, logout, onAuthChange, AuthState } from './auth.js';
+import { initAuth, signInWithGoogle, signInWithEmail, createAccount, signInAsGuest, logout, onAuthChange, AuthState, updateUserData, getUserData } from './auth.js';
 import { initProducts, loadProducts, filterProducts, searchProducts, updateStoreUI, ProductsState } from './products.js';
 import { UI } from './ui.js';
 import { initAdmin } from './admin.js';
@@ -68,7 +68,78 @@ function setupEventListeners() {
     document.getElementById('closeNav')?.addEventListener('click', UI.closeMobileNav);
     document.getElementById('mobileUserBtn')?.addEventListener('click', () => {
         UI.closeMobileNav();
-        // يمكن إضافة فتح صفحة المستخدم هنا
+        UI.showAuthScreen();
+    });
+
+    // القائمة المنسدلة للمستخدم
+    document.getElementById('userToggle')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        UI.toggleUserDropdown();
+    });
+
+    document.addEventListener('click', () => {
+        UI.closeUserDropdown();
+    });
+
+    // تسجيل الخروج
+    document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+        await logout();
+        window.location.reload();
+    });
+
+    document.getElementById('mobileLogoutBtn')?.addEventListener('click', async () => {
+        await logout();
+        window.location.reload();
+    });
+
+    // التنقل بين الأقسام
+    document.getElementById('profileLink')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        UI.showSection('profileSection');
+        UI.closeUserDropdown();
+    });
+
+    document.getElementById('adminToggle')?.addEventListener('click', () => {
+        UI.showSection('adminSection');
+    });
+
+    document.querySelectorAll('a[href="#adminSection"]').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            UI.showSection('adminSection');
+            UI.closeMobileNav();
+        });
+    });
+
+    document.querySelectorAll('a[href="#home"]').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            UI.showSection('home');
+            UI.closeMobileNav();
+        });
+    });
+
+    // تحديث الملف الشخصي
+    document.getElementById('profileForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const displayName = document.getElementById('editDisplayName').value;
+        const phone = document.getElementById('editPhone').value;
+        const address = document.getElementById('editAddress').value;
+        
+        const result = await updateUserData(AuthState.currentUser.uid, {
+            displayName,
+            phone,
+            address
+        });
+        
+        if (result.success) {
+            showToast('تم تحديث البيانات بنجاح');
+            // تحديث الواجهة بالبيانات الجديدة
+            UI.updateUserUI(AuthState.currentUser, AuthState.isAdmin);
+        } else {
+            showToast('فشل تحديث البيانات', 'error');
+        }
     });
 
     // البحث
@@ -175,6 +246,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // متابعة حالة المصادقة
     onAuthChange(async (state) => {
         if (state.currentUser) {
+            // جلب بيانات المستخدم الإضافية من Firestore
+            const userData = await getUserData(state.currentUser);
+            if (userData) {
+                // تحديث الحقول في صفحة الحساب
+                document.getElementById('editPhone').value = userData.phone || '';
+                document.getElementById('editAddress').value = userData.address || '';
+            }
+            
+            // تحديث واجهة المستخدم ببيانات المستخدم
+            UI.updateUserUI(state.currentUser, state.isAdmin);
+            
             // تحميل المنتجات والإعدادات
             await loadProducts();
             UI.renderProducts(ProductsState.filteredProducts);
@@ -192,9 +274,13 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
         } else {
-            UI.showAuthScreen();
-            // إخفاء عناصر الأدمن عند تسجيل الخروج
-            setupAdminControls(false);
+            // التأكد من أننا لسنا في حالة تحميل أولية قبل إظهار شاشة الدخول
+            setTimeout(() => {
+                if (!AuthState.currentUser) {
+                    UI.showAuthScreen();
+                    setupAdminControls(false);
+                }
+            }, 1000);
         }
     });
     
