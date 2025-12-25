@@ -65,6 +65,24 @@
 
             <!-- نموذج البريد الإلكتروني -->
             <div id="emailAuthSection" class="email-form-container hidden">
+                
+                <!-- قسم استعادة كلمة المرور -->
+                <div id="resetPasswordSection" class="hidden">
+                    <form id="resetPasswordForm">
+                        <p class="reset-info">أدخل بريدك الإلكتروني لإرسال رابط إعادة تعيين كلمة المرور.</p>
+                        <div class="form-group">
+                            <input type="email" id="resetEmailInput" placeholder="البريد الإلكتروني" required>
+                        </div>
+                        <button type="submit" id="sendResetEmailBtn" class="btn primary-btn w-100">
+                            <i class="fas fa-paper-plane"></i> إرسال رابط إعادة التعيين
+                        </button>
+                        <button type="button" id="backToSignIn" class="btn text-btn back-btn">
+                            <i class="fas fa-arrow-right"></i> العودة لتسجيل الدخول
+                        </button>
+                    </form>
+                </div>
+
+                <!-- نموذج البريد الإلكتروني -->
                 <form id="emailAuthForm">
                     <div class="form-group">
                         <input type="text" id="displayNameInput" placeholder="الاسم الكامل" class="hidden">
@@ -84,6 +102,9 @@
                         </button>
                         <button type="button" id="toggleSignUpMode" class="btn text-btn">
                             <i class="fas fa-user-plus"></i> إنشاء حساب جديد
+                        </button>
+                        <button type="button" id="forgotPasswordBtn" class="btn text-btn small-text-btn">
+                            هل نسيت كلمة المرور؟
                         </button>
                     </div>
                     <button type="button" id="backToOptions" class="btn text-btn back-btn">
