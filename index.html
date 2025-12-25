@@ -104,29 +104,33 @@
         <header class="main-header">
             <div class="container">
                 <div class="header-content">
-                    <div class="logo">
-                        <i class="fas fa-spa"></i>
-                        <span class="store-name">جمالك</span>
+                    <!-- أقصى اليمين: قائمة الخيارات (الثلاث خطوط) والاسم/اللوجو -->
+                    <div class="header-group-right">
+                        <button id="menuToggle" class="icon-btn" title="القائمة"><i class="fas fa-bars"></i></button>
+                        <div class="logo">
+                            <i class="fas fa-spa"></i>
+                            <span class="store-name">جمالك</span>
+                        </div>
                     </div>
+                    
+                    <!-- الوسط: البحث -->
                     <div class="search-container">
                         <i class="fas fa-search"></i>
                         <input type="text" id="productSearch" placeholder="ابحث عن منتج...">
                     </div>
-                    <div class="user-actions">
-                        <button id="adminToggle" class="icon-btn admin-only hidden" title="لوحة التحكم">
-                            <i class="fas fa-cog"></i>
+
+                    <!-- أقصى اليسار: السلة -->
+                    <div class="header-group-left">
+                        <button id="ordersLink" class="icon-btn hidden" title="السلة">
+                            <i class="fas fa-shopping-cart"></i>
                         </button>
-                        <button id="ordersLink" class="icon-btn hidden" title="طلباتي">
-                            <i class="fas fa-shopping-bag"></i>
-                        </button>
-                        <button id="logoutBtn" class="icon-btn logout-item hidden" title="تسجيل الخروج">
-                            <i class="fas fa-sign-out-alt"></i>
-                        </button>
-                        <button id="userToggle" class="icon-btn" title="حسابي">
-                            <img id="userAvatar" src="https://ui-avatars.com/api/?name=User&background=C89B3C&color=fff" alt="User" class="user-avatar-img hidden">
-                            <i id="userIcon" class="far fa-user"></i>
-                        </button>
-                        <button id="menuToggle" class="icon-btn mobile-only"><i class="fas fa-bars"></i></button>
+                    </div>
+                    
+                    <!-- العناصر القديمة التي تم نقلها أو إخفاؤها (للتأكد من عدم وجودها) -->
+                    <div class="user-actions hidden">
+                        <button id="adminToggle" class="icon-btn admin-only hidden" title="لوحة التحكم"></button>
+                        <button id="logoutBtn" class="icon-btn logout-item hidden" title="تسجيل الخروج"></button>
+                        <button id="userToggle" class="icon-btn" title="حسابي"></button>
                     </div>
                 </div>
             </div>
@@ -148,6 +152,10 @@
                 <a href="#adminSection" class="nav-link admin-only hidden"><i class="fas fa-cog"></i> لوحة التحكم</a>
             </div>
             <div class="nav-actions">
+                <!-- الأزرار المنقولة من الهيدر -->
+                <a href="#" id="adminToggleNav" class="nav-link admin-only hidden"><i class="fas fa-cog"></i> لوحة التحكم</a>
+                <a href="#" id="userToggleNav" class="nav-link"><i class="far fa-user"></i> حسابي</a>
+                <a href="#" id="logoutBtnNav" class="nav-link logout-item hidden"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a>
                 <div id="mobileUserInfo" class="mobile-user-info hidden">
                     <img id="mobileUserAvatar" src="" alt="" class="user-avatar-img">
                     <div class="user-details">
@@ -307,10 +315,47 @@
                         <button class="admin-tab" data-tab="users">
                             <i class="fas fa-users"></i> المستخدمين
                         </button>
+                        <button class="admin-tab" data-tab="settings">
+                            <i class="fas fa-cogs"></i> إعدادات الموقع
+                        </button>
                     </div>
 
                     <!-- محتوى التبويبات -->
                     <div class="admin-tab-content">
+                        
+                        <!-- تبويب إعدادات الموقع -->
+                        <div id="settingsTab" class="tab-pane hidden">
+                            <div class="tab-header">
+                                <h3>تعديل بيانات الموقع</h3>
+                            </div>
+                            <form id="siteSettingsForm" class="form-card">
+                                <div class="form-group">
+                                    <label for="storeNameInput">اسم المتجر</label>
+                                    <input type="text" id="storeNameInput" placeholder="اسم المتجر" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="logoInput">شعار المتجر (URL)</label>
+                                    <input type="text" id="logoInput" placeholder="رابط الشعار (سيتم استبداله لاحقاً برفع من الاستوديو)">
+                                </div>
+                                <div class="form-group">
+                                    <label for="emailInput">البريد الإلكتروني للتواصل</label>
+                                    <input type="email" id="emailInput" placeholder="example@store.com" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="phone1Input">رقم الهاتف 1</label>
+                                    <input type="tel" id="phone1Input" placeholder="009665xxxxxxxx" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="phone2Input">رقم الهاتف 2 (اختياري)</label>
+                                    <input type="tel" id="phone2Input" placeholder="009665xxxxxxxx">
+                                </div>
+                                <div class="form-group">
+                                    <label for="deliveryTimeInput">مدة التوصيل (بالأيام)</label>
+                                    <input type="number" id="deliveryTimeInput" placeholder="مثال: 3-5 أيام" required>
+                                </div>
+                                <button type="submit" class="btn primary-btn w-100">حفظ إعدادات الموقع</button>
+                            </form>
+                        </div>
                         
                         <!-- تبويب المنتجات -->
                         <div id="productsTab" class="tab-pane active">
@@ -459,11 +504,18 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="productImage">رابط الصورة</label>
-                        <input type="url" id="productImage" placeholder="https://example.com/image.jpg">
-                        <small>اتركه فارغاً لاستخدام صورة افتراضية</small>
-                    </div>
+<div class="form-group">
+    <label for="productImageFile">صورة المنتج</label>
+    <div class="image-upload-container">
+        <input type="file" id="productImageFile" accept="image/*" class="hidden-file-input">
+        <label for="productImageFile" class="btn outline-btn upload-btn">
+            <i class="fas fa-upload"></i> اختيار صورة من الاستوديو
+        </label>
+        <img id="productImagePreview" src="" alt="معاينة الصورة" class="image-preview hidden">
+        <input type="hidden" id="productImage" value=""> <!-- للحفاظ على URL الصورة الحالية -->
+    </div>
+    <small>اتركه فارغاً لاستخدام صورة افتراضية</small>
+</div>
 
                     <div class="form-group">
                         <label for="productDescription">الوصف</label>
