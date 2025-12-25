@@ -22,8 +22,19 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💄</text></svg>">
 </head>
 <body>
+    <!-- شاشة التحميل الأولية -->
+    <div id="initialLoader" class="initial-loader">
+        <div class="loader-content">
+            <div class="logo-circle">
+                <span class="logo-text">ج</span>
+            </div>
+            <div class="loading-spinner"></div>
+            <p>جاري التحميل...</p>
+        </div>
+    </div>
+
     <!-- شاشة المصادقة -->
-    <div id="authScreen" class="auth-screen">
+    <div id="authScreen" class="auth-screen hidden">
         <div class="auth-card">
             <div class="auth-header">
                 <div class="logo-circle">
@@ -105,7 +116,29 @@
                         <button id="adminToggle" class="icon-btn admin-only hidden" title="لوحة التحكم">
                             <i class="fas fa-cog"></i>
                         </button>
-                        <button id="userToggle" class="icon-btn"><i class="far fa-user"></i></button>
+                        <div class="user-profile-dropdown">
+                            <button id="userToggle" class="icon-btn">
+                                <img id="userAvatar" src="https://ui-avatars.com/api/?name=User&background=C89B3C&color=fff" alt="User" class="user-avatar-img hidden">
+                                <i id="userIcon" class="far fa-user"></i>
+                            </button>
+                            <div id="userDropdown" class="dropdown-menu hidden">
+                                <div class="dropdown-header">
+                                    <p id="dropdownUserName" class="user-name">مستخدم</p>
+                                    <p id="dropdownUserEmail" class="user-email">email@example.com</p>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <a href="#profile" id="profileLink" class="dropdown-item">
+                                    <i class="fas fa-user-circle"></i> حسابي
+                                </a>
+                                <a href="#orders" class="dropdown-item">
+                                    <i class="fas fa-shopping-bag"></i> طلباتي
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <button id="logoutBtn" class="dropdown-item logout-item">
+                                    <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+                                </button>
+                            </div>
+                        </div>
                         <button id="menuToggle" class="icon-btn mobile-only"><i class="fas fa-bars"></i></button>
                     </div>
                 </div>
@@ -128,8 +161,15 @@
                 <a href="#adminSection" class="nav-link admin-only hidden"><i class="fas fa-cog"></i> لوحة التحكم</a>
             </div>
             <div class="nav-actions">
+                <div id="mobileUserInfo" class="mobile-user-info hidden">
+                    <img id="mobileUserAvatar" src="" alt="" class="user-avatar-img">
+                    <div class="user-details">
+                        <p id="mobileUserName">مستخدم</p>
+                        <button id="mobileLogoutBtn" class="text-btn">تسجيل الخروج</button>
+                    </div>
+                </div>
                 <button id="mobileUserBtn" class="btn outline-btn">
-                    <i class="fas fa-user"></i> حسابي
+                    <i class="fas fa-user"></i> تسجيل الدخول
                 </button>
             </div>
         </nav>
@@ -175,6 +215,40 @@
                     <div class="products-grid" id="productsGrid">
                         <!-- المنتجات تحمل هنا -->
                         <div class="loading-spinner"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- صفحة الحساب الشخصي -->
+            <section id="profileSection" class="profile-section hidden">
+                <div class="container">
+                    <div class="profile-card">
+                        <div class="profile-header">
+                            <div class="profile-avatar-container">
+                                <img id="profileAvatar" src="https://ui-avatars.com/api/?name=User&background=C89B3C&color=fff" alt="User Avatar">
+                                <button id="changeAvatarBtn" class="change-avatar-btn"><i class="fas fa-camera"></i></button>
+                            </div>
+                            <h2 id="profileName">اسم المستخدم</h2>
+                            <p id="profileEmail">user@example.com</p>
+                            <span id="adminBadge" class="badge admin-badge hidden">مسؤول</span>
+                        </div>
+                        <div class="profile-body">
+                            <form id="profileForm">
+                                <div class="form-group">
+                                    <label>الاسم الكامل</label>
+                                    <input type="text" id="editDisplayName" placeholder="الاسم الكامل">
+                                </div>
+                                <div class="form-group">
+                                    <label>رقم الهاتف</label>
+                                    <input type="tel" id="editPhone" placeholder="رقم الهاتف">
+                                </div>
+                                <div class="form-group">
+                                    <label>العنوان</label>
+                                    <textarea id="editAddress" placeholder="العنوان بالتفصيل"></textarea>
+                                </div>
+                                <button type="submit" class="btn primary-btn w-100">حفظ التغييرات</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </section>
