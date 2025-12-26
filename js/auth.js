@@ -1,4 +1,4 @@
-// js/auth.js - معالجة المصادقة (النسخة المصححة)
+// js/auth.js - معالجة المصادقة (النسخة المحسنة)
 
 // حالة المستخدم
 let currentUser = null;
@@ -7,7 +7,7 @@ let isUserAdminFlag = false;
 
 // تهيئة المصادقة
 function initAuth() {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         if (!window.auth) {
             console.warn('Firebase Auth غير متاح، استخدام وضع الضيف');
             const guestUser = {
@@ -32,7 +32,10 @@ function initAuth() {
             return;
         }
         
-        window.auth.onAuthStateChanged(async (user) => {
+        // التحقق من حالة المصادقة الحالية
+        const unsubscribe = window.auth.onAuthStateChanged(async (user) => {
+            unsubscribe(); // إلغاء الاشتراك بعد أول تحديث
+            
             if (user) {
                 // مستخدم مسجل الدخول من Firebase
                 console.log('المستخدم مسجل الدخول:', user.email);
@@ -64,7 +67,7 @@ function initAuth() {
             }
         }, (error) => {
             console.error('خطأ في مراقبة حالة المصادقة:', error);
-            resolve({ success: false, error: error.message });
+            reject(error);
         });
     });
 }
@@ -72,21 +75,26 @@ function initAuth() {
 // تسجيل الدخول باستخدام Google
 async function signInWithGoogle() {
     try {
+        console.log('بدء تسجيل الدخول باستخدام Google...');
+        
         if (!window.auth || !firebase) {
             throw new Error('Firebase غير متاح');
         }
         
         // استخدام firebase من النافذة العامة
         const provider = new firebase.auth.GoogleAuthProvider();
+        console.log('المزود:', provider);
+        
         const result = await window.auth.signInWithPopup(provider);
         const user = result.user;
+        console.log('تم تسجيل الدخول:', user.email);
         
         // حفظ بيانات المستخدم في Firestore
         await saveUserData(user);
         
         return { success: true, user };
     } catch (error) {
-        console.error('خطأ في تسجيل الدخول باستخدام Google:', error);
+        console.error('تفاصيل خطأ تسجيل الدخول باستخدام Google:', error);
         return { 
             success: false, 
             error: getErrorMessage(error) 
@@ -97,19 +105,27 @@ async function signInWithGoogle() {
 // تسجيل الدخول باستخدام البريد الإلكتروني
 async function signInWithEmail(email, password) {
     try {
+        console.log('محاولة تسجيل الدخول بالبريد:', email);
+        
         if (!window.auth) {
             throw new Error('Firebase Auth غير متاح');
         }
         
-        const result = await window.auth.signInWithEmailAndPassword(email, password);
+        // التحقق من صحة المدخلات
+        if (!email || !password) {
+            throw new Error('البريد الإلكتروني وكلمة المرور مطلوبان');
+        }
+        
+        const result = await window.auth.signInWithEmailAndPassword(email.trim(), password);
         const user = result.user;
+        console.log('تم تسجيل الدخول بنجاح:', user.email);
         
         // تحديث آخر وقت دخول
         await updateLastLogin(user.uid);
         
         return { success: true, user };
     } catch (error) {
-        console.error('خطأ في تسجيل الدخول:', error);
+        console.error('تفاصيل خطأ تسجيل الدخول:', error);
         return { 
             success: false, 
             error: getErrorMessage(error) 
@@ -120,16 +136,31 @@ async function signInWithEmail(email, password) {
 // إنشاء حساب جديد
 async function signUpWithEmail(email, password, displayName) {
     try {
+        console.log('إنشاء حساب جديد:', email);
+        
         if (!window.auth) {
             throw new Error('Firebase Auth غير متاح');
         }
         
-        const result = await window.auth.createUserWithEmailAndPassword(email, password);
+        // التحقق من صحة المدخلات
+        if (!email || !password) {
+            throw new Error('البريد الإلكتروني وكلمة المرور مطلوبان');
+        }
+        
+        if (password.length < 6) {
+            throw new Error('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+        }
+        
+        const result = await window.auth.createUserWithEmailAndPassword(email.trim(), password);
         const user = result.user;
+        console.log('تم إنشاء الحساب:', user.email);
         
         // تحديث اسم المستخدم
-        if (displayName) {
-            await user.updateProfile({ displayName });
+        if (displayName && displayName.trim()) {
+            await user.updateProfile({ 
+                displayName: displayName.trim() 
+            });
+            console.log('تم تحديث اسم المستخدم:', displayName);
         }
         
         // حفظ بيانات المستخدم في Firestore
@@ -137,7 +168,7 @@ async function signUpWithEmail(email, password, displayName) {
         
         return { success: true, user };
     } catch (error) {
-        console.error('خطأ في إنشاء الحساب:', error);
+        console.error('تفاصيل خطأ إنشاء الحساب:', error);
         return { 
             success: false, 
             error: getErrorMessage(error) 
@@ -154,6 +185,7 @@ async function updateLastLogin(userId) {
         await userRef.update({
             lastLogin: firebase.firestore.FieldValue.serverTimestamp()
         });
+        console.log('تم تحديث آخر وقت دخول للمستخدم:', userId);
     } catch (error) {
         console.error('خطأ في تحديث آخر وقت دخول:', error);
     }
@@ -162,6 +194,7 @@ async function updateLastLogin(userId) {
 // تسجيل الدخول كضيف
 function signInAsGuest() {
     try {
+        console.log('تسجيل الدخول كضيف...');
         const guestUser = {
             uid: 'guest_' + Date.now(),
             email: null,
@@ -187,6 +220,7 @@ function signInAsGuest() {
         };
         
         localStorage.setItem('jamalek_user', JSON.stringify(userState));
+        console.log('تم تسجيل الدخول كضيف');
         
         return { success: true, user: guestUser, userData: guestUser };
     } catch (error) {
@@ -198,14 +232,22 @@ function signInAsGuest() {
 // استعادة كلمة المرور
 async function resetPassword(email) {
     try {
+        console.log('إعادة تعيين كلمة المرور لـ:', email);
+        
         if (!window.auth) {
             throw new Error('Firebase Auth غير متاح');
         }
         
-        await window.auth.sendPasswordResetEmail(email);
+        if (!email || !email.includes('@')) {
+            throw new Error('البريد الإلكتروني غير صحيح');
+        }
+        
+        await window.auth.sendPasswordResetEmail(email.trim());
+        console.log('تم إرسال رابط إعادة التعيين');
+        
         return { success: true };
     } catch (error) {
-        console.error('خطأ في إرسال رابط إعادة التعيين:', error);
+        console.error('تفاصيل خطأ إعادة تعيين كلمة المرور:', error);
         return { 
             success: false, 
             error: getErrorMessage(error) 
@@ -216,8 +258,11 @@ async function resetPassword(email) {
 // تسجيل الخروج
 async function signOut() {
     try {
+        console.log('تسجيل الخروج...');
+        
         if (currentUser && !currentUser.isGuest && window.auth) {
             await window.auth.signOut();
+            console.log('تم تسجيل الخروج من Firebase');
         }
         
         currentUser = null;
@@ -226,6 +271,7 @@ async function signOut() {
         
         // مسح حالة المستخدم من localStorage
         localStorage.removeItem('jamalek_user');
+        console.log('تم مسح بيانات المستخدم من localStorage');
         
         return { success: true };
     } catch (error) {
@@ -256,7 +302,10 @@ async function saveUserData(user) {
             address: ''
         };
         
+        console.log('حفظ بيانات المستخدم في Firestore:', user.email);
         await userRef.set(userData, { merge: true });
+        console.log('تم حفظ بيانات المستخدم');
+        
         return { success: true };
     } catch (error) {
         console.error('خطأ في حفظ بيانات المستخدم:', error);
@@ -288,8 +337,10 @@ async function getUserData(user) {
         const userSnap = await userRef.get();
         
         if (userSnap.exists()) {
+            console.log('تم جلب بيانات المستخدم من Firestore');
             return userSnap.data();
         } else {
+            console.log('المستخدم غير موجود في Firestore، سيتم إنشاؤه');
             await saveUserData(user);
             const newSnap = await userRef.get();
             return newSnap.data();
@@ -391,6 +442,8 @@ function getErrorMessage(error) {
     if (!error) return 'حدث خطأ غير متوقع';
     
     const errorCode = error.code || '';
+    console.log('كود الخطأ:', errorCode);
+    console.log('رسالة الخطأ الأصلية:', error.message);
     
     const errorMessages = {
         'auth/invalid-email': 'البريد الإلكتروني غير صحيح',
@@ -405,7 +458,8 @@ function getErrorMessage(error) {
         'auth/popup-closed-by-user': 'تم إغلاق نافذة التسجيل',
         'auth/cancelled-popup-request': 'تم إلغاء عملية التسجيل',
         'auth/requires-recent-login': 'يجب تسجيل الدخول مرة أخرى لإكمال هذه العملية',
-        'auth/invalid-credential': 'بيانات الاعتماد غير صالحة',
+        'auth/invalid-credential': 'بيانات الاعتماد غير صالحة. تحقق من البريد الإلكتروني وكلمة المرور',
+        'auth/invalid-login-credentials': 'بيانات تسجيل الدخول غير صحيحة. تحقق من البريد الإلكتروني وكلمة المرور',
         'auth/app-deleted': 'تم حذف التطبيق',
         'auth/app-not-authorized': 'التطبيق غير مصرح له',
         'auth/argument-error': 'خطأ في المدخلات',
@@ -414,7 +468,12 @@ function getErrorMessage(error) {
         'auth/user-token-expired': 'انتهت صلاحية رمز المستخدم',
         'auth/unauthorized-domain': 'نطاق غير مصرح به',
         'auth/web-storage-unsupported': 'التخزين عبر الويب غير مدعوم',
-        'default': error.message || 'حدث خطأ غير متوقع'
+        'auth/missing-android-pkg-name': 'اسم حزمة Android مفقود',
+        'auth/missing-continue-uri': 'رابط المتابعة مفقود',
+        'auth/missing-ios-bundle-id': 'معرف حزمة iOS مفقود',
+        'auth/invalid-continue-uri': 'رابط المتابعة غير صالح',
+        'auth/unauthorized-continue-uri': 'رابط المتابعة غير مصرح به',
+        'default': 'حدث خطأ غير متوقع: ' + (error.message || 'يرجى المحاولة مرة أخرى')
     };
     
     return errorMessages[errorCode] || errorMessages['default'];
@@ -429,12 +488,43 @@ function loadUserFromLocalStorage() {
             currentUser = userData;
             currentUserData = userData;
             isUserAdminFlag = userData.isAdmin || false;
+            console.log('تم تحميل المستخدم من localStorage:', userData.displayName);
             return { success: true, user: userData, isAdmin: isUserAdminFlag };
         }
+        console.log('لا يوجد مستخدم محفوظ في localStorage');
         return { success: false, user: null };
     } catch (error) {
         console.error('خطأ في تحميل حالة المستخدم:', error);
         return { success: false, user: null };
+    }
+}
+
+// اختبار اتصال Firebase
+async function testFirebaseConnection() {
+    try {
+        console.log('اختبار اتصال Firebase...');
+        
+        if (!window.auth || !window.db) {
+            return { success: false, error: 'Firebase غير مهيأ' };
+        }
+        
+        // اختبار Auth
+        const authUser = window.auth.currentUser;
+        console.log('المستخدم الحالي في Auth:', authUser?.email || 'لا يوجد');
+        
+        // اختبار Firestore (محاولة قراءة مستند صغير)
+        const testRef = window.db.collection('test').doc('connection');
+        try {
+            await testRef.get();
+            console.log('Firestore متصل');
+        } catch (e) {
+            console.log('Firestore قد يحتاج إلى تهيئة القواعد');
+        }
+        
+        return { success: true };
+    } catch (error) {
+        console.error('فشل اختبار اتصال Firebase:', error);
+        return { success: false, error: error.message };
     }
 }
 
@@ -456,3 +546,4 @@ window.getAllUsers = getAllUsers;
 window.getUsersCount = getUsersCount;
 window.loadUserFromLocalStorage = loadUserFromLocalStorage;
 window.getErrorMessage = getErrorMessage;
+window.testFirebaseConnection = testFirebaseConnection;
