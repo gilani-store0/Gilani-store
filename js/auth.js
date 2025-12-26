@@ -11,7 +11,9 @@ import {
     signInWithEmailAndPassword,
     sendPasswordResetEmail,
     onAuthStateChanged,
-    updateProfile
+    updateProfile,
+    updateEmail,
+    updatePassword
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
 import {
@@ -19,7 +21,12 @@ import {
     setDoc,
     getDoc,
     updateDoc,
-    serverTimestamp
+    serverTimestamp,
+    collection,
+    getDocs,
+    query,
+    where,
+    orderBy
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
 // حالة المستخدم
@@ -32,21 +39,21 @@ export function initAuth() {
     return new Promise((resolve) => {
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // مستخدم مسجل الدخول
+                // مستخدم مسجل الدخول من Firebase
                 console.log('المستخدم مسجل الدخول:', user.email);
                 currentUser = user;
                 
                 try {
                     currentUserData = await getUserData(user);
                     isUserAdminFlag = currentUserData?.isAdmin || false;
-                    resolve({ success: true, user, isAdmin: isUserAdminFlag });
+                    resolve({ success: true, user, userData: currentUserData, isAdmin: isUserAdminFlag });
                 } catch (error) {
                     console.error('خطأ في تحميل بيانات المستخدم:', error);
                     resolve({ success: false, error: error.message });
                 }
             } else {
-                // لا يوجد مستخدم مسجل
-                console.log('لا يوجد مستخدم مسجل');
+                // لا يوجد مستخدم مسجل من Firebase
+                console.log('لا يوجد مستخدم مسجل من Firebase');
                 currentUser = null;
                 currentUserData = null;
                 isUserAdminFlag = false;
@@ -99,7 +106,9 @@ export async function signUpWithEmail(email, password, displayName) {
         const user = result.user;
         
         // تحديث اسم المستخدم
-        await updateProfile(user, { displayName });
+        if (displayName) {
+            await updateProfile(user, { displayName });
+        }
         
         // حفظ بيانات المستخدم في Firestore
         await saveUserData(user);
@@ -122,16 +131,28 @@ export function signInAsGuest() {
             email: null,
             displayName: 'ضيف',
             photoURL: null,
-            isGuest: true
+            isGuest: true,
+            createdAt: new Date().toISOString()
         };
         
         currentUser = guestUser;
         currentUserData = guestUser;
         isUserAdminFlag = false;
         
-        updateLocalUserState(guestUser, false);
+        // حفظ حالة المستخدم في localStorage
+        const userState = {
+            uid: guestUser.uid,
+            email: guestUser.email,
+            displayName: guestUser.displayName,
+            photoURL: guestUser.photoURL,
+            isAdmin: false,
+            createdAt: guestUser.createdAt,
+            isGuest: true
+        };
         
-        return { success: true, user: guestUser };
+        localStorage.setItem('jamalek_user', JSON.stringify(userState));
+        
+        return { success: true, user: guestUser, userData: guestUser };
     } catch (error) {
         console.error('خطأ في تسجيل الدخول كضيف:', error);
         return { success: false, error: 'خطأ في تسجيل الدخول كضيف' };
@@ -163,7 +184,8 @@ export async function signOut() {
         currentUserData = null;
         isUserAdminFlag = false;
         
-        clearLocalUserState();
+        // مسح حالة المستخدم من localStorage
+        localStorage.removeItem('jamalek_user');
         
         return { success: true };
     } catch (error) {
@@ -179,11 +201,14 @@ async function saveUserData(user) {
         const userData = {
             uid: user.uid,
             email: user.email,
-            displayName: user.displayName,
+            displayName: user.displayName || user.email?.split('@')[0] || 'مستخدم',
             photoURL: user.photoURL,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
-            isAdmin: false
+            lastLogin: serverTimestamp(),
+            isAdmin: false,
+            phone: '',
+            address: ''
         };
         
         await setDoc(userRef, userData, { merge: true });
@@ -197,6 +222,7 @@ async function saveUserData(user) {
 // جلب بيانات المستخدم من Firestore
 export async function getUserData(user) {
     try {
+        // إذا كان ضيفاً، ارجع بياناته المحلية
         if (user.isGuest) {
             return user;
         }
@@ -208,14 +234,8 @@ export async function getUserData(user) {
             return userSnap.data();
         } else {
             await saveUserData(user);
-            return {
-                uid: user.uid,
-                email: user.email,
-                displayName: user.displayName,
-                photoURL: user.photoURL,
-                isAdmin: false,
-                createdAt: serverTimestamp()
-            };
+            const newSnap = await getDoc(userRef);
+            return newSnap.data();
         }
     } catch (error) {
         console.error('خطأ في جلب بيانات المستخدم:', error);
@@ -231,10 +251,72 @@ export async function updateUserData(userId, userData) {
             ...userData,
             updatedAt: serverTimestamp()
         });
+        
+        // تحديث الذاكرة المحلية
+        if (currentUserData && currentUserData.uid === userId) {
+            currentUserData = { ...currentUserData, ...userData };
+        }
+        
         return { success: true };
     } catch (error) {
         console.error('خطأ في تحديث بيانات المستخدم:', error);
         return { success: false, error: error.message };
+    }
+}
+
+// تحديث البريد الإلكتروني
+export async function updateUserEmail(newEmail) {
+    try {
+        await updateEmail(auth.currentUser, newEmail);
+        await updateUserData(auth.currentUser.uid, { email: newEmail });
+        return { success: true };
+    } catch (error) {
+        console.error('خطأ في تحديث البريد الإلكتروني:', error);
+        return { success: false, error: getErrorMessage(error.code) };
+    }
+}
+
+// تحديث كلمة المرور
+export async function updateUserPassword(newPassword) {
+    try {
+        await updatePassword(auth.currentUser, newPassword);
+        return { success: true };
+    } catch (error) {
+        console.error('خطأ في تحديث كلمة المرور:', error);
+        return { success: false, error: getErrorMessage(error.code) };
+    }
+}
+
+// جلب جميع المستخدمين (للأدمن فقط)
+export async function getAllUsers() {
+    try {
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, orderBy("createdAt", "desc"));
+        const snapshot = await getDocs(q);
+        const users = [];
+        
+        snapshot.forEach((doc) => {
+            const user = doc.data();
+            user.id = doc.id;
+            users.push(user);
+        });
+        
+        return users;
+    } catch (error) {
+        console.error('خطأ في جلب المستخدمين:', error);
+        return [];
+    }
+}
+
+// جلب عدد المستخدمين
+export async function getUsersCount() {
+    try {
+        const usersRef = collection(db, "users");
+        const snapshot = await getDocs(usersRef);
+        return snapshot.size;
+    } catch (error) {
+        console.error('خطأ في جلب عدد المستخدمين:', error);
+        return 0;
     }
 }
 
@@ -243,33 +325,19 @@ export function getCurrentUser() {
     return currentUser;
 }
 
+// الحصول على بيانات المستخدم الحالي
+export function getCurrentUserData() {
+    return currentUserData;
+}
+
 // التحقق إذا كان المستخدم مسؤولاً
 export function isUserAdmin() {
     return isUserAdminFlag;
 }
 
-// تحديث حالة المستخدم في الذاكرة المحلية
-export function updateLocalUserState(user, isAdmin) {
-    try {
-        const userState = {
-            uid: user.uid,
-            email: user.email,
-            displayName: user.displayName,
-            photoURL: user.photoURL,
-            isAdmin: isAdmin,
-            lastLogin: new Date().toISOString(),
-            isGuest: user.isGuest || false
-        };
-        localStorage.setItem('jamalek_user', JSON.stringify(userState));
-    } catch (error) {
-        console.error('خطأ في حفظ حالة المستخدم:', error);
-    }
-}
-
-// مسح حالة المستخدم من الذاكرة المحلية
-export function clearLocalUserState() {
-    localStorage.removeItem('jamalek_user');
-    localStorage.removeItem('jamalek_cart');
+// تعيين حالة المسؤول
+export function setAdminStatus(status) {
+    isUserAdminFlag = status;
 }
 
 // دالة مساعدة لتحويل كود الخطأ إلى رسالة مفهومة
@@ -286,13 +354,33 @@ function getErrorMessage(errorCode) {
         'auth/network-request-failed': 'خطأ في الاتصال بالشبكة',
         'auth/popup-closed-by-user': 'تم إغلاق نافذة التسجيل',
         'auth/cancelled-popup-request': 'تم إلغاء عملية التسجيل',
+        'auth/requires-recent-login': 'يجب تسجيل الدخول مرة أخرى لإكمال هذه العملية',
+        'auth/invalid-credential': 'بيانات الاعتماد غير صالحة',
         'default': 'حدث خطأ غير متوقع'
     };
     
     return errorMessages[errorCode] || errorMessages['default'];
 }
 
-// تصدير الدوال
+// تحميل حالة المستخدم من localStorage
+export function loadUserFromLocalStorage() {
+    try {
+        const savedUser = localStorage.getItem('jamalek_user');
+        if (savedUser) {
+            const userData = JSON.parse(savedUser);
+            currentUser = userData;
+            currentUserData = userData;
+            isUserAdminFlag = userData.isAdmin || false;
+            return { success: true, user: userData, isAdmin: isUserAdminFlag };
+        }
+        return { success: false, user: null };
+    } catch (error) {
+        console.error('خطأ في تحميل حالة المستخدم:', error);
+        return { success: false, user: null };
+    }
+}
+
+// تصدير جميع الدوال
 export { 
     initAuth,
     signInWithGoogle, 
@@ -302,6 +390,14 @@ export {
     signOut,
     signInAsGuest,
     getCurrentUser,
+    getCurrentUserData,
+    getUserData,
     isUserAdmin,
-    updateUserData
+    setAdminStatus,
+    updateUserData,
+    updateUserEmail,
+    updateUserPassword,
+    getAllUsers,
+    getUsersCount,
+    loadUserFromLocalStorage
 };
