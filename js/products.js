@@ -1,9 +1,7 @@
-// js/products.js - عرض المنتجات
-
-import { db } from './firebase.js';
+// js/products.js - عرض المنتجات (النسخة المتوافقة)
 
 // حالة المنتجات
-export const ProductsState = {
+const ProductsState = {
     products: [],
     filteredProducts: [],
     currentFilter: 'all',
@@ -18,23 +16,24 @@ export const ProductsState = {
 };
 
 // تهيئة المنتجات
-export function initProducts() {
+function initProducts() {
     console.log('تهيئة المنتجات...');
 }
 
 // تحميل المنتجات
-export async function loadProducts() {
+async function loadProducts() {
     try {
-        const { collection, getDocs, query, orderBy } = await import(
-            "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"
-        );
+        if (!window.db) {
+            console.warn('Firestore غير متاح، استخدام منتجات افتراضية');
+            ProductsState.products = getDefaultProducts();
+            ProductsState.filteredProducts = [...ProductsState.products];
+            return ProductsState.products;
+        }
         
-        const productsSnapshot = await getDocs(
-            query(collection(db, 'products'), orderBy('createdAt', 'desc'))
-        );
+        const snapshot = await window.db.collection('products').orderBy('createdAt', 'desc').get();
         
         ProductsState.products = [];
-        productsSnapshot.forEach(doc => {
+        snapshot.forEach(doc => {
             const product = doc.data();
             product.id = doc.id;
             ProductsState.products.push(product);
@@ -53,28 +52,8 @@ export async function loadProducts() {
     }
 }
 
-// تحميل منتج واحد
-export async function loadProductById(productId) {
-    try {
-        const { doc, getDoc } = await import(
-            "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"
-        );
-        
-        const productDoc = await getDoc(doc(db, "products", productId));
-        if (productDoc.exists()) {
-            const product = productDoc.data();
-            product.id = productDoc.id;
-            return product;
-        }
-        return null;
-    } catch (error) {
-        console.error('خطأ في تحميل المنتج:', error);
-        return null;
-    }
-}
-
 // تصفية المنتجات
-export function filterProducts(filter = 'all') {
+function filterProducts(filter = 'all') {
     ProductsState.currentFilter = filter;
     
     let filtered = [...ProductsState.products];
@@ -93,8 +72,7 @@ export function filterProducts(filter = 'all') {
         filtered = filtered.filter(product => 
             product.name?.toLowerCase().includes(query) ||
             product.description?.toLowerCase().includes(query) ||
-            product.category?.toLowerCase().includes(query) ||
-            product.brand?.toLowerCase().includes(query)
+            product.category?.toLowerCase().includes(query)
         );
     }
     
@@ -103,7 +81,7 @@ export function filterProducts(filter = 'all') {
 }
 
 // ترتيب المنتجات
-export function sortProducts(products, sortType) {
+function sortProducts(products, sortType) {
     const sorted = [...products];
     
     switch(sortType) {
@@ -112,7 +90,6 @@ export function sortProducts(products, sortType) {
         case 'price-high':
             return sorted.sort((a, b) => (b.price || 0) - (a.price || 0));
         case 'popular':
-            // يمكن إضافة منطق الشعبية بناءً على المشتريات أو المشاهدات
             return sorted.sort((a, b) => (b.views || 0) - (a.views || 0));
         case 'newest':
         default:
@@ -121,24 +98,19 @@ export function sortProducts(products, sortType) {
 }
 
 // البحث في المنتجات
-export function searchProducts(query) {
+function searchProducts(query) {
     ProductsState.searchQuery = query;
     return filterProducts(ProductsState.currentFilter);
 }
 
 // الحصول على منتج بواسطة ID
-export function getProductById(productId) {
+function getProductById(productId) {
     return ProductsState.products.find(product => product.id === productId);
 }
 
 // الحصول على اسم الفئة
-export function getCategoryName(category) {
+function getCategoryName(category) {
     return ProductsState.categories[category] || category;
-}
-
-// الحصول على جميع الفئات
-export function getAllCategories() {
-    return ProductsState.categories;
 }
 
 // منتجات افتراضية
@@ -154,7 +126,6 @@ function getDefaultProducts() {
             isNew: true,
             isBest: true,
             category: 'perfume',
-            brand: 'شانيل',
             stock: 25,
             views: 150
         },
@@ -166,7 +137,6 @@ function getDefaultProducts() {
             image: 'https://images.unsplash.com/photo-1526947425960-945c6e72858f?q=80&w=300&h=300&fit=crop',
             isSale: true,
             category: 'makeup',
-            brand: 'لوريال',
             stock: 40,
             views: 120
         },
@@ -178,7 +148,6 @@ function getDefaultProducts() {
             image: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?q=80&w=300&h=300&fit=crop',
             isBest: true,
             category: 'perfume',
-            brand: 'ديور',
             stock: 15,
             views: 180
         },
@@ -189,7 +158,6 @@ function getDefaultProducts() {
             price: 65,
             image: 'https://images.unsplash.com/photo-1556228578-9c360e1d8d34?q=80&w=300&h=300&fit=crop',
             category: 'skincare',
-            brand: 'نيفيا',
             stock: 50,
             views: 90
         },
@@ -202,7 +170,6 @@ function getDefaultProducts() {
             image: 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?q=80&w=300&h=300&fit=crop',
             isSale: true,
             category: 'haircare',
-            brand: 'هيربال',
             stock: 35,
             views: 110
         },
@@ -214,34 +181,17 @@ function getDefaultProducts() {
             image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=300&h=300&fit=crop',
             isNew: true,
             category: 'makeup',
-            brand: 'مايبيلين',
             stock: 30,
             views: 85
         }
     ];
 }
 
-// الحصول على عدد المنتجات
-export function getProductsCount() {
-    return ProductsState.products.length;
-}
-
-// الحصول على المنتجات حسب الفئة
-export function getProductsByCategory(category) {
-    return ProductsState.products.filter(product => product.category === category);
-}
-
-// الحصول على المنتجات الجديدة
-export function getNewProducts() {
-    return ProductsState.products.filter(product => product.isNew);
-}
-
-// الحصول على المنتجات في العرض
-export function getSaleProducts() {
-    return ProductsState.products.filter(product => product.isSale);
-}
-
-// الحصول على أفضل المنتجات
-export function getBestProducts() {
-    return ProductsState.products.filter(product => product.isBest);
-}
+// جعل الدوال متاحة عالمياً
+window.initProducts = initProducts;
+window.loadProducts = loadProducts;
+window.filterProducts = filterProducts;
+window.sortProducts = sortProducts;
+window.searchProducts = searchProducts;
+window.getProductById = getProductById;
+window.getCategoryName = getCategoryName;

@@ -1,33 +1,4 @@
-// js/auth.js - معالجة المصادقة
-import { 
-    auth,
-    db
-} from './firebase.js';
-
-import {
-    signInWithPopup,
-    GoogleAuthProvider,
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-    sendPasswordResetEmail,
-    onAuthStateChanged,
-    updateProfile,
-    updateEmail,
-    updatePassword
-} from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-
-import {
-    doc,
-    setDoc,
-    getDoc,
-    updateDoc,
-    serverTimestamp,
-    collection,
-    getDocs,
-    query,
-    where,
-    orderBy
-} from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+// js/auth.js - معالجة المصادقة (النسخة المتوافقة)
 
 // حالة المستخدم
 let currentUser = null;
@@ -35,9 +6,15 @@ let currentUserData = null;
 let isUserAdminFlag = false;
 
 // تهيئة المصادقة
-export function initAuth() {
+function initAuth() {
     return new Promise((resolve) => {
-        onAuthStateChanged(auth, async (user) => {
+        if (!window.auth) {
+            console.error('Firebase Auth غير متاح');
+            resolve({ success: false, user: null });
+            return;
+        }
+        
+        window.auth.onAuthStateChanged(async (user) => {
             if (user) {
                 // مستخدم مسجل الدخول من Firebase
                 console.log('المستخدم مسجل الدخول:', user.email);
@@ -64,10 +41,14 @@ export function initAuth() {
 }
 
 // تسجيل الدخول باستخدام Google
-export async function signInWithGoogle() {
+async function signInWithGoogle() {
     try {
-        const provider = new GoogleAuthProvider();
-        const result = await signInWithPopup(auth, provider);
+        if (!window.auth || !firebase) {
+            throw new Error('Firebase غير متاح');
+        }
+        
+        const provider = new firebase.auth.GoogleAuthProvider();
+        const result = await window.auth.signInWithPopup(provider);
         const user = result.user;
         
         // حفظ بيانات المستخدم في Firestore
@@ -84,9 +65,13 @@ export async function signInWithGoogle() {
 }
 
 // تسجيل الدخول باستخدام البريد الإلكتروني
-export async function signInWithEmail(email, password) {
+async function signInWithEmail(email, password) {
     try {
-        const result = await signInWithEmailAndPassword(auth, email, password);
+        if (!window.auth) {
+            throw new Error('Firebase Auth غير متاح');
+        }
+        
+        const result = await window.auth.signInWithEmailAndPassword(email, password);
         const user = result.user;
         
         return { success: true, user };
@@ -100,14 +85,18 @@ export async function signInWithEmail(email, password) {
 }
 
 // إنشاء حساب جديد
-export async function signUpWithEmail(email, password, displayName) {
+async function signUpWithEmail(email, password, displayName) {
     try {
-        const result = await createUserWithEmailAndPassword(auth, email, password);
+        if (!window.auth) {
+            throw new Error('Firebase Auth غير متاح');
+        }
+        
+        const result = await window.auth.createUserWithEmailAndPassword(email, password);
         const user = result.user;
         
         // تحديث اسم المستخدم
         if (displayName) {
-            await updateProfile(user, { displayName });
+            await user.updateProfile({ displayName });
         }
         
         // حفظ بيانات المستخدم في Firestore
@@ -124,7 +113,7 @@ export async function signUpWithEmail(email, password, displayName) {
 }
 
 // تسجيل الدخول كضيف
-export function signInAsGuest() {
+function signInAsGuest() {
     try {
         const guestUser = {
             uid: 'guest_' + Date.now(),
@@ -160,9 +149,13 @@ export function signInAsGuest() {
 }
 
 // استعادة كلمة المرور
-export async function resetPassword(email) {
+async function resetPassword(email) {
     try {
-        await sendPasswordResetEmail(auth, email);
+        if (!window.auth) {
+            throw new Error('Firebase Auth غير متاح');
+        }
+        
+        await window.auth.sendPasswordResetEmail(email);
         return { success: true };
     } catch (error) {
         console.error('خطأ في إرسال رابط إعادة التعيين:', error);
@@ -174,10 +167,10 @@ export async function resetPassword(email) {
 }
 
 // تسجيل الخروج
-export async function signOut() {
+async function signOut() {
     try {
-        if (currentUser && !currentUser.isGuest) {
-            await auth.signOut();
+        if (currentUser && !currentUser.isGuest && window.auth) {
+            await window.auth.signOut();
         }
         
         currentUser = null;
@@ -197,21 +190,26 @@ export async function signOut() {
 // حفظ بيانات المستخدم في Firestore
 async function saveUserData(user) {
     try {
-        const userRef = doc(db, "users", user.uid);
+        if (!window.db) {
+            console.warn('Firestore غير متاح، تجاهل حفظ بيانات المستخدم');
+            return { success: false };
+        }
+        
+        const userRef = window.db.collection("users").doc(user.uid);
         const userData = {
             uid: user.uid,
             email: user.email,
             displayName: user.displayName || user.email?.split('@')[0] || 'مستخدم',
             photoURL: user.photoURL,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-            lastLogin: serverTimestamp(),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
             isAdmin: false,
             phone: '',
             address: ''
         };
         
-        await setDoc(userRef, userData, { merge: true });
+        await userRef.set(userData, { merge: true });
         return { success: true };
     } catch (error) {
         console.error('خطأ في حفظ بيانات المستخدم:', error);
@@ -220,21 +218,33 @@ async function saveUserData(user) {
 }
 
 // جلب بيانات المستخدم من Firestore
-export async function getUserData(user) {
+async function getUserData(user) {
     try {
         // إذا كان ضيفاً، ارجع بياناته المحلية
         if (user.isGuest) {
             return user;
         }
         
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
+        if (!window.db) {
+            console.warn('Firestore غير متاح، استخدام بيانات محلية');
+            return {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName || 'مستخدم',
+                photoURL: user.photoURL,
+                isAdmin: false,
+                createdAt: new Date()
+            };
+        }
+        
+        const userRef = window.db.collection("users").doc(user.uid);
+        const userSnap = await userRef.get();
         
         if (userSnap.exists()) {
             return userSnap.data();
         } else {
             await saveUserData(user);
-            const newSnap = await getDoc(userRef);
+            const newSnap = await userRef.get();
             return newSnap.data();
         }
     } catch (error) {
@@ -244,12 +254,17 @@ export async function getUserData(user) {
 }
 
 // تحديث بيانات المستخدم
-export async function updateUserData(userId, userData) {
+async function updateUserData(userId, userData) {
     try {
-        const userRef = doc(db, "users", userId);
-        await updateDoc(userRef, {
+        if (!window.db) {
+            console.warn('Firestore غير متاح، تجاهل تحديث البيانات');
+            return { success: false, error: 'Firestore غير متاح' };
+        }
+        
+        const userRef = window.db.collection("users").doc(userId);
+        await userRef.update({
             ...userData,
-            updatedAt: serverTimestamp()
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
         // تحديث الذاكرة المحلية
@@ -264,35 +279,15 @@ export async function updateUserData(userId, userData) {
     }
 }
 
-// تحديث البريد الإلكتروني
-export async function updateUserEmail(newEmail) {
-    try {
-        await updateEmail(auth.currentUser, newEmail);
-        await updateUserData(auth.currentUser.uid, { email: newEmail });
-        return { success: true };
-    } catch (error) {
-        console.error('خطأ في تحديث البريد الإلكتروني:', error);
-        return { success: false, error: getErrorMessage(error.code) };
-    }
-}
-
-// تحديث كلمة المرور
-export async function updateUserPassword(newPassword) {
-    try {
-        await updatePassword(auth.currentUser, newPassword);
-        return { success: true };
-    } catch (error) {
-        console.error('خطأ في تحديث كلمة المرور:', error);
-        return { success: false, error: getErrorMessage(error.code) };
-    }
-}
-
 // جلب جميع المستخدمين (للأدمن فقط)
-export async function getAllUsers() {
+async function getAllUsers() {
     try {
-        const usersRef = collection(db, "users");
-        const q = query(usersRef, orderBy("createdAt", "desc"));
-        const snapshot = await getDocs(q);
+        if (!window.db) {
+            console.warn('Firestore غير متاح، ارجاع قائمة فارغة');
+            return [];
+        }
+        
+        const snapshot = await window.db.collection("users").get();
         const users = [];
         
         snapshot.forEach((doc) => {
@@ -309,10 +304,14 @@ export async function getAllUsers() {
 }
 
 // جلب عدد المستخدمين
-export async function getUsersCount() {
+async function getUsersCount() {
     try {
-        const usersRef = collection(db, "users");
-        const snapshot = await getDocs(usersRef);
+        if (!window.db) {
+            console.warn('Firestore غير متاح، ارجاع 0');
+            return 0;
+        }
+        
+        const snapshot = await window.db.collection("users").get();
         return snapshot.size;
     } catch (error) {
         console.error('خطأ في جلب عدد المستخدمين:', error);
@@ -321,22 +320,22 @@ export async function getUsersCount() {
 }
 
 // الحصول على المستخدم الحالي
-export function getCurrentUser() {
+function getCurrentUser() {
     return currentUser;
 }
 
 // الحصول على بيانات المستخدم الحالي
-export function getCurrentUserData() {
+function getCurrentUserData() {
     return currentUserData;
 }
 
 // التحقق إذا كان المستخدم مسؤولاً
-export function isUserAdmin() {
+function isUserAdmin() {
     return isUserAdminFlag;
 }
 
 // تعيين حالة المسؤول
-export function setAdminStatus(status) {
+function setAdminStatus(status) {
     isUserAdminFlag = status;
 }
 
@@ -363,7 +362,7 @@ function getErrorMessage(errorCode) {
 }
 
 // تحميل حالة المستخدم من localStorage
-export function loadUserFromLocalStorage() {
+function loadUserFromLocalStorage() {
     try {
         const savedUser = localStorage.getItem('jamalek_user');
         if (savedUser) {
@@ -380,24 +379,20 @@ export function loadUserFromLocalStorage() {
     }
 }
 
-// تصدير جميع الدوال
-export { 
-    initAuth,
-    signInWithGoogle, 
-    signInWithEmail, 
-    signUpWithEmail, 
-    resetPassword,
-    signOut,
-    signInAsGuest,
-    getCurrentUser,
-    getCurrentUserData,
-    getUserData,
-    isUserAdmin,
-    setAdminStatus,
-    updateUserData,
-    updateUserEmail,
-    updateUserPassword,
-    getAllUsers,
-    getUsersCount,
-    loadUserFromLocalStorage
-};
+// جعل الدوال متاحة عالمياً
+window.initAuth = initAuth;
+window.signInWithGoogle = signInWithGoogle;
+window.signInWithEmail = signInWithEmail;
+window.signUpWithEmail = signUpWithEmail;
+window.signInAsGuest = signInAsGuest;
+window.resetPassword = resetPassword;
+window.signOut = signOut;
+window.getCurrentUser = getCurrentUser;
+window.getCurrentUserData = getCurrentUserData;
+window.getUserData = getUserData;
+window.isUserAdmin = isUserAdmin;
+window.setAdminStatus = setAdminStatus;
+window.updateUserData = updateUserData;
+window.getAllUsers = getAllUsers;
+window.getUsersCount = getUsersCount;
+window.loadUserFromLocalStorage = loadUserFromLocalStorage;
