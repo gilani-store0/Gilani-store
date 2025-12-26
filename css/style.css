@@ -1425,4 +1425,234 @@ body {
     padding: 20px;
     box-shadow: var(--shadow);
     position: sticky;
-    top: 100px
+    top: 100px;
+}
+
+.summary-details {
+    margin: 20px 0;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.summary-row.total {
+    border-bottom: none;
+    font-weight: 600;
+    font-size: 18px;
+    color: var(--primary);
+}
+
+.total-amount {
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.shipping-note {
+    background: rgba(200, 155, 60, 0.1);
+    padding: 10px;
+    border-radius: 8px;
+    margin: 15px 0;
+    font-size: 14px;
+    color: #555;
+}
+
+.shipping-note i {
+    color: var(--primary);
+    margin-left: 5px;
+}
+
+.summary-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* ==================== Toast notifications ==================== */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--success);
+    color: white;
+    padding: 12px 20px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    z-index: 9999;
+    animation: slideDown 0.3s ease;
+    max-width: 300px;
+}
+
+.toast-error {
+    background: var(--danger);
+}
+
+.toast-warning {
+    background: var(--warning);
+    color: #212529;
+}
+
+.toast-success {
+    background: var(--success);
+}
+
+.toast-info {
+    background: var(--info);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+/* ==================== حالة الطلبات ==================== */
+.order-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.order-info h4 {
+    margin: 0;
+    color: var(--dark);
+}
+
+.order-date {
+    color: var(--gray);
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+.order-status {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-processing {
+    background: #cce5ff;
+    color: #004085;
+}
+
+.status-completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-cancelled {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.order-items {
+    margin-bottom: 15px;
+}
+
+.order-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--border);
+}
+
+.order-item:last-child {
+    border-bottom: none;
+}
+
+.order-footer {
+    padding-top: 15px;
+    border-top: 1px solid var(--border);
+}
+
+.order-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+}
+
+/* تحسين القائمة المتنقلة */
+.cart-count-mobile {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--danger);
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* صورة المستخدم */
+.user-avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* تعطيل الزرارات */
+button:disabled, 
+input:disabled, 
+select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed !important;
+}
+
+/* مؤشر التحميل */
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-top: 3px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
