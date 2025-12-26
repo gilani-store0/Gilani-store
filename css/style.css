@@ -29,6 +29,7 @@ body {
     color: var(--dark);
     line-height: 1.6;
     overflow-x: hidden;
+    touch-action: pan-y;
 }
 
 .container {
@@ -899,6 +900,7 @@ body {
     border-bottom: 2px solid var(--border);
     padding-bottom: 10px;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .admin-tab {
@@ -916,6 +918,8 @@ body {
     gap: 8px;
     white-space: nowrap;
     transition: var(--transition);
+    min-height: 44px;
+    min-width: 44px;
 }
 
 .admin-tab:hover {
@@ -958,6 +962,7 @@ body {
     overflow-x: auto;
     border-radius: var(--radius);
     border: 1px solid var(--border);
+    -webkit-overflow-scrolling: touch;
 }
 
 .admin-table {
@@ -1087,6 +1092,8 @@ body {
     font-size: 18px;
     cursor: pointer;
     color: var(--gray);
+    min-height: 44px;
+    min-width: 44px;
 }
 
 .close-modal:hover {
@@ -1655,4 +1662,305 @@ select:disabled {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* ==================== إصلاح تخطيط سلة التسوق للجوال ==================== */
+
+/* تخطيط سلة التسوق على الجوال */
+@media (max-width: 768px) {
+    .cart-content {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .cart-items-header {
+        grid-template-columns: 2fr 1fr 1fr 1fr 0.5fr;
+        font-size: 12px;
+        padding: 10px 5px;
+        gap: 8px;
+        overflow-x: auto;
+    }
+    
+    .cart-item {
+        grid-template-columns: 2fr 1fr 1fr 1fr 0.5fr;
+        padding: 12px 8px;
+        gap: 8px;
+        font-size: 13px;
+        overflow-x: auto;
+    }
+    
+    .cart-item-product {
+        flex-direction: column;
+        text-align: center;
+        gap: 8px;
+    }
+    
+    .cart-item-image {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .cart-item-details h4 {
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+    
+    .item-description {
+        font-size: 12px;
+        display: none; /* إخفاء الوصف على الجوال لتوفير المساحة */
+    }
+    
+    .cart-item-quantity {
+        gap: 5px;
+    }
+    
+    .quantity-btn {
+        width: 25px;
+        height: 25px;
+        font-size: 12px;
+    }
+    
+    .quantity-value {
+        min-width: 25px;
+        font-size: 14px;
+    }
+    
+    /* عرض العناصر بطريقة عمودية للشاشات الصغيرة جداً */
+    @media (max-width: 480px) {
+        .cart-items-header {
+            display: none; /* إخفاء العناوين على الشاشات الصغيرة */
+        }
+        
+        .cart-item {
+            grid-template-columns: 1fr;
+            gap: 12px;
+            text-align: center;
+        }
+        
+        .cart-item > div {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .cart-item > div::before {
+            content: attr(data-label);
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 12px;
+        }
+        
+        .cart-item-product {
+            flex-direction: row;
+            justify-content: flex-start;
+            text-align: right;
+        }
+        
+        .cart-item-product::before {
+            content: 'المنتج:';
+        }
+        
+        .cart-item-price::before {
+            content: 'السعر:';
+        }
+        
+        .cart-item-quantity::before {
+            content: 'الكمية:';
+        }
+        
+        .cart-item-total::before {
+            content: 'المجموع:';
+        }
+        
+        .cart-item-actions::before {
+            content: 'إجراءات:';
+        }
+    }
+    
+    /* إصلاح الأزرار على الجوال */
+    .btn, .icon-btn, .quantity-btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* تحسين تجربة اللمس للجوال */
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        font-size: 16px; /* منع التكبير في iOS */
+    }
+    
+    /* تحسين التبويبات على الجوال */
+    .admin-tabs {
+        overflow-x: auto;
+        padding-bottom: 15px;
+    }
+    
+    .admin-tab {
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+    
+    /* تحسين جداول الإدارة على الجوال */
+    .table-container {
+        margin: 0 -20px;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+    }
+    
+    .admin-table th,
+    .admin-table td {
+        padding: 10px;
+        font-size: 14px;
+    }
+    
+    /* إصلاح عرض المنتجات على الجوال */
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+    }
+    
+    .product-card {
+        margin-bottom: 10px;
+    }
+    
+    /* إصلاح الهيدر على الجوال */
+    .header-content {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .search-container {
+        order: 3;
+        max-width: 100%;
+        margin: 10px 0 0;
+    }
+}
+
+/* تحسينات إضافية للشاشات الصغيرة جداً */
+@media (max-width: 480px) {
+    .container {
+        padding: 0 15px;
+    }
+    
+    .hero-section {
+        padding: 50px 0;
+    }
+    
+    .hero-title {
+        font-size: 28px;
+    }
+    
+    .hero-description {
+        font-size: 16px;
+    }
+    
+    .section-title {
+        font-size: 24px;
+    }
+    
+    .filter-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filter-tabs {
+        justify-content: center;
+    }
+    
+    .sort-select {
+        width: 100%;
+    }
+    
+    /* إصلاح نماذج الاتصال */
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    /* إصلاح شاشة المصادقة */
+    .auth-card {
+        padding: 30px 20px;
+    }
+    
+    .welcome-text {
+        font-size: 20px;
+    }
+    
+    /* إصلاح الفوتر */
+    .footer-content {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .footer-info,
+    .footer-links,
+    .footer-contact {
+        min-width: 100%;
+    }
+}
+
+/* تحسين تجربة اللمس للجوال */
+@media (hover: none) and (pointer: coarse) {
+    .btn:hover, .icon-btn:hover, .filter-btn:hover {
+        transform: none;
+    }
+    
+    .product-card:hover {
+        transform: none;
+    }
+    
+    .service-card:hover {
+        transform: none;
+    }
+    
+    .stat-card:hover {
+        transform: none;
+    }
+}
+
+/* ==================== حماية لوحة التحكم ==================== */
+
+/* إخفاء كافة روابط الإدارة للمستخدمين غير المسؤولين */
+.admin-only {
+    display: none !important;
+}
+
+/* إظهارها فقط للمسؤولين */
+.admin-mode .admin-only {
+    display: flex !important;
+}
+
+/* نمط خاص للمسؤولين في الملف الشخصي */
+.admin-badge {
+    background: var(--primary);
+    color: var(--white);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 10px;
+    display: inline-block;
+}
+
+/* رسالة عند محاولة الوصول بدون صلاحيات */
+.access-denied {
+    text-align: center;
+    padding: 50px 20px;
+}
+
+.access-denied i {
+    font-size: 64px;
+    color: var(--danger);
+    margin-bottom: 20px;
+}
+
+.access-denied h2 {
+    color: var(--dark);
+    margin-bottom: 10px;
+}
+
+.access-denied p {
+    color: var(--gray);
+    margin-bottom: 20px;
 }
