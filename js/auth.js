@@ -1,4 +1,4 @@
-// js/auth.js - معالجة المصادقة (النسخة المحسنة)
+// js/auth.js - معالجة المصادقة (النسخة المحسنة مع حماية المسؤولين)
 
 // حالة المستخدم
 let currentUser = null;
@@ -43,7 +43,12 @@ function initAuth() {
                 
                 try {
                     currentUserData = await getUserData(user);
-                    isUserAdminFlag = currentUserData?.isAdmin || false;
+                    // التحقق من صلاحيات المسؤول باستخدام دالة متخصصة
+                    isUserAdminFlag = await verifyAdminStatus();
+                    
+                    console.log('حالة المسؤول بعد التحميل:', isUserAdminFlag);
+                    console.log('بيانات المستخدم:', currentUserData);
+                    
                     resolve({ 
                         success: true, 
                         user, 
@@ -70,6 +75,46 @@ function initAuth() {
             reject(error);
         });
     });
+}
+
+// تحقق من صلاحيات المسؤول
+async function verifyAdminStatus() {
+    try {
+        const user = getCurrentUser();
+        
+        // إذا كان ضيفاً، لا يمكن أن يكون مسؤولاً
+        if (!user || user.isGuest) {
+            console.log('المستخدم ضيف أو غير موجود');
+            setAdminStatus(false);
+            return false;
+        }
+        
+        // جلب بيانات المستخدم من Firestore للتأكد من الصلاحيات
+        const userData = await getUserData(user);
+        
+        console.log('بيانات المستخدم للتحقق من الإدارة:', {
+            email: userData?.email,
+            isAdmin: userData?.isAdmin,
+            uid: userData?.uid
+        });
+        
+        // التحقق من صلاحيات المسؤول
+        const isAdmin = userData?.isAdmin === true;
+        
+        setAdminStatus(isAdmin);
+        
+        if (isAdmin) {
+            console.log(`✅ المستخدم ${userData.email} مسؤول`);
+        } else {
+            console.log(`❌ المستخدم ${userData.email} ليس مسؤولاً`);
+        }
+        
+        return isAdmin;
+    } catch (error) {
+        console.error('خطأ في التحقق من حالة المسؤول:', error);
+        setAdminStatus(false);
+        return false;
+    }
 }
 
 // تسجيل الدخول باستخدام Google
@@ -289,6 +334,31 @@ async function saveUserData(user) {
         }
         
         const userRef = window.db.collection("users").doc(user.uid);
+        
+        // جلب البيانات الحالية أولاً
+        const userSnap = await userRef.get();
+        
+        // قائمة المسؤولين الثابتة
+        const adminEmails = [
+            "yxr.249@gmail.com", 
+            "admin@qb-store.com",
+            "admin@qb.com"
+        ];
+        
+        // تحديد إذا كان المستخدم مسؤولاً (فقط في أول دخول)
+        const isFirstLogin = !userSnap.exists();
+        let isAdmin = false;
+        
+        if (isFirstLogin) {
+            // في أول دخول فقط، تحقق من البريد الإلكتروني
+            isAdmin = adminEmails.includes(user.email?.toLowerCase());
+            console.log(`أول دخول للمستخدم ${user.email}: isAdmin = ${isAdmin}`);
+        } else {
+            // للمستخدمين القدامى، استخدم الصلاحية المحفوظة
+            isAdmin = userSnap.data()?.isAdmin === true;
+            console.log(`مستخدم قديم ${user.email}: isAdmin = ${isAdmin}`);
+        }
+        
         const userData = {
             uid: user.uid,
             email: user.email,
@@ -297,18 +367,27 @@ async function saveUserData(user) {
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
             lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-            isAdmin: false,
-            phone: '',
-            address: ''
+            isAdmin: isAdmin, // حفظ حالة المسؤول
+            phone: userSnap.exists() ? userSnap.data().phone || '' : '',
+            address: userSnap.exists() ? userSnap.data().address || '' : ''
         };
         
-        console.log('حفظ بيانات المستخدم في Firestore:', user.email);
+        console.log(`💾 حفظ بيانات المستخدم: ${user.email}, isAdmin: ${userData.isAdmin}`);
         await userRef.set(userData, { merge: true });
-        console.log('تم حفظ بيانات المستخدم');
+        
+        // تحديث الذاكرة المحلية
+        if (currentUserData && currentUserData.uid === user.uid) {
+            currentUserData = { ...currentUserData, ...userData };
+        }
+        
+        // تحديث حالة المسؤول
+        setAdminStatus(isAdmin);
+        
+        console.log('✅ تم حفظ بيانات المستخدم، حالة المسؤول:', isAdmin);
         
         return { success: true };
     } catch (error) {
-        console.error('خطأ في حفظ بيانات المستخدم:', error);
+        console.error('❌ خطأ في حفظ بيانات المستخدم:', error);
         return { success: false };
     }
 }
@@ -338,7 +417,9 @@ async function getUserData(user) {
         
         if (userSnap.exists()) {
             console.log('تم جلب بيانات المستخدم من Firestore');
-            return userSnap.data();
+            const userData = userSnap.data();
+            console.log('بيانات المستخدم المسترجعة:', userData);
+            return userData;
         } else {
             console.log('المستخدم غير موجود في Firestore، سيتم إنشاؤه');
             await saveUserData(user);
@@ -435,6 +516,13 @@ function isUserAdmin() {
 // تعيين حالة المسؤول
 function setAdminStatus(status) {
     isUserAdminFlag = status;
+    console.log('تم تعيين حالة المسؤول إلى:', status);
+    
+    // تحديث الذاكرة المحلية
+    if (currentUserData) {
+        currentUserData.isAdmin = status;
+        localStorage.setItem('jamalek_user', JSON.stringify(currentUserData));
+    }
 }
 
 // دالة مساعدة لتحويل كود الخطأ إلى رسالة مفهومة
@@ -489,6 +577,7 @@ function loadUserFromLocalStorage() {
             currentUserData = userData;
             isUserAdminFlag = userData.isAdmin || false;
             console.log('تم تحميل المستخدم من localStorage:', userData.displayName);
+            console.log('حالة المسؤول من localStorage:', isUserAdminFlag);
             return { success: true, user: userData, isAdmin: isUserAdminFlag };
         }
         console.log('لا يوجد مستخدم محفوظ في localStorage');
@@ -528,6 +617,76 @@ async function testFirebaseConnection() {
     }
 }
 
+// التحقق من صلاحية المسؤول وتحديث الواجهة
+async function checkAndUpdateAdminStatus() {
+    try {
+        const user = getCurrentUser();
+        if (user && !user.isGuest) {
+            const userData = await getUserData(user);
+            
+            if (userData && userData.isAdmin) {
+                setAdminStatus(true);
+                console.log('المستخدم مسؤول:', userData.email);
+                return true;
+            } else {
+                console.log('المستخدم ليس مسؤولاً:', user.email);
+                setAdminStatus(false);
+                return false;
+            }
+        }
+        return false;
+    } catch (error) {
+        console.error('خطأ في التحقق من حالة المسؤول:', error);
+        return false;
+    }
+}
+
+// دالة طوارئ لجعل مستخدم مسؤولاً (تشغيل في console المتصفح)
+function emergencyMakeAdmin(email) {
+    if (!window.db) {
+        console.error('Firestore غير متاح');
+        return;
+    }
+    
+    if (!confirm(`هل أنت متأكد من جعل ${email} مسؤولاً؟`)) return;
+    
+    // البحث عن المستخدم بالبريد الإلكتروني
+    window.db.collection("users")
+        .where("email", "==", email.toLowerCase())
+        .get()
+        .then(snapshot => {
+            if (snapshot.empty) {
+                console.error(`المستخدم ${email} غير موجود`);
+                return;
+            }
+            
+            snapshot.forEach(doc => {
+                window.db.collection("users").doc(doc.id).update({
+                    isAdmin: true,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    console.log(`✅ تم جعل ${email} مسؤولاً`);
+                    alert(`تم جعل ${email} مسؤولاً`);
+                    
+                    // تحديث الواجهة إذا كان المستخدم الحالي
+                    const currentUser = getCurrentUser();
+                    if (currentUser && currentUser.email === email) {
+                        setAdminStatus(true);
+                        if (window.UI && window.UI.updateUserUI) {
+                            window.UI.updateUserUI(currentUser, true);
+                        }
+                        showToast('تم تحديث صلاحياتك كمسؤول', false, 'success');
+                    }
+                }).catch(error => {
+                    console.error('❌ خطأ في تحديث الصلاحيات:', error);
+                });
+            });
+        })
+        .catch(error => {
+            console.error('❌ خطأ في البحث:', error);
+        });
+}
+
 // جعل الدوال متاحة عالمياً
 window.initAuth = initAuth;
 window.signInWithGoogle = signInWithGoogle;
@@ -547,3 +706,6 @@ window.getUsersCount = getUsersCount;
 window.loadUserFromLocalStorage = loadUserFromLocalStorage;
 window.getErrorMessage = getErrorMessage;
 window.testFirebaseConnection = testFirebaseConnection;
+window.checkAndUpdateAdminStatus = checkAndUpdateAdminStatus;
+window.verifyAdminStatus = verifyAdminStatus;
+window.emergencyMakeAdmin = emergencyMakeAdmin;

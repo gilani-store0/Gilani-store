@@ -1,4 +1,4 @@
-// js/main.js - تشغيل وربط الكل
+// js/main.js - تشغيل وربط الكل (مع حماية المسؤولين)
 
 // ==================== متغيرات واجهة المستخدم ====================
 const UI = {
@@ -33,6 +33,18 @@ const UI = {
         
         // إظهار القسم الرئيسي
         this.showSection('homeSection');
+        
+        // تحديث واجهة المستخدم
+        this.updateUserUIAfterLogin();
+    },
+
+    // تحديث واجهة المستخدم بعد تسجيل الدخول
+    async updateUserUIAfterLogin() {
+        const user = getCurrentUser();
+        if (user) {
+            const isAdmin = await verifyAdminStatus();
+            this.updateUserUI(user, isAdmin);
+        }
     },
 
     // تحديث عداد السلة
@@ -93,6 +105,9 @@ const UI = {
             case 'adminSection':
                 if (isUserAdmin()) {
                     await this.loadAdminSection();
+                } else {
+                    showMessage('غير مصرح', 'ليس لديك صلاحية للوصول إلى لوحة الإدارة', 'error');
+                    this.showSection('homeSection');
                 }
                 break;
             case 'profileSection':
@@ -139,16 +154,45 @@ const UI = {
         this.renderCartItems(cartItems);
     },
 
-    // تحميل قسم الإدارة
+    // تحميل قسم الإدارة (محمي بالكامل)
     async loadAdminSection() {
-        console.log('تحميل قسم الإدارة...');
+        console.log('🔐 محاولة تحميل قسم الإدارة...');
         
-        if (!isUserAdmin()) {
-            showMessage('غير مصرح', 'ليس لديك صلاحية للوصول إلى لوحة الإدارة', 'error');
+        // تحقق ثلاثي من صلاحيات المسؤول
+        const user = getCurrentUser();
+        
+        // 1. تحقق من وجود المستخدم
+        if (!user) {
+            showMessage('غير مصرح', 'يجب تسجيل الدخول أولاً', 'error');
+            this.showSection('homeSection');
             return;
         }
         
+        // 2. تحقق إذا كان ضيفاً
+        if (user.isGuest) {
+            showMessage('غير مصرح', 'الضيف لا يمكنه الوصول إلى لوحة الإدارة', 'error');
+            this.showSection('homeSection');
+            return;
+        }
+        
+        // 3. تحقق من صلاحيات المسؤول في Firestore
         try {
+            const isAdmin = await verifyAdminStatus();
+            
+            console.log('نتيجة التحقق من الإدارة:', {
+                email: user.email,
+                isAdmin: isAdmin
+            });
+            
+            if (!isAdmin) {
+                showMessage('غير مصرح', 'ليس لديك صلاحية للوصول إلى لوحة الإدارة', 'error');
+                this.showSection('homeSection');
+                return;
+            }
+            
+            // فقط إذا كان مسؤولاً، تابع تحميل لوحة التحكم
+            console.log('✅ تم التحقق من صلاحيات المسؤول، جلب البيانات...');
+            
             // تحميل الإحصائيات
             const stats = await getStoreStats();
             this.updateAdminStats(stats);
@@ -160,9 +204,15 @@ const UI = {
             // تحميل إعدادات الموقع
             await loadSiteSettingsForAdmin();
             
+            // إظهار علامة التبويب النشطة
+            switchTab('products');
+            
+            showToast('مرحباً بك في لوحة التحكم', false, 'success');
+            
         } catch (error) {
-            console.error('خطأ في تحميل قسم الإدارة:', error);
+            console.error('❌ خطأ في تحميل قسم الإدارة:', error);
             showMessage('خطأ', 'تعذر تحميل بيانات الإدارة', 'error');
+            this.showSection('homeSection');
         }
     },
 
@@ -257,11 +307,14 @@ const UI = {
         const photo = user.photoURL || 
             `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=C89B3C&color=fff`;
 
-        // تحديث الهيدر
+        console.log('تحديث واجهة المستخدم:', name, 'isAdmin:', isAdmin);
+
+        // ========== تحديث الهيدر ==========
         const ordersBtn = document.getElementById('ordersBtn');
         const logoutBtn = document.getElementById('logoutBtn');
         const userToggle = document.getElementById('userToggle');
         const adminHeaderBtn = document.getElementById('adminHeaderBtn');
+        const debugAdminBtn = document.getElementById('debugAdminBtn');
         
         if (ordersBtn) {
             if (user.isGuest) {
@@ -282,12 +335,20 @@ const UI = {
         if (adminHeaderBtn) {
             if (isAdmin) {
                 adminHeaderBtn.classList.remove('hidden');
+                console.log('✅ تم اظهار زر الإدارة في الهيدر');
             } else {
                 adminHeaderBtn.classList.add('hidden');
+                console.log('❌ تم إخفاء زر الإدارة في الهيدر');
             }
         }
+        
+        // إخفاء زر التصحيح نهائياً
+        if (debugAdminBtn) {
+            debugAdminBtn.style.display = 'none';
+            debugAdminBtn.classList.add('hidden');
+        }
 
-        // تحديث الجوال
+        // ========== تحديث الجوال ==========
         const mobileUserName = document.getElementById('mobileUserName');
         const mobileUserEmail = document.getElementById('mobileUserEmail');
         const mobileUserAvatar = document.getElementById('mobileUserAvatar');
@@ -320,8 +381,10 @@ const UI = {
         if (adminMobileBtn) {
             if (isAdmin) {
                 adminMobileBtn.classList.remove('hidden');
+                console.log('✅ تم اظهار زر الإدارة في الجوال');
             } else {
                 adminMobileBtn.classList.add('hidden');
+                console.log('❌ تم إخفاء زر الإدارة في الجوال');
             }
         }
     },
@@ -392,6 +455,9 @@ const UI = {
     setupMainAppEventListeners() {
         console.log('إعداد مستمعي أحداث الموقع الرئيسي...');
         
+        // حماية روابط الإدارة
+        this.setupAdminProtection();
+        
         // 1. القائمة المتنقلة
         const menuToggle = document.getElementById('menuToggle');
         if (menuToggle) {
@@ -415,8 +481,8 @@ const UI = {
             });
         }
 
-        // 2. التنقل بين الأقسام
-        document.querySelectorAll('[data-section]').forEach(link => {
+        // 2. التنقل بين الأقسام (مع حماية الإدارة)
+        document.querySelectorAll('[data-section]:not([data-section="admin"])').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 const sectionId = link.dataset.section;
@@ -426,17 +492,11 @@ const UI = {
                     'cart': 'cartSection',
                     'orders': 'ordersSection',
                     'profile': 'profileSection',
-                    'admin': 'adminSection',
                     'contact': 'contactSection'
                 };
                 
                 const targetSection = sectionMap[sectionId];
                 if (targetSection) {
-                    if (sectionId === 'admin' && !isUserAdmin()) {
-                        showMessage('غير مصرح', 'ليس لديك صلاحية للوصول إلى لوحة الإدارة', 'error');
-                        return;
-                    }
-                    
                     this.showSection(targetSection);
                     
                     // إغلاق القائمة المتنقلة إذا كانت مفتوحة
@@ -465,20 +525,7 @@ const UI = {
             });
         }
 
-        // 5. لوحة التحكم في الهيدر
-        const adminHeaderBtn = document.getElementById('adminHeaderBtn');
-        if (adminHeaderBtn) {
-            adminHeaderBtn.addEventListener('click', async () => {
-                if (isUserAdmin()) {
-                    await this.loadAdminSection();
-                    this.showSection('adminSection');
-                } else {
-                    showMessage('غير مصرح', 'ليس لديك صلاحية للوصول إلى لوحة الإدارة', 'error');
-                }
-            });
-        }
-
-        // 6. زر البحث
+        // 5. زر البحث
         const productSearch = document.getElementById('productSearch');
         if (productSearch) {
             productSearch.addEventListener('input', (e) => {
@@ -491,7 +538,7 @@ const UI = {
             });
         }
 
-        // 7. أزرار الفلترة
+        // 6. أزرار الفلترة
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const filter = e.target.dataset.filter;
@@ -505,7 +552,7 @@ const UI = {
             });
         });
 
-        // 8. زر الفرز
+        // 7. زر الفرز
         const productSort = document.getElementById('productSort');
         if (productSort) {
             productSort.addEventListener('change', (e) => {
@@ -514,7 +561,7 @@ const UI = {
             });
         }
 
-        // 9. نموذج الاتصال
+        // 8. نموذج الاتصال
         const contactForm = document.getElementById('contactForm');
         if (contactForm) {
             contactForm.addEventListener('submit', (e) => {
@@ -524,7 +571,7 @@ const UI = {
             });
         }
 
-        // 10. زر الحساب الشخصي
+        // 9. زر الحساب الشخصي
         const userToggle = document.getElementById('userToggle');
         if (userToggle) {
             userToggle.addEventListener('click', () => {
@@ -532,7 +579,7 @@ const UI = {
             });
         }
 
-        // 11. زر الطلبات
+        // 10. زر الطلبات
         const ordersBtn = document.getElementById('ordersBtn');
         if (ordersBtn) {
             ordersBtn.addEventListener('click', () => {
@@ -540,7 +587,7 @@ const UI = {
             });
         }
         
-        // 12. تحديث الملف الشخصي
+        // 11. تحديث الملف الشخصي
         const profileForm = document.getElementById('profileForm');
         if (profileForm) {
             profileForm.addEventListener('submit', async (e) => {
@@ -570,34 +617,47 @@ const UI = {
             });
         }
         
-        // 13. زر تغيير كلمة المرور
+        // 12. زر تغيير كلمة المرور
         const changePasswordBtn = document.getElementById('changePasswordBtn');
         if (changePasswordBtn) {
             changePasswordBtn.addEventListener('click', () => {
                 showMessage('قريباً', 'ميزة تغيير كلمة المرور ستكون متاحة قريباً', 'info');
             });
         }
-        
-        // 14. زر لوحة التحكم في القائمة المتنقلة
-        const adminMobileBtn = document.getElementById('adminMobileBtn');
-        if (adminMobileBtn) {
-            adminMobileBtn.addEventListener('click', async (e) => {
+    },
+
+    // إعداد حماية روابط الإدارة
+    setupAdminProtection() {
+        // حماية زر الإدارة في الهيدر
+        const adminHeaderBtn = document.getElementById('adminHeaderBtn');
+        if (adminHeaderBtn) {
+            adminHeaderBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
-                if (isUserAdmin()) {
+                const isAdmin = await verifyAdminStatus();
+                
+                if (isAdmin) {
                     await this.loadAdminSection();
                     this.showSection('adminSection');
-                    
-                    // إغلاق القائمة المتنقلة
-                    const mobileNav = document.getElementById('mobileNav');
-                    if (mobileNav) {
-                        mobileNav.classList.remove('active');
-                        document.body.style.overflow = 'auto';
-                    }
                 } else {
                     showMessage('غير مصرح', 'ليس لديك صلاحية للوصول إلى لوحة الإدارة', 'error');
                 }
             });
         }
+        
+        // حماية روابط الإدارة في الفوتر
+        document.querySelectorAll('.footer-links a[data-section="admin"]').forEach(link => {
+            link.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const isAdmin = await verifyAdminStatus();
+                
+                if (isAdmin) {
+                    await this.loadAdminSection();
+                    this.showSection('adminSection');
+                } else {
+                    showMessage('غير مصرح', 'ليس لديك صلاحية للوصول إلى لوحة الإدارة', 'error');
+                }
+            });
+        });
     },
 
     // إعداد مستمعي أحداث المنتجات
@@ -958,8 +1018,7 @@ const UI = {
 async function handleGoogleSignIn() {
     const result = await signInWithGoogle();
     if (result.success) {
-        const userData = await getUserData(result.user);
-        UI.updateUserUI(result.user, userData?.isAdmin || false);
+        await UI.updateUserUIAfterLogin();
         UI.showMainApp();
         showToast('تم تسجيل الدخول بنجاح', false, 'success');
     } else {
@@ -1028,8 +1087,7 @@ function setupForms() {
             }
             
             if (result.success) {
-                const userData = await getUserData(result.user);
-                UI.updateUserUI(result.user, userData?.isAdmin || false);
+                await UI.updateUserUIAfterLogin();
                 UI.showMainApp();
                 showToast(
                     displayNameInput.classList.contains('hidden') ? 
@@ -1064,7 +1122,7 @@ function setupForms() {
 
 // ==================== تهيئة التطبيق ====================
 async function initApp() {
-    console.log('بدء تشغيل المتجر...');
+    console.log('🚀 بدء تشغيل المتجر...');
     
     try {
         // تهيئة Firebase أولاً
@@ -1083,22 +1141,17 @@ async function initApp() {
         
         if (savedUser.success && savedUser.user) {
             console.log('تم تحميل المستخدم من الذاكرة المحلية:', savedUser.user.displayName);
-            UI.updateUserUI(savedUser.user, savedUser.user.isAdmin || false);
+            
+            // التحقق من صلاحيات المسؤول
+            if (!savedUser.user.isGuest) {
+                const isAdmin = await verifyAdminStatus();
+                UI.updateUserUI(savedUser.user, isAdmin);
+            } else {
+                UI.updateUserUI(savedUser.user, false);
+            }
+            
             UI.showMainApp();
             
-            // إذا كان المستخدم ضيفاً، لا نحتاج لتحميل بيانات إضافية
-            if (!savedUser.user.isGuest) {
-                // محاولة تحميل بيانات Firebase إذا كان مستخدم نظام
-                try {
-                    const authResult = await initAuth();
-                    if (authResult.success && authResult.user) {
-                        console.log('تم التحقق من Firebase:', authResult.user.email);
-                        UI.updateUserUI(authResult.user, authResult.isAdmin);
-                    }
-                } catch (error) {
-                    console.error('خطأ في التحقق من Firebase:', error);
-                }
-            }
         } else {
             // إذا لم يكن هناك مستخدم محفوظ، عرض شاشة المصادقة
             console.log('لا يوجد مستخدم محفوظ، عرض شاشة المصادقة');
@@ -1234,6 +1287,35 @@ document.addEventListener('click', function(e) {
                 localStorage.removeItem('jamalek_wishlist');
                 location.reload();
             });
+        }
+    }
+    
+    // 7. حماية روابط الإدارة في القائمة المتنقلة
+    if (e.target.closest('#adminMobileBtn')) {
+        e.preventDefault();
+        
+        // تحقق من صلاحيات المسؤول أولاً
+        const adminMobileBtn = e.target.closest('#adminMobileBtn');
+        if (adminMobileBtn.classList.contains('hidden')) {
+            showMessage('غير مصرح', 'ليس لديك صلاحية للوصول إلى لوحة الإدارة', 'error');
+            return;
+        }
+        
+        const isAdmin = isUserAdmin();
+        
+        if (isAdmin) {
+            UI.loadAdminSection().then(() => {
+                UI.showSection('adminSection');
+                
+                // إغلاق القائمة المتنقلة
+                const mobileNav = document.getElementById('mobileNav');
+                if (mobileNav) {
+                    mobileNav.classList.remove('active');
+                    document.body.style.overflow = 'auto';
+                }
+            });
+        } else {
+            showMessage('غير مصرح', 'ليس لديك صلاحية للوصول إلى لوحة الإدارة', 'error');
         }
     }
 });

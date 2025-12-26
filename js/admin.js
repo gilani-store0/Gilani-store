@@ -7,6 +7,12 @@ let pendingActionData = null;
 function initAdmin() {
     console.log('تهيئة لوحة الإدارة...');
     setupAdminEventListeners();
+    
+    // التحقق من صلاحية المسؤول
+    if (!isUserAdmin()) {
+        console.warn('المستخدم ليس مسؤولاً، إخفاء لوحة الإدارة');
+        return;
+    }
 }
 
 // جلب جميع المنتجات
@@ -41,7 +47,7 @@ async function getSiteSettings() {
             console.warn('Firestore غير متاح، إرجاع إعدادات افتراضية');
             return {
                 storeName: "QB",
-                email: "yxr.249@gmai.com",
+                email: "yxr.249@gmail.com",
                 phone1: "+249933002015",
                 phone2: "",
                 shippingCost: 15,
@@ -60,9 +66,9 @@ async function getSiteSettings() {
         } else {
             // إعدادات افتراضية
             return {
-                storeName: "جمالك",
-                email: "info@jamalek.com",
-                phone1: "+966500000000",
+                storeName: "QB",
+                email: "yxr.249@gmail.com",
+                phone1: "+249933002015",
                 phone2: "",
                 shippingCost: 15,
                 freeShippingLimit: 200,
@@ -84,13 +90,13 @@ async function loadSiteSettingsForAdmin() {
         
         // تعبئة الحقول
         if (document.getElementById('storeNameInput')) {
-            document.getElementById('storeNameInput').value = settings.storeName || 'جمالك';
+            document.getElementById('storeNameInput').value = settings.storeName || 'QB';
         }
         if (document.getElementById('emailInput')) {
-            document.getElementById('emailInput').value = settings.email || 'info@jamalek.com';
+            document.getElementById('emailInput').value = settings.email || 'yxr.249@gmail.com';
         }
         if (document.getElementById('phone1Input')) {
-            document.getElementById('phone1Input').value = settings.phone1 || '+966500000000';
+            document.getElementById('phone1Input').value = settings.phone1 || '+249933002015';
         }
         if (document.getElementById('phone2Input')) {
             document.getElementById('phone2Input').value = settings.phone2 || '';
@@ -456,6 +462,40 @@ function editProductModal(product) {
     document.getElementById('productModal').classList.remove('hidden');
 }
 
+// منتجات افتراضية للإدارة
+function getDefaultProducts() {
+    return [
+        {
+            id: '1',
+            name: 'عطر فاخر للرجال',
+            description: 'عطر فاخر برائحة عطرية مميزة للرجال، يدوم طويلاً',
+            price: 150,
+            oldPrice: 200,
+            image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=300&h=300&fit=crop',
+            isNew: true,
+            isBest: true,
+            category: 'perfume',
+            stock: 25,
+            views: 150,
+            isActive: true,
+            createdAt: new Date('2024-01-15')
+        },
+        {
+            id: '2',
+            name: 'مكياج سائل عالي الجودة',
+            description: 'مكياج سائل عالي الجودة يمنحك مظهراً طبيعياً',
+            price: 85,
+            image: 'https://images.unsplash.com/photo-1526947425960-945c6e72858f?q=80&w=300&h=300&fit=crop',
+            isSale: true,
+            category: 'makeup',
+            stock: 40,
+            views: 120,
+            isActive: true,
+            createdAt: new Date('2024-01-10')
+        }
+    ];
+}
+
 // جعل الدوال متاحة عالمياً
 window.initAdmin = initAdmin;
 window.loadAllProducts = loadAllProducts;
@@ -469,3 +509,4 @@ window.executePendingAction = executePendingAction;
 window.switchTab = switchTab;
 window.editProductModal = editProductModal;
 window.showProductModal = showProductModal;
+window.getDefaultProducts = getDefaultProducts;
