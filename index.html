@@ -133,6 +133,11 @@
 
                     <!-- أقصى اليسار: الأزرار -->
                     <div class="header-group-left">
+                        <!-- زر الإدارة (يظهر للمسؤول فقط) -->
+                        <button id="adminHeaderBtn" class="icon-btn hidden" title="لوحة التحكم">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                        
                         <!-- زر السلة -->
                         <button id="cartBtn" class="icon-btn" title="سلة التسوق">
                             <i class="fas fa-shopping-cart"></i>
@@ -188,6 +193,11 @@
                 </a>
                 <a href="#" id="ordersMobileBtn" class="nav-link hidden" data-section="orders">
                     <i class="fas fa-shopping-bag"></i> طلباتي
+                </a>
+                
+                <!-- قسم الأدمن -->
+                <a href="#" id="adminMobileBtn" class="nav-link admin-only hidden" data-section="admin">
+                    <i class="fas fa-cog"></i> لوحة التحكم
                 </a>
             </div>
             
@@ -292,6 +302,26 @@
                 </div>
             </section>
 
+            <!-- صفحة الطلبات -->
+            <section id="ordersSection" class="orders-section hidden">
+                <div class="container">
+                    <h2 class="section-title">
+                        <i class="fas fa-shopping-bag"></i> طلباتي
+                    </h2>
+                    <p class="section-subtitle">تتبع حالة طلباتك السابقة والحالية</p>
+                    
+                    <div class="orders-tabs">
+                        <button class="orders-tab active" data-status="all">جميع الطلبات</button>
+                        <button class="orders-tab" data-status="processing">قيد التجهيز</button>
+                        <button class="orders-tab" data-status="completed">مكتملة</button>
+                    </div>
+                    
+                    <div id="ordersList" class="orders-list">
+                        <!-- سيتم ملؤه ديناميكياً -->
+                    </div>
+                </div>
+            </section>
+
             <!-- صفحة الحساب الشخصي -->
             <section id="profileSection" class="profile-section hidden">
                 <div class="container">
@@ -333,6 +363,170 @@
                                 <button id="changePasswordBtn" class="btn outline-btn w-100">
                                     <i class="fas fa-key"></i> تغيير كلمة المرور
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- لوحة الإدارة -->
+            <section id="adminSection" class="admin-section hidden">
+                <div class="container">
+                    <div class="admin-header">
+                        <h2 class="section-title">
+                            <i class="fas fa-cog"></i> لوحة التحكم الإدارية
+                        </h2>
+                        <p class="admin-subtitle">مرحباً بك في لوحة إدارة المتجر</p>
+                    </div>
+
+                    <!-- إحصائيات سريعة -->
+                    <div class="admin-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-box"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="totalProducts">0</h3>
+                                <p>المنتجات</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="totalUsers">0</h3>
+                                <p>المستخدمين</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-shopping-bag"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="totalOrders">0</h3>
+                                <p>الطلبات</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-money-bill"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="totalRevenue">0 ر.س</h3>
+                                <p>الإيرادات</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- تبويبات الإدارة -->
+                    <div class="admin-tabs">
+                        <button class="admin-tab active" data-tab="products">
+                            <i class="fas fa-box"></i> المنتجات
+                        </button>
+                        <button class="admin-tab" data-tab="users">
+                            <i class="fas fa-users"></i> المستخدمين
+                        </button>
+                        <button class="admin-tab" data-tab="settings">
+                            <i class="fas fa-cogs"></i> إعدادات الموقع
+                        </button>
+                    </div>
+
+                    <!-- محتوى التبويبات -->
+                    <div class="admin-tab-content">
+                        
+                        <!-- تبويب إعدادات الموقع -->
+                        <div id="settingsTab" class="tab-pane hidden">
+                            <div class="tab-header">
+                                <h3>تعديل بيانات الموقع</h3>
+                            </div>
+                            <form id="siteSettingsForm" class="form-card">
+                                <div class="form-group">
+                                    <label for="storeNameInput">اسم المتجر</label>
+                                    <input type="text" id="storeNameInput" placeholder="اسم المتجر" value="جمالك" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="emailInput">البريد الإلكتروني للتواصل</label>
+                                    <input type="email" id="emailInput" placeholder="example@store.com" value="info@jamalek.com" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="phone1Input">رقم الهاتف 1</label>
+                                    <input type="tel" id="phone1Input" placeholder="009665xxxxxxxx" value="+966500000000" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="phone2Input">رقم الهاتف 2 (اختياري)</label>
+                                    <input type="tel" id="phone2Input" placeholder="009665xxxxxxxx">
+                                </div>
+                                <div class="form-group">
+                                    <label for="addressInput">العنوان</label>
+                                    <input type="text" id="addressInput" placeholder="العنوان" value="السعودية - الرياض">
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="shippingCost">تكلفة الشحن (ر.س)</label>
+                                        <input type="number" id="shippingCost" min="0" step="0.01" value="15">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="freeShippingLimit">حد الشحن المجاني (ر.س)</label>
+                                        <input type="number" id="freeShippingLimit" min="0" step="0.01" value="200">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn primary-btn w-100">
+                                    <i class="fas fa-save"></i> حفظ إعدادات الموقع
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- تبويب المنتجات -->
+                        <div id="productsTab" class="tab-pane">
+                            <div class="tab-header">
+                                <h3>إدارة المنتجات</h3>
+                                <button id="addProductBtn" class="btn primary-btn">
+                                    <i class="fas fa-plus"></i> منتج جديد
+                                </button>
+                            </div>
+                            
+                            <div class="table-container">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>الصورة</th>
+                                            <th>المنتج</th>
+                                            <th>السعر</th>
+                                            <th>المخزون</th>
+                                            <th>الحالة</th>
+                                            <th>تاريخ الإضافة</th>
+                                            <th>الإجراءات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="productsTable">
+                                        <!-- سيتم ملؤه ديناميكياً -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- تبويب المستخدمين -->
+                        <div id="usersTab" class="tab-pane hidden">
+                            <div class="tab-header">
+                                <h3>إدارة المستخدمين</h3>
+                            </div>
+                            <div id="usersTable" class="table-container">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>الصورة</th>
+                                            <th>الاسم</th>
+                                            <th>البريد الإلكتروني</th>
+                                            <th>الدور</th>
+                                            <th>تاريخ التسجيل</th>
+                                            <th>الإجراءات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="usersTableBody">
+                                        <!-- سيتم ملؤه ديناميكياً -->
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -454,7 +648,88 @@
         </footer>
     </div>
 
-    <!-- المودالات -->
+    <!-- مودال إضافة/تعديل المنتج -->
+    <div id="productModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">إضافة منتج جديد</h3>
+                <button class="close-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="productForm">
+                <input type="hidden" id="editProductId">
+                
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productName">اسم المنتج *</label>
+                            <input type="text" id="productName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productPrice">السعر (ر.س) *</label>
+                            <input type="number" id="productPrice" min="0" step="0.01" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="productImage">صورة المنتج (URL)</label>
+                        <input type="text" id="productImage" placeholder="رابط الصورة">
+                        <small>مثال: https://images.unsplash.com/photo-1541643600914-78b084683601</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="productDescription">الوصف</label>
+                        <textarea id="productDescription" rows="3" placeholder="وصف مختصر للمنتج..."></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productCategory">الفئة</label>
+                            <select id="productCategory">
+                                <option value="perfume">عطور</option>
+                                <option value="makeup">مكياج</option>
+                                <option value="skincare">عناية بالبشرة</option>
+                                <option value="haircare">عناية بالشعر</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="productStock">الكمية *</label>
+                            <input type="number" id="productStock" min="0" value="10" required>
+                        </div>
+                    </div>
+
+                    <div class="form-checkboxes">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="isNew">
+                            منتج جديد
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="isSale">
+                            عرض خاص
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="isBest">
+                            الأفضل مبيعاً
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="isActive" checked>
+                            نشط للبيع
+                        </label>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn primary-btn">
+                        <i class="fas fa-save"></i> حفظ المنتج
+                    </button>
+                    <button type="button" class="btn gray-btn close-modal">
+                        <i class="fas fa-times"></i> إلغاء
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- مودال التأكيد -->
     <div id="confirmModal" class="modal hidden">
         <div class="modal-content small">
             <div class="modal-body text-center">
@@ -469,6 +744,7 @@
         </div>
     </div>
 
+    <!-- مودال الرسائل -->
     <div id="messageModal" class="modal hidden">
         <div class="modal-content small">
             <div class="modal-body text-center">
@@ -482,833 +758,17 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
+    <!-- Firebase SDKs (الإصدار المتوافق 9.x) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     
-    <!-- تطبيق JavaScript -->
-    <script>
-    // ==================== تهيئة Firebase ====================
-    const firebaseConfig = {
-        apiKey: "AIzaSyBdoi5KxlVb6G31cue5SGbaw-VW2UGu4cs",
-        authDomain: "qb-store.firebaseapp.com",
-        projectId: "qb-store",
-        storageBucket: "qb-store.firebasestorage.app",
-        messagingSenderId: "81820788306",
-        appId: "1:81820788306:web:54be52d359ad36c3e0e18b",
-        measurementId: "G-4K0MDY0W5M"
-    };
-
-    // تهيئة Firebase
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
-    // ==================== متغيرات التطبيق ====================
-    let currentUser = null;
-    let cartItems = [];
-    let wishlistItems = [];
-
-    // ==================== دوال المساعدة ====================
-    function showToast(message, isError = false, type = 'info') {
-        // إزالة عنصر Toast إذا كان موجوداً
-        const existingToast = document.querySelector('.toast');
-        if (existingToast) {
-            existingToast.remove();
-        }
-        
-        const toast = document.createElement('div');
-        toast.className = `toast ${isError ? 'toast-error' : type === 'success' ? 'toast-success' : type === 'warning' ? 'toast-warning' : ''}`;
-        toast.textContent = message;
-        
-        document.body.appendChild(toast);
-        
-        // إخفاء Toast بعد 3 ثواني
-        setTimeout(() => {
-            toast.style.animation = 'slideUp 0.3s ease forwards';
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
-    }
-
-    function showMessage(title, message, type = 'info') {
-        const messageModal = document.getElementById('messageModal');
-        const messageIcon = document.getElementById('messageIcon');
-        const messageTitle = document.getElementById('messageTitle');
-        const messageText = document.getElementById('messageText');
-        
-        const icons = {
-            info: 'fa-info-circle',
-            success: 'fa-check-circle',
-            warning: 'fa-exclamation-triangle',
-            error: 'fa-times-circle'
-        };
-        
-        messageIcon.className = `fas ${icons[type] || icons.info}`;
-        messageTitle.textContent = title;
-        messageText.textContent = message;
-        
-        messageModal.classList.remove('hidden');
-        
-        document.getElementById('messageCloseBtn').onclick = () => {
-            messageModal.classList.add('hidden');
-        };
-    }
-
-    function getCategoryName(category) {
-        const categories = {
-            'perfume': 'عطور',
-            'makeup': 'مكياج',
-            'skincare': 'عناية بالبشرة',
-            'haircare': 'عناية بالشعر'
-        };
-        return categories[category] || category;
-    }
-
-    // ==================== إدارة المستخدم ====================
-    function signInAsGuest() {
-        const guestUser = {
-            uid: 'guest_' + Date.now(),
-            email: null,
-            displayName: 'ضيف',
-            photoURL: null,
-            isGuest: true,
-            createdAt: new Date().toISOString()
-        };
-        
-        currentUser = guestUser;
-        localStorage.setItem('jamalek_user', JSON.stringify(guestUser));
-        
-        // تحديث واجهة المستخدم
-        updateUserUI(guestUser);
-        
-        return { success: true, user: guestUser };
-    }
-
-    async function signInWithGoogle() {
-        try {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            const result = await auth.signInWithPopup(provider);
-            const user = result.user;
-            
-            // حفظ بيانات المستخدم في localStorage
-            const userState = {
-                uid: user.uid,
-                email: user.email,
-                displayName: user.displayName,
-                photoURL: user.photoURL,
-                isGuest: false,
-                createdAt: new Date().toISOString()
-            };
-            
-            currentUser = userState;
-            localStorage.setItem('jamalek_user', JSON.stringify(userState));
-            
-            // تحديث واجهة المستخدم
-            updateUserUI(userState);
-            
-            return { success: true, user: userState };
-        } catch (error) {
-            console.error('خطأ في تسجيل الدخول بـ Google:', error);
-            return { success: false, error: getErrorMessage(error.code) };
-        }
-    }
-
-    async function signInWithEmail(email, password) {
-        try {
-            const result = await auth.signInWithEmailAndPassword(email, password);
-            const user = result.user;
-            
-            // حفظ بيانات المستخدم في localStorage
-            const userState = {
-                uid: user.uid,
-                email: user.email,
-                displayName: user.displayName || user.email?.split('@')[0] || 'مستخدم',
-                photoURL: user.photoURL,
-                isGuest: false,
-                createdAt: new Date().toISOString()
-            };
-            
-            currentUser = userState;
-            localStorage.setItem('jamalek_user', JSON.stringify(userState));
-            
-            // تحديث واجهة المستخدم
-            updateUserUI(userState);
-            
-            return { success: true, user: userState };
-        } catch (error) {
-            console.error('خطأ في تسجيل الدخول:', error);
-            return { success: false, error: getErrorMessage(error.code) };
-        }
-    }
-
-    async function signUpWithEmail(email, password, displayName) {
-        try {
-            const result = await auth.createUserWithEmailAndPassword(email, password);
-            const user = result.user;
-            
-            // تحديث اسم المستخدم
-            if (displayName) {
-                await user.updateProfile({ displayName });
-            }
-            
-            // حفظ بيانات المستخدم في localStorage
-            const userState = {
-                uid: user.uid,
-                email: user.email,
-                displayName: displayName || user.email?.split('@')[0] || 'مستخدم',
-                photoURL: user.photoURL,
-                isGuest: false,
-                createdAt: new Date().toISOString()
-            };
-            
-            currentUser = userState;
-            localStorage.setItem('jamalek_user', JSON.stringify(userState));
-            
-            // تحديث واجهة المستخدم
-            updateUserUI(userState);
-            
-            return { success: true, user: userState };
-        } catch (error) {
-            console.error('خطأ في إنشاء الحساب:', error);
-            return { success: false, error: getErrorMessage(error.code) };
-        }
-    }
-
-    async function resetPassword(email) {
-        try {
-            await auth.sendPasswordResetEmail(email);
-            return { success: true };
-        } catch (error) {
-            console.error('خطأ في إرسال رابط إعادة التعيين:', error);
-            return { success: false, error: getErrorMessage(error.code) };
-        }
-    }
-
-    async function signOut() {
-        try {
-            await auth.signOut();
-            currentUser = null;
-            localStorage.removeItem('jamalek_user');
-            return { success: true };
-        } catch (error) {
-            console.error('خطأ في تسجيل الخروج:', error);
-            return { success: false, error: 'خطأ في تسجيل الخروج' };
-        }
-    }
-
-    function loadUserFromLocalStorage() {
-        try {
-            const savedUser = localStorage.getItem('jamalek_user');
-            if (savedUser) {
-                const userData = JSON.parse(savedUser);
-                currentUser = userData;
-                return { success: true, user: userData };
-            }
-            return { success: false, user: null };
-        } catch (error) {
-            console.error('خطأ في تحميل حالة المستخدم:', error);
-            return { success: false, user: null };
-        }
-    }
-
-    function getErrorMessage(errorCode) {
-        const errorMessages = {
-            'auth/invalid-email': 'البريد الإلكتروني غير صحيح',
-            'auth/user-disabled': 'هذا الحساب معطل',
-            'auth/user-not-found': 'لا يوجد حساب بهذا البريد الإلكتروني',
-            'auth/wrong-password': 'كلمة المرور غير صحيحة',
-            'auth/email-already-in-use': 'هذا البريد الإلكتروني مستخدم بالفعل',
-            'auth/weak-password': 'كلمة المرور ضعيفة، يجب أن تكون 6 أحرف على الأقل',
-            'auth/operation-not-allowed': 'طريقة التسجيل هذه غير مفعلة',
-            'auth/too-many-requests': 'تم إجراء محاولات كثيرة، يرجى الانتظار والمحاولة لاحقاً',
-            'auth/network-request-failed': 'خطأ في الاتصال بالشبكة',
-            'auth/popup-closed-by-user': 'تم إغلاق نافذة التسجيل',
-            'auth/cancelled-popup-request': 'تم إلغاء عملية التسجيل',
-            'default': 'حدث خطأ غير متوقع'
-        };
-        
-        return errorMessages[errorCode] || errorMessages['default'];
-    }
-
-    // ==================== إدارة السلة ====================
-    function loadCart() {
-        const savedCart = localStorage.getItem('jamalek_cart');
-        if (savedCart) {
-            try {
-                cartItems = JSON.parse(savedCart);
-                updateCartCount();
-            } catch (error) {
-                console.error('خطأ في تحميل السلة:', error);
-                cartItems = [];
-            }
-        }
-    }
-
-    function saveCart() {
-        localStorage.setItem('jamalek_cart', JSON.stringify(cartItems));
-    }
-
-    function updateCartCount() {
-        const itemCount = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
-        
-        const cartCount = document.getElementById('cartCount');
-        const cartMobileCount = document.getElementById('cartMobileCount');
-        
-        if (cartCount) {
-            cartCount.textContent = itemCount;
-            cartCount.classList.toggle('hidden', itemCount === 0);
-        }
-        
-        if (cartMobileCount) {
-            cartMobileCount.textContent = itemCount;
-            cartMobileCount.classList.toggle('hidden', itemCount === 0);
-        }
-    }
-
-    function addToCart(product, quantity = 1) {
-        const existingItem = cartItems.find(item => item.id === product.id);
-        
-        if (existingItem) {
-            existingItem.quantity = (existingItem.quantity || 1) + quantity;
-        } else {
-            cartItems.push({
-                id: product.id,
-                name: product.name,
-                price: product.price,
-                image: product.image,
-                description: product.description,
-                category: product.category,
-                quantity: quantity
-            });
-        }
-        
-        saveCart();
-        updateCartCount();
-        showToast(`تم إضافة "${product.name}" إلى السلة`, false, 'success');
-        return true;
-    }
-
-    // ==================== تحديث واجهة المستخدم ====================
-    function updateUserUI(user) {
-        if (!user) return;
-
-        const name = user.displayName || 'ضيف';
-        const email = user.email || '';
-        const isGuest = user.isGuest || false;
-        const photo = user.photoURL || 
-            `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=C89B3C&color=fff`;
-
-        // تحديث الهيدر
-        const ordersBtn = document.getElementById('ordersBtn');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const userToggle = document.getElementById('userToggle');
-        
-        if (ordersBtn) {
-            if (isGuest) {
-                ordersBtn.classList.add('hidden');
-            } else {
-                ordersBtn.classList.remove('hidden');
-            }
-        }
-        
-        if (logoutBtn) logoutBtn.classList.remove('hidden');
-        if (userToggle) {
-            userToggle.innerHTML = isGuest ? 
-                '<i class="far fa-user"></i>' : 
-                `<i class="fas fa-user-circle"></i>`;
-        }
-
-        // تحديث الجوال
-        const mobileUserName = document.getElementById('mobileUserName');
-        const mobileUserEmail = document.getElementById('mobileUserEmail');
-        const mobileUserAvatar = document.getElementById('mobileUserAvatar');
-        const mobileUserInfo = document.getElementById('mobileUserInfo');
-        const mobileAuthBtn = document.getElementById('mobileAuthBtn');
-        const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
-        const cartMobileBtn = document.getElementById('cartMobileBtn');
-        const ordersMobileBtn = document.getElementById('ordersMobileBtn');
-        
-        if (mobileUserName) mobileUserName.textContent = name;
-        if (mobileUserEmail) mobileUserEmail.textContent = isGuest ? 'مستخدم ضيف' : email;
-        if (mobileUserAvatar) mobileUserAvatar.src = photo;
-        if (mobileUserInfo) mobileUserInfo.classList.remove('hidden');
-        if (mobileAuthBtn) mobileAuthBtn.classList.add('hidden');
-        if (mobileLogoutBtn) {
-            mobileLogoutBtn.classList.remove('hidden');
-            mobileLogoutBtn.innerHTML = isGuest ? 
-                '<i class="fas fa-user-slash"></i> الخروج كضيف' : 
-                '<i class="fas fa-sign-out-alt"></i> تسجيل الخروج';
-        }
-        if (cartMobileBtn) cartMobileBtn.classList.remove('hidden');
-        if (ordersMobileBtn) {
-            if (isGuest) {
-                ordersMobileBtn.classList.add('hidden');
-            } else {
-                ordersMobileBtn.classList.remove('hidden');
-            }
-        }
-
-        // تحديث الملف الشخصي
-        const profileName = document.getElementById('profileName');
-        const profileEmail = document.getElementById('profileEmail');
-        const profileAvatar = document.getElementById('profileAvatar');
-        const editDisplayName = document.getElementById('editDisplayName');
-        const profileJoinDate = document.getElementById('profileJoinDate');
-        
-        if (profileName) profileName.textContent = name;
-        if (profileEmail) profileEmail.textContent = isGuest ? 'مستخدم غير مسجل' : email;
-        if (profileAvatar) profileAvatar.src = photo;
-        if (editDisplayName) editDisplayName.value = name;
-        if (profileJoinDate) {
-            const date = user.createdAt ? 
-                new Date(user.createdAt).toLocaleDateString('ar-SA') :
-                'غير محدد';
-            profileJoinDate.textContent = `تاريخ الانضمام: ${date}`;
-        }
-    }
-
-    // ==================== تحميل المنتجات ====================
-    function loadSampleProducts() {
-        const productsGrid = document.getElementById('productsGrid');
-        const products = [
-            {
-                id: 1,
-                name: 'عطر فاخر',
-                price: 150,
-                image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=300&h=300&fit=crop',
-                description: 'عطر فاخر برائحة مميزة',
-                category: 'perfume',
-                stock: 10,
-                isNew: true
-            },
-            {
-                id: 2,
-                name: 'مكياج سائل',
-                price: 85,
-                image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=300&h=300&fit=crop',
-                description: 'مكياج سائل عالي الجودة',
-                category: 'makeup',
-                stock: 15,
-                isSale: true
-            },
-            {
-                id: 3,
-                name: 'كريم البشرة',
-                price: 120,
-                image: 'https://images.unsplash.com/photo-1556228578-9c360e1d8d34?q=80&w=300&h=300&fit=crop',
-                description: 'كريم عناية بالبشرة',
-                category: 'skincare',
-                stock: 20,
-                isBest: true
-            },
-            {
-                id: 4,
-                name: 'شامبو فاخر',
-                price: 65,
-                image: 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?q=80&w=300&h=300&fit=crop',
-                description: 'شامبو للعناية بالشعر',
-                category: 'haircare',
-                stock: 25
-            }
-        ];
-        
-        productsGrid.innerHTML = products.map(product => `
-            <div class="product-card" data-id="${product.id}">
-                ${product.isNew ? '<span class="product-badge new">جديد</span>' : ''}
-                ${product.isSale ? '<span class="product-badge sale">عرض خاص</span>' : ''}
-                ${product.isBest ? '<span class="product-badge best">الأفضل</span>' : ''}
-                
-                <img src="${product.image}" alt="${product.name}" class="product-image">
-                <div class="product-info">
-                    <h3 class="product-name">${product.name}</h3>
-                    <p class="product-description">${product.description}</p>
-                    <div class="product-meta">
-                        <span class="product-category">${getCategoryName(product.category)}</span>
-                        <span class="${product.stock > 0 ? 'in-stock' : 'out-of-stock'}">
-                            ${product.stock > 0 ? `متوفر (${product.stock})` : 'نفذت الكمية'}
-                        </span>
-                    </div>
-                    <div class="product-footer">
-                        <div class="product-price">
-                            <span class="current-price">${product.price} ر.س</span>
-                        </div>
-                        <div class="product-buttons">
-                            <button class="btn primary-btn add-to-cart" 
-                                    data-id="${product.id}" 
-                                    data-name="${product.name}"
-                                    data-price="${product.price}"
-                                    data-image="${product.image}"
-                                    ${product.stock <= 0 ? 'disabled' : ''}>
-                                <i class="fas fa-cart-plus"></i>
-                                ${product.stock > 0 ? 'أضف للسلة' : 'نفذت الكمية'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-        
-        // إضافة أحداث لأزرار السلة
-        document.querySelectorAll('.add-to-cart').forEach(btn => {
-            btn.addEventListener('click', function() {
-                if (this.disabled) return;
-                
-                const productId = parseInt(this.getAttribute('data-id'));
-                const product = {
-                    id: productId,
-                    name: this.getAttribute('data-name'),
-                    price: parseFloat(this.getAttribute('data-price')),
-                    image: this.getAttribute('data-image')
-                };
-                
-                addToCart(product);
-            });
-        });
-    }
-
-    // ==================== إعداد الأحداث ====================
-    function setupEventListeners() {
-        console.log('إعداد مستمعي الأحداث...');
-        
-        // 1. شاشة المصادقة
-        // زر "متابعة كضيف"
-        document.getElementById('guestSignInBtn').addEventListener('click', async function() {
-            const result = signInAsGuest();
-            if (result.success) {
-                document.getElementById('authScreen').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-                loadSampleProducts();
-                showToast('مرحباً بك كضيف', false, 'success');
-            }
-        });
-        
-        // زر "متابعة باستخدام البريد"
-        document.getElementById('showEmailFormBtn').addEventListener('click', function() {
-            document.getElementById('authOptions').classList.add('hidden');
-            document.getElementById('emailAuthSection').classList.remove('hidden');
-            document.getElementById('resetPasswordSection').classList.add('hidden');
-        });
-        
-        // زر "العودة" في نموذج البريد
-        document.getElementById('backToOptions').addEventListener('click', function() {
-            document.getElementById('emailAuthSection').classList.add('hidden');
-            document.getElementById('authOptions').classList.remove('hidden');
-            document.getElementById('resetPasswordSection').classList.add('hidden');
-        });
-        
-        // زر تبديل كلمة المرور
-        document.getElementById('togglePassword').addEventListener('click', function() {
-            const passwordInput = document.getElementById('passwordInput');
-            const icon = this.querySelector('i');
-            
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-            } else {
-                passwordInput.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
-            }
-        });
-        
-        // زر "نسيت كلمة المرور"
-        document.getElementById('forgotPasswordBtn').addEventListener('click', function() {
-            document.getElementById('emailAuthForm').classList.add('hidden');
-            document.getElementById('resetPasswordSection').classList.remove('hidden');
-        });
-        
-        // زر "العودة لتسجيل الدخول" من استعادة كلمة المرور
-        document.getElementById('backToSignIn').addEventListener('click', function() {
-            document.getElementById('resetPasswordSection').classList.add('hidden');
-            document.getElementById('emailAuthForm').classList.remove('hidden');
-        });
-        
-        // زر "إنشاء حساب جديد"
-        document.getElementById('toggleSignUpMode').addEventListener('click', function() {
-            const displayNameInput = document.getElementById('displayNameInput');
-            const signInBtn = document.getElementById('signInWithEmailBtn');
-            
-            if (displayNameInput.classList.contains('hidden')) {
-                displayNameInput.classList.remove('hidden');
-                signInBtn.innerHTML = '<i class="fas fa-user-plus"></i> إنشاء حساب';
-                this.innerHTML = '<i class="fas fa-sign-in-alt"></i> لدي حساب بالفعل';
-            } else {
-                displayNameInput.classList.add('hidden');
-                signInBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> تسجيل الدخول';
-                this.innerHTML = '<i class="fas fa-user-plus"></i> إنشاء حساب جديد';
-            }
-        });
-        
-        // زر "تسجيل الدخول" أو "إنشاء حساب"
-        document.getElementById('emailAuthForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const email = document.getElementById('emailInput').value;
-            const password = document.getElementById('passwordInput').value;
-            const displayNameInput = document.getElementById('displayNameInput');
-            const displayName = displayNameInput.value;
-            
-            let result;
-            if (displayNameInput.classList.contains('hidden')) {
-                // تسجيل الدخول
-                result = await signInWithEmail(email, password);
-            } else {
-                // إنشاء حساب
-                result = await signUpWithEmail(email, password, displayName);
-            }
-            
-            if (result.success) {
-                document.getElementById('authScreen').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-                loadSampleProducts();
-                showToast('تم تسجيل الدخول بنجاح', false, 'success');
-                
-                // إعادة تعيين النموذج
-                this.reset();
-                document.getElementById('generalError').classList.remove('show');
-            } else {
-                const generalError = document.getElementById('generalError');
-                generalError.textContent = result.error;
-                generalError.classList.add('show');
-            }
-        });
-        
-        // زر "إرسال رابط إعادة التعيين"
-        document.getElementById('resetPasswordForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const email = document.getElementById('resetEmailInput').value;
-            const result = await resetPassword(email);
-            
-            if (result.success) {
-                showMessage('تم الإرسال', 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني', 'success');
-                document.getElementById('resetPasswordSection').classList.add('hidden');
-                document.getElementById('emailAuthForm').classList.remove('hidden');
-                this.reset();
-            } else {
-                showMessage('خطأ', result.error, 'error');
-            }
-        });
-        
-        // زر Google
-        document.getElementById('googleSignInBtn').addEventListener('click', async function() {
-            const result = await signInWithGoogle();
-            if (result.success) {
-                document.getElementById('authScreen').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-                loadSampleProducts();
-                showToast('تم تسجيل الدخول بنجاح', false, 'success');
-                document.getElementById('generalError').classList.remove('show');
-            } else {
-                const generalError = document.getElementById('generalError');
-                generalError.textContent = result.error;
-                generalError.classList.add('show');
-            }
-        });
-        
-        // 2. القائمة الرئيسية
-        // فتح القائمة الجوال
-        document.getElementById('menuToggle').addEventListener('click', function() {
-            document.getElementById('mobileNav').classList.add('active');
-        });
-        
-        // إغلاق القائمة الجوال
-        document.getElementById('closeNav').addEventListener('click', function() {
-            document.getElementById('mobileNav').classList.remove('active');
-        });
-        
-        // 3. التنقل بين الأقسام
-        document.querySelectorAll('[data-section]').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const sectionName = this.getAttribute('data-section');
-                
-                // إخفاء جميع الأقسام
-                document.querySelectorAll('main > section').forEach(section => {
-                    section.classList.add('hidden');
-                });
-                
-                // إظهار القسم المطلوب
-                let targetId = '';
-                switch(sectionName) {
-                    case 'home':
-                        targetId = 'homeSection';
-                        break;
-                    case 'products':
-                        targetId = 'productsSection';
-                        break;
-                    case 'cart':
-                        targetId = 'cartSection';
-                        break;
-                    case 'orders':
-                        targetId = 'ordersSection';
-                        break;
-                    case 'profile':
-                        targetId = 'profileSection';
-                        break;
-                    case 'contact':
-                        targetId = 'contactSection';
-                        break;
-                    default:
-                        targetId = sectionName + 'Section';
-                }
-                
-                const targetSection = document.getElementById(targetId);
-                if (targetSection) {
-                    targetSection.classList.remove('hidden');
-                }
-                
-                // إغلاق القائمة الجوال
-                document.getElementById('mobileNav').classList.remove('active');
-                
-                // التمرير للأعلى
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-        });
-        
-        // 4. الأزرار الخاصة
-        // زر "ابدأ التسوق"
-        document.getElementById('startShoppingBtn').addEventListener('click', function() {
-            document.querySelectorAll('main > section').forEach(section => {
-                section.classList.add('hidden');
-            });
-            document.getElementById('productsSection').classList.remove('hidden');
-            document.getElementById('mobileNav').classList.remove('active');
-        });
-        
-        // زر الحساب الشخصي
-        document.getElementById('userToggle').addEventListener('click', function() {
-            document.querySelectorAll('main > section').forEach(section => {
-                section.classList.add('hidden');
-            });
-            document.getElementById('profileSection').classList.remove('hidden');
-        });
-        
-        // زر السلة
-        document.getElementById('cartBtn').addEventListener('click', function() {
-            document.querySelectorAll('main > section').forEach(section => {
-                section.classList.add('hidden');
-            });
-            document.getElementById('cartSection').classList.remove('hidden');
-        });
-        
-        // زر تسجيل الخروج
-        document.getElementById('logoutBtn').addEventListener('click', async function() {
-            const user = currentUser;
-            const message = user && user.isGuest ? 
-                'هل تريد الخروج كضيف؟ سيتم مسح سلة التسوق' : 
-                'هل تريد تسجيل الخروج؟';
-            
-            if (confirm(message)) {
-                await signOut();
-                localStorage.removeItem('jamalek_user');
-                localStorage.removeItem('jamalek_cart');
-                location.reload();
-            }
-        });
-        
-        // زر تسجيل الخروج في الجوال
-        document.getElementById('mobileLogoutBtn').addEventListener('click', async function() {
-            const user = currentUser;
-            const message = user && user.isGuest ? 
-                'هل تريد الخروج كضيف؟ سيتم مسح سلة التسوق' : 
-                'هل تريد تسجيل الخروج؟';
-            
-            if (confirm(message)) {
-                await signOut();
-                localStorage.removeItem('jamalek_user');
-                localStorage.removeItem('jamalek_cart');
-                location.reload();
-            }
-        });
-        
-        // زر تسجيل الدخول في الجوال
-        document.getElementById('mobileAuthBtn').addEventListener('click', function() {
-            document.getElementById('mainApp').classList.add('hidden');
-            document.getElementById('authScreen').classList.remove('hidden');
-            document.getElementById('mobileNav').classList.remove('active');
-        });
-        
-        // 5. فلترة المنتجات
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                // إزالة النشط من جميع الأزرار
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                // إضافة النشط للزر المضغوط
-                this.classList.add('active');
-                
-                const filter = this.getAttribute('data-filter');
-                console.log('تصفية حسب:', filter);
-            });
-        });
-        
-        // 6. فرز المنتجات
-        document.getElementById('productSort').addEventListener('change', function() {
-            const sortType = this.value;
-            console.log('فرز حسب:', sortType);
-        });
-        
-        // 7. بحث المنتجات
-        document.getElementById('productSearch').addEventListener('input', function(e) {
-            const query = e.target.value;
-            if (query.length > 2) {
-                console.log('بحث عن:', query);
-            }
-        });
-        
-        // 8. نموذج الاتصال
-        document.getElementById('contactForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            showMessage('شكراً لك', 'تم إرسال رسالتك بنجاح، سنرد عليك قريباً', 'success');
-            this.reset();
-        });
-        
-        // 9. الملف الشخصي
-        document.getElementById('profileForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            showToast('تم حفظ التغييرات (نظام تجريبي)', false, 'success');
-        });
-        
-        document.getElementById('changePasswordBtn').addEventListener('click', function() {
-            showMessage('قريباً', 'ميزة تغيير كلمة المرور ستكون متاحة قريباً', 'info');
-        });
-        
-        // 10. السنة الحالية
-        document.getElementById('currentYear').textContent = new Date().getFullYear();
-    }
-
-    // ==================== بدء التطبيق ====================
-    function initApp() {
-        console.log('بدء تشغيل المتجر...');
-        
-        // إعداد مستمعي الأحداث
-        setupEventListeners();
-        
-        // تحميل السلة
-        loadCart();
-        
-        // محاولة تحميل المستخدم من localStorage
-        const savedUser = loadUserFromLocalStorage();
-        
-        if (savedUser.success && savedUser.user) {
-            console.log('تم تحميل المستخدم من الذاكرة المحلية:', savedUser.user.displayName);
-            updateUserUI(savedUser.user);
-            document.getElementById('authScreen').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
-            loadSampleProducts();
-        } else {
-            // إذا لم يكن هناك مستخدم محفوظ، عرض شاشة المصادقة
-            console.log('لا يوجد مستخدم محفوظ، عرض شاشة المصادقة');
-            document.getElementById('authScreen').classList.remove('hidden');
-            document.getElementById('mainApp').classList.add('hidden');
-        }
-        
-        console.log('التطبيق جاهز للعمل!');
-    }
-
-    // بدء التطبيق عند تحميل الصفحة
-    document.addEventListener('DOMContentLoaded', initApp);
-    </script>
+    <!-- ملفات JavaScript الخاصة بالتطبيق -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/products.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>
