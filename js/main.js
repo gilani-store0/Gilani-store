@@ -1066,61 +1066,82 @@ function setupForms() {
 async function initApp() {
     console.log('بدء تشغيل المتجر...');
     
-    // تهيئة وحدات التطبيق الأساسية
-    initProducts();
-    initCart();
-    initAdmin();
-    
-    // محاولة تحميل المستخدم من localStorage أولاً
-    const savedUser = loadUserFromLocalStorage();
-    
-    if (savedUser.success && savedUser.user) {
-        console.log('تم تحميل المستخدم من الذاكرة المحلية:', savedUser.user.displayName);
-        UI.updateUserUI(savedUser.user, savedUser.user.isAdmin || false);
-        UI.showMainApp();
-        
-        // إذا كان المستخدم ضيفاً، لا نحتاج لتحميل بيانات إضافية
-        if (!savedUser.user.isGuest) {
-            // محاولة تحميل بيانات Firebase إذا كان مستخدم نظام
-            try {
-                const authResult = await initAuth();
-                if (authResult.success && authResult.user) {
-                    console.log('تم التحقق من Firebase:', authResult.user.email);
-                    UI.updateUserUI(authResult.user, authResult.isAdmin);
-                }
-            } catch (error) {
-                console.error('خطأ في التحقق من Firebase:', error);
-            }
+    try {
+        // تهيئة Firebase أولاً
+        const firebaseInit = initializeFirebase();
+        if (!firebaseInit.success) {
+            console.warn('Firebase لم يتم تهيئته، استخدام وضع غير متصل');
         }
-    } else {
-        // إذا لم يكن هناك مستخدم محفوظ، عرض شاشة المصادقة
-        console.log('لا يوجد مستخدم محفوظ، عرض شاشة المصادقة');
-        UI.showAuthScreen();
-    }
-    
-    // إعداد النماذج بعد تحميل DOM
-    setupForms();
-    
-    // ربط أزرار مودال التأكيد
-    const confirmBtn = document.getElementById('confirmBtn');
-    if (confirmBtn) {
-        confirmBtn.addEventListener('click', executePendingAction);
-    }
-
-    const cancelBtn = document.getElementById('cancelBtn');
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', clearConfirmation);
-    }
-    
-    // ربط أزرار إغلاق المودال
-    document.querySelectorAll('.close-modal').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const modal = this.closest('.modal');
-            if (modal) {
-                modal.classList.add('hidden');
+        
+        // تهيئة وحدات التطبيق الأساسية
+        initProducts();
+        initCart();
+        initAdmin();
+        
+        // محاولة تحميل المستخدم من localStorage أولاً
+        const savedUser = loadUserFromLocalStorage();
+        
+        if (savedUser.success && savedUser.user) {
+            console.log('تم تحميل المستخدم من الذاكرة المحلية:', savedUser.user.displayName);
+            UI.updateUserUI(savedUser.user, savedUser.user.isAdmin || false);
+            UI.showMainApp();
+            
+            // إذا كان المستخدم ضيفاً، لا نحتاج لتحميل بيانات إضافية
+            if (!savedUser.user.isGuest) {
+                // محاولة تحميل بيانات Firebase إذا كان مستخدم نظام
+                try {
+                    const authResult = await initAuth();
+                    if (authResult.success && authResult.user) {
+                        console.log('تم التحقق من Firebase:', authResult.user.email);
+                        UI.updateUserUI(authResult.user, authResult.isAdmin);
+                    }
+                } catch (error) {
+                    console.error('خطأ في التحقق من Firebase:', error);
+                }
             }
+        } else {
+            // إذا لم يكن هناك مستخدم محفوظ، عرض شاشة المصادقة
+            console.log('لا يوجد مستخدم محفوظ، عرض شاشة المصادقة');
+            UI.showAuthScreen();
+        }
+        
+        // إعداد النماذج بعد تحميل DOM
+        setupForms();
+        
+        // ربط أزرار مودال التأكيد
+        const confirmBtn = document.getElementById('confirmBtn');
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', executePendingAction);
+        }
+
+        const cancelBtn = document.getElementById('cancelBtn');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', clearConfirmation);
+        }
+        
+        // ربط أزرار إغلاق المودال
+        document.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const modal = this.closest('.modal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                }
+            });
         });
-    });
+        
+    } catch (error) {
+        console.error('خطأ فادح في تهيئة التطبيق:', error);
+        // عرض رسالة خطأ للمستخدم
+        document.body.innerHTML = `
+            <div style="text-align: center; padding: 50px; font-family: 'Cairo', sans-serif;">
+                <h1 style="color: #C89B3C;">⚠️ خطأ في التطبيق</h1>
+                <p>حدث خطأ أثناء تحميل التطبيق. يرجى تحديث الصفحة أو المحاولة لاحقاً.</p>
+                <button onclick="location.reload()" style="background: #C89B3C; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                    تحديث الصفحة
+                </button>
+            </div>
+        `;
+    }
 }
 
 // ==================== تفويض الأحداث للمستند ====================

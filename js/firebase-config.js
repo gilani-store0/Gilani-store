@@ -1,26 +1,46 @@
-// firebase.js - تهيئة Firebase
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-import { getStorage } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
+// js/firebase-config.js - تهيئة Firebase (النسخة المصححة)
 
-// إعدادات Firebase
+// جعل Firebase متاحاً عالمياً
 const firebaseConfig = {
-  apiKey: "AIzaSyBdoi5KxlVb6G31cue5SGbaw-VW2UGu4cs",
-  authDomain: "qb-store.firebaseapp.com",
-  projectId: "qb-store",
-  storageBucket: "qb-store.firebasestorage.app",
-  messagingSenderId: "81820788306",
-  appId: "1:81820788306:web:54be52d359ad36c3e0e18b",
-  measurementId: "G-4K0MDY0W5M"
+    apiKey: "AIzaSyBdoi5KxlVb6G31cue5SGbaw-VW2UGu4cs",
+    authDomain: "qb-store.firebaseapp.com",
+    projectId: "qb-store",
+    storageBucket: "qb-store.firebasestorage.app",
+    messagingSenderId: "81820788306",
+    appId: "1:81820788306:web:54be52d359ad36c3e0e18b",
+    measurementId: "G-4K0MDY0W5M"
 };
 
-// تهيئة Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
+console.log('تهيئة Firebase...');
 
-export { app, analytics, auth, db, storage };
+// تهيئة Firebase بطريقة متوافقة
+function initializeFirebase() {
+    try {
+        // تأكد من أن Firebase تم تحميله أولاً
+        if (typeof firebase !== 'undefined') {
+            // تهيئة التطبيق
+            const app = firebase.initializeApp(firebaseConfig);
+            
+            // الحصول على الخدمات
+            const auth = firebase.auth();
+            const db = firebase.firestore();
+            
+            // جعلها متاحة عالمياً
+            window.firebaseApp = app;
+            window.auth = auth;
+            window.db = db;
+            
+            console.log('Firebase تم تهيئته بنجاح!');
+            return { success: true, app, auth, db };
+        } else {
+            console.error('Firebase لم يتم تحميله!');
+            return { success: false, error: 'Firebase لم يتم تحميله' };
+        }
+    } catch (error) {
+        console.error('خطأ في تهيئة Firebase:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+// استدعاء التهيئة عند تحميل الصفحة
+window.initializeFirebase = initializeFirebase;

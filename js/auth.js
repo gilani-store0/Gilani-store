@@ -1,4 +1,4 @@
-// js/auth.js - معالجة المصادقة (النسخة المتوافقة)
+// js/auth.js - معالجة المصادقة (النسخة المصححة)
 
 // حالة المستخدم
 let currentUser = null;
@@ -9,8 +9,26 @@ let isUserAdminFlag = false;
 function initAuth() {
     return new Promise((resolve) => {
         if (!window.auth) {
-            console.error('Firebase Auth غير متاح');
-            resolve({ success: false, user: null });
+            console.warn('Firebase Auth غير متاح، استخدام وضع الضيف');
+            const guestUser = {
+                uid: 'guest_' + Date.now(),
+                email: null,
+                displayName: 'ضيف',
+                photoURL: null,
+                isGuest: true,
+                createdAt: new Date().toISOString()
+            };
+            
+            currentUser = guestUser;
+            currentUserData = guestUser;
+            isUserAdminFlag = false;
+            
+            resolve({ 
+                success: true, 
+                user: guestUser, 
+                userData: guestUser, 
+                isAdmin: false 
+            });
             return;
         }
         
@@ -23,10 +41,18 @@ function initAuth() {
                 try {
                     currentUserData = await getUserData(user);
                     isUserAdminFlag = currentUserData?.isAdmin || false;
-                    resolve({ success: true, user, userData: currentUserData, isAdmin: isUserAdminFlag });
+                    resolve({ 
+                        success: true, 
+                        user, 
+                        userData: currentUserData, 
+                        isAdmin: isUserAdminFlag 
+                    });
                 } catch (error) {
                     console.error('خطأ في تحميل بيانات المستخدم:', error);
-                    resolve({ success: false, error: error.message });
+                    resolve({ 
+                        success: false, 
+                        error: 'خطأ في تحميل بيانات المستخدم' 
+                    });
                 }
             } else {
                 // لا يوجد مستخدم مسجل من Firebase
@@ -36,6 +62,9 @@ function initAuth() {
                 isUserAdminFlag = false;
                 resolve({ success: false, user: null });
             }
+        }, (error) => {
+            console.error('خطأ في مراقبة حالة المصادقة:', error);
+            resolve({ success: false, error: error.message });
         });
     });
 }
@@ -47,6 +76,7 @@ async function signInWithGoogle() {
             throw new Error('Firebase غير متاح');
         }
         
+        // استخدام firebase من النافذة العامة
         const provider = new firebase.auth.GoogleAuthProvider();
         const result = await window.auth.signInWithPopup(provider);
         const user = result.user;
@@ -59,7 +89,7 @@ async function signInWithGoogle() {
         console.error('خطأ في تسجيل الدخول باستخدام Google:', error);
         return { 
             success: false, 
-            error: getErrorMessage(error.code) 
+            error: getErrorMessage(error) 
         };
     }
 }
@@ -74,12 +104,15 @@ async function signInWithEmail(email, password) {
         const result = await window.auth.signInWithEmailAndPassword(email, password);
         const user = result.user;
         
+        // تحديث آخر وقت دخول
+        await updateLastLogin(user.uid);
+        
         return { success: true, user };
     } catch (error) {
         console.error('خطأ في تسجيل الدخول:', error);
         return { 
             success: false, 
-            error: getErrorMessage(error.code) 
+            error: getErrorMessage(error) 
         };
     }
 }
@@ -107,8 +140,22 @@ async function signUpWithEmail(email, password, displayName) {
         console.error('خطأ في إنشاء الحساب:', error);
         return { 
             success: false, 
-            error: getErrorMessage(error.code) 
+            error: getErrorMessage(error) 
         };
+    }
+}
+
+// تحديث آخر وقت دخول
+async function updateLastLogin(userId) {
+    try {
+        if (!window.db) return;
+        
+        const userRef = window.db.collection("users").doc(userId);
+        await userRef.update({
+            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } catch (error) {
+        console.error('خطأ في تحديث آخر وقت دخول:', error);
     }
 }
 
@@ -161,7 +208,7 @@ async function resetPassword(email) {
         console.error('خطأ في إرسال رابط إعادة التعيين:', error);
         return { 
             success: false, 
-            error: getErrorMessage(error.code) 
+            error: getErrorMessage(error) 
         };
     }
 }
@@ -340,7 +387,11 @@ function setAdminStatus(status) {
 }
 
 // دالة مساعدة لتحويل كود الخطأ إلى رسالة مفهومة
-function getErrorMessage(errorCode) {
+function getErrorMessage(error) {
+    if (!error) return 'حدث خطأ غير متوقع';
+    
+    const errorCode = error.code || '';
+    
     const errorMessages = {
         'auth/invalid-email': 'البريد الإلكتروني غير صحيح',
         'auth/user-disabled': 'هذا الحساب معطل',
@@ -355,7 +406,15 @@ function getErrorMessage(errorCode) {
         'auth/cancelled-popup-request': 'تم إلغاء عملية التسجيل',
         'auth/requires-recent-login': 'يجب تسجيل الدخول مرة أخرى لإكمال هذه العملية',
         'auth/invalid-credential': 'بيانات الاعتماد غير صالحة',
-        'default': 'حدث خطأ غير متوقع'
+        'auth/app-deleted': 'تم حذف التطبيق',
+        'auth/app-not-authorized': 'التطبيق غير مصرح له',
+        'auth/argument-error': 'خطأ في المدخلات',
+        'auth/invalid-api-key': 'مفتاح API غير صالح',
+        'auth/invalid-user-token': 'رمز المستخدم غير صالح',
+        'auth/user-token-expired': 'انتهت صلاحية رمز المستخدم',
+        'auth/unauthorized-domain': 'نطاق غير مصرح به',
+        'auth/web-storage-unsupported': 'التخزين عبر الويب غير مدعوم',
+        'default': error.message || 'حدث خطأ غير متوقع'
     };
     
     return errorMessages[errorCode] || errorMessages['default'];
@@ -396,3 +455,4 @@ window.updateUserData = updateUserData;
 window.getAllUsers = getAllUsers;
 window.getUsersCount = getUsersCount;
 window.loadUserFromLocalStorage = loadUserFromLocalStorage;
+window.getErrorMessage = getErrorMessage;
