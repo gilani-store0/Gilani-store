@@ -770,5 +770,22 @@
     <script src="js/cart.js"></script>
     <script src="js/admin.js"></script>
     <script src="js/main.js"></script>
+    
+    <!-- تهيئة Firebase بعد تحميل جميع المكتبات -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('الصفحة تم تحميلها، تهيئة Firebase...');
+        
+        // انتظر قليلاً للتأكد من تحميل Firebase SDK
+        setTimeout(() => {
+            if (typeof firebase !== 'undefined') {
+                initializeFirebase();
+                console.log('Firebase SDK محمّل وتمت تهيئته');
+            } else {
+                console.error('Firebase SDK لم يتم تحميله!');
+            }
+        }, 100);
+    });
+    </script>
 </body>
 </html>
