@@ -40,14 +40,15 @@ async function getSiteSettings() {
         if (!window.db) {
             console.warn('Firestore غير متاح، إرجاع إعدادات افتراضية');
             return {
-                storeName: "جمالك",
-                email: "info@jamalek.com",
-                phone1: "+966500000000",
+                storeName: "QB",
+                email: "yxr.249@gmai.com",
+                phone1: "+249933002015",
                 phone2: "",
                 shippingCost: 15,
                 freeShippingLimit: 200,
                 address: "السعودية - الرياض",
-                workingHours: "من الأحد إلى الخميس: 9 صباحاً - 10 مساءً"
+                workingHours: "من الأحد إلى الخميس: 9 صباحاً - 10 مساءً",
+                storeDescription: "متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية"
             };
         }
         
@@ -66,7 +67,8 @@ async function getSiteSettings() {
                 shippingCost: 15,
                 freeShippingLimit: 200,
                 address: "السعودية - الرياض",
-                workingHours: "من الأحد إلى الخميس: 9 صباحاً - 10 مساءً"
+                workingHours: "من الأحد إلى الخميس: 9 صباحاً - 10 مساءً",
+                storeDescription: "متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية"
             };
         }
     } catch (error) {
@@ -243,6 +245,25 @@ function setupAdminEventListeners() {
             switchTab(tabId);
         });
     });
+    
+    // نموذج المنتج
+    const productForm = document.getElementById('productForm');
+    if (productForm) {
+        productForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showToast('سيتم تنفيذ هذه الميزة في التحديث القادم', false, 'info');
+            document.getElementById('productModal').classList.add('hidden');
+        });
+    }
+    
+    // نموذج إعدادات الموقع
+    const siteSettingsForm = document.getElementById('siteSettingsForm');
+    if (siteSettingsForm) {
+        siteSettingsForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showToast('سيتم تنفيذ هذه الميزة في التحديث القادم', false, 'info');
+        });
+    }
 }
 
 // تبديل علامات التبويب
@@ -395,6 +416,13 @@ function renderAdminUsers(users) {
             </td>
         </tr>
     `).join('');
+    
+    // إضافة مستمعي الأحداث
+    tableBody.querySelectorAll('.edit-user').forEach(btn => {
+        btn.addEventListener('click', () => {
+            showToast('ميزة تعديل المستخدم ستكون متاحة قريباً', false, 'info');
+        });
+    });
 }
 
 // عرض مودال المنتج
@@ -402,6 +430,11 @@ function showProductModal() {
     document.getElementById('modalTitle').textContent = 'إضافة منتج جديد';
     document.getElementById('editProductId').value = '';
     document.getElementById('productForm').reset();
+    
+    // تعيين القيم الافتراضية
+    document.getElementById('productStock').value = 10;
+    document.getElementById('isActive').checked = true;
+    
     document.getElementById('productModal').classList.remove('hidden');
 }
 
@@ -423,50 +456,6 @@ function editProductModal(product) {
     document.getElementById('productModal').classList.remove('hidden');
 }
 
-// منتجات افتراضية
-function getDefaultProducts() {
-    return [
-        {
-            id: '1',
-            name: 'عطر فاخر للرجال',
-            description: 'عطر فاخر برائحة عطرية مميزة للرجال، يدوم طويلاً',
-            price: 150,
-            oldPrice: 200,
-            image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=300&h=300&fit=crop',
-            isNew: true,
-            isBest: true,
-            category: 'perfume',
-            stock: 25,
-            views: 150,
-            createdAt: new Date('2024-01-15')
-        },
-        {
-            id: '2',
-            name: 'مكياج سائل عالي الجودة',
-            description: 'مكياج سائل عالي الجودة يمنحك مظهراً طبيعياً',
-            price: 85,
-            image: 'https://images.unsplash.com/photo-1526947425960-945c6e72858f?q=80&w=300&h=300&fit=crop',
-            isSale: true,
-            category: 'makeup',
-            stock: 40,
-            views: 120,
-            createdAt: new Date('2024-01-10')
-        },
-        {
-            id: '3',
-            name: 'عطر نسائي زهري',
-            description: 'عطر نسائي برائحة زهرية مميزة تدوم طوال اليوم',
-            price: 200,
-            image: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?q=80&w=300&h=300&fit=crop',
-            isBest: true,
-            category: 'perfume',
-            stock: 15,
-            views: 180,
-            createdAt: new Date('2024-01-05')
-        }
-    ];
-}
-
 // جعل الدوال متاحة عالمياً
 window.initAdmin = initAdmin;
 window.loadAllProducts = loadAllProducts;
@@ -477,3 +466,6 @@ window.formatDate = formatDate;
 window.setupConfirmation = setupConfirmation;
 window.clearConfirmation = clearConfirmation;
 window.executePendingAction = executePendingAction;
+window.switchTab = switchTab;
+window.editProductModal = editProductModal;
+window.showProductModal = showProductModal;

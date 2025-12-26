@@ -218,6 +218,30 @@ function updateFreeShippingLimit(limit) {
     return limit;
 }
 
+// تحديث واجهة المفضلة
+function updateWishlistUI() {
+    const wishlistCount = document.getElementById('wishlistCount');
+    const wishlistMobileCount = document.getElementById('wishlistMobileCount');
+    
+    if (wishlistCount) {
+        if (WishlistState.itemCount > 0) {
+            wishlistCount.textContent = WishlistState.itemCount;
+            wishlistCount.classList.remove('hidden');
+        } else {
+            wishlistCount.classList.add('hidden');
+        }
+    }
+    
+    if (wishlistMobileCount) {
+        if (WishlistState.itemCount > 0) {
+            wishlistMobileCount.textContent = WishlistState.itemCount;
+            wishlistMobileCount.classList.remove('hidden');
+        } else {
+            wishlistMobileCount.classList.add('hidden');
+        }
+    }
+}
+
 // عرض إشعار
 function showToast(message, isError = false, type = 'info') {
     // إزالة عنصر Toast إذا كان موجوداً
@@ -227,7 +251,7 @@ function showToast(message, isError = false, type = 'info') {
     }
     
     const toast = document.createElement('div');
-    toast.className = `toast ${isError ? 'toast-error' : type === 'success' ? 'toast-success' : type === 'warning' ? 'toast-warning' : ''}`;
+    toast.className = `toast ${isError ? 'toast-error' : type === 'success' ? 'toast-success' : type === 'warning' ? 'toast-warning' : 'toast-info'}`;
     toast.textContent = message;
     
     document.body.appendChild(toast);

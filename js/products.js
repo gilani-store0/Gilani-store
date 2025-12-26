@@ -127,7 +127,8 @@ function getDefaultProducts() {
             isBest: true,
             category: 'perfume',
             stock: 25,
-            views: 150
+            views: 150,
+            createdAt: new Date('2024-01-15')
         },
         {
             id: '2',
@@ -138,7 +139,8 @@ function getDefaultProducts() {
             isSale: true,
             category: 'makeup',
             stock: 40,
-            views: 120
+            views: 120,
+            createdAt: new Date('2024-01-10')
         },
         {
             id: '3',
@@ -149,7 +151,8 @@ function getDefaultProducts() {
             isBest: true,
             category: 'perfume',
             stock: 15,
-            views: 180
+            views: 180,
+            createdAt: new Date('2024-01-05')
         },
         {
             id: '4',
@@ -159,7 +162,8 @@ function getDefaultProducts() {
             image: 'https://images.unsplash.com/photo-1556228578-9c360e1d8d34?q=80&w=300&h=300&fit=crop',
             category: 'skincare',
             stock: 50,
-            views: 90
+            views: 90,
+            createdAt: new Date('2024-01-08')
         },
         {
             id: '5',
@@ -171,7 +175,8 @@ function getDefaultProducts() {
             isSale: true,
             category: 'haircare',
             stock: 35,
-            views: 110
+            views: 110,
+            createdAt: new Date('2024-01-12')
         },
         {
             id: '6',
@@ -182,7 +187,8 @@ function getDefaultProducts() {
             isNew: true,
             category: 'makeup',
             stock: 30,
-            views: 85
+            views: 85,
+            createdAt: new Date('2024-01-20')
         }
     ];
 }
