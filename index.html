@@ -789,5 +789,84 @@
         }, 100);
     });
     </script>
+    
+    <!-- في نهاية ملف index.html قبل </body> -->
+
+<script>
+// تحقق من الدومين عند التحميل
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🌐 تحميل الصفحة على:', window.location.hostname);
+    
+    const isGitHubPages = window.location.hostname.includes('github.io');
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1';
+    
+    // إضافة معلومات للـ console
+    console.log('📊 معلومات الدومين:', {
+        hostname: window.location.hostname,
+        protocol: window.location.protocol,
+        isGitHubPages: isGitHubPages,
+        isLocalhost: isLocalhost,
+        pathname: window.location.pathname
+    });
+    
+    // إضافة class للـ body إذا كان على GitHub Pages
+    if (isGitHubPages) {
+        document.body.classList.add('github-pages');
+        console.log('✅ تم تفعيل وضع GitHub Pages');
+        
+        // إضافة رسالة تنبيه
+        setTimeout(() => {
+            console.log('💡 تلميح: إذا لم يعمل Firebase، تأكد من إضافة الدومين إلى Firebase Console');
+            console.log('💡 اضغط F12 لرؤية الأخطاء في Console');
+        }, 2000);
+    }
+    
+    // تهيئة Firebase بعد تحميل جميع المكتبات
+    setTimeout(() => {
+        if (typeof firebase !== 'undefined') {
+            initializeFirebase();
+            console.log('✅ Firebase SDK محمّل وتمت تهيئته');
+            
+            // اختبار الاتصال
+            setTimeout(async () => {
+                if (window.testFirebaseConnection) {
+                    const result = await testFirebaseConnection();
+                    console.log('🧪 نتيجة اختبار Firebase:', result);
+                }
+            }, 2000);
+        } else {
+            console.error('❌ Firebase SDK لم يتم تحميله!');
+            
+            // عرض رسالة للمستخدم
+            if (isGitHubPages) {
+                alert('⚠️ Firebase لم يتم تحميله. قد يكون هناك مشكلة في الاتصال بالإنترنت أو في إعدادات GitHub Pages.');
+            }
+        }
+    }, 500);
+});
+
+// دالة للمساعدة في تطوير
+window.debugFirebase = function() {
+    console.log('🔍 معلومات تصحيح Firebase:', {
+        firebase: typeof firebase,
+        auth: window.auth ? 'موجود' : 'غير موجود',
+        db: window.db ? 'موجود' : 'غير موجود',
+        currentUser: window.auth?.currentUser?.email || 'لا يوجد',
+        hostname: window.location.hostname
+    });
+};
+
+// اختصار للطوارئ
+window.makeAdmin = function(email) {
+    if (!email) {
+        email = prompt('أدخل البريد الإلكتروني:');
+    }
+    if (email) {
+        emergencyMakeAdmin(email);
+    }
+};
+</script>
+    
 </body>
 </html>
