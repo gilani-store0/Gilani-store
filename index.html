@@ -7,22 +7,17 @@
     <meta name="description" content="متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية">
     <title>QB | متجر عطور ومستحضرات تجميل والعناية بالشعر</title>
     
-    <!-- خط Cairo -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- CSS -->
     <link rel="stylesheet" href="css/style.css">
     
-    <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💄</text></svg>">
 </head>
 <body>
-    <!-- شاشة المصادقة -->
     <div id="authScreen" class="auth-screen">
         <div class="auth-card">
             <div class="auth-header">
@@ -52,10 +47,8 @@
                 </button>
             </div>
 
-            <!-- نموذج البريد الإلكتروني -->
             <div id="emailAuthSection" class="email-form-container hidden">
                 
-                <!-- قسم استعادة كلمة المرور -->
                 <div id="resetPasswordSection" class="hidden">
                     <form id="resetPasswordForm">
                         <p class="reset-info">أدخل بريدك الإلكتروني لإرسال رابط إعادة تعيين كلمة المرور.</p>
@@ -71,7 +64,6 @@
                     </form>
                 </div>
 
-                <!-- نموذج البريد الإلكتروني -->
                 <form id="emailAuthForm">
                     <div class="form-group">
                         <input type="text" id="displayNameInput" placeholder="الاسم الكامل" class="hidden">
@@ -108,13 +100,10 @@
         </div>
     </div>
 
-    <!-- التطبيق الرئيسي -->
     <div id="mainApp" class="hidden">
-        <!-- الهيدر المبسط -->
         <header class="main-header">
             <div class="container">
                 <div class="header-content">
-                    <!-- اليمين: زر القائمة -->
                     <div class="header-group-right">
                         <button id="menuToggle" class="icon-btn" title="القائمة">
                             <i class="fas fa-bars"></i>
@@ -125,13 +114,11 @@
                         </div>
                     </div>
                     
-                    <!-- الوسط: البحث -->
                     <div class="search-container">
                         <i class="fas fa-search"></i>
                         <input type="text" id="productSearch" placeholder="ابحث عن منتج...">
                     </div>
 
-                    <!-- اليسار: سلة التسوق فقط -->
                     <div class="header-group-left">
                         <button id="cartBtn" class="icon-btn" title="سلة التسوق">
                             <i class="fas fa-shopping-cart"></i>
@@ -142,7 +129,6 @@
             </div>
         </header>
 
-        <!-- قائمة الجوال الكاملة -->
         <nav class="mobile-nav" id="mobileNav">
             <div class="nav-header">
                 <div class="nav-logo">
@@ -154,7 +140,6 @@
                 </button>
             </div>
             
-            <!-- معلومات المستخدم -->
             <div class="nav-user-info" id="mobileUserInfo">
                 <div class="user-avatar">
                     <img id="mobileUserAvatar" src="https://ui-avatars.com/api/?name=ضيف&background=C89B3C&color=fff" 
@@ -167,7 +152,6 @@
                 </div>
             </div>
             
-            <!-- روابط التنقل الرئيسية -->
             <div class="nav-links">
                 <a href="#" class="nav-link" data-section="home">
                     <i class="fas fa-home"></i> الرئيسية
@@ -184,18 +168,15 @@
                 </a>
             </div>
             
-            <!-- روابط المستخدم -->
             <div class="nav-user-links">
                 <a href="#" class="nav-link user-link" data-section="profile">
                     <i class="far fa-user"></i> حسابي
                 </a>
                 
-                <!-- لوحة التحكم للمسؤولين فقط -->
                 <a href="#" id="adminMobileBtn" class="nav-link admin-only hidden" data-section="admin">
                     <i class="fas fa-cog"></i> لوحة التحكم
                 </a>
                 
-                <!-- زر تسجيل الدخول/الخروج -->
                 <button id="mobileAuthBtn" class="nav-link auth-btn">
                     <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
                 </button>
@@ -205,7 +186,6 @@
                 </button>
             </div>
             
-            <!-- معلومات المتجر -->
             <div class="nav-store-info">
                 <div class="nav-info-item">
                     <i class="fas fa-phone"></i>
@@ -222,9 +202,7 @@
             </div>
         </nav>
 
-        <!-- المحتوى الرئيسي -->
         <main>
-            <!-- قسم البطل -->
             <section class="hero-section" id="homeSection">
                 <div class="container">
                     <div class="hero-content">
@@ -242,7 +220,6 @@
                 </div>
             </section>
 
-            <!-- المنتجات -->
             <section class="products-section" id="productsSection">
                 <div class="container">
                     <div class="section-header">
@@ -270,7 +247,6 @@
                 </div>
             </section>
 
-            <!-- سلة التسوق -->
             <section id="cartSection" class="cart-section hidden">
                 <div class="container">
                     <h2 class="section-title">
@@ -290,52 +266,109 @@
                         </div>
                         
                         <div class="cart-summary" id="cartSummary">
-                            <!-- سيتم ملؤه ديناميكياً -->
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- صفحة الحساب الشخصي -->
-            <section id="profileSection" class="profile-section hidden">
+            <section id="profileSection" class="profile-section-simple hidden">
                 <div class="container">
-                    <div class="profile-card">
-                        <div class="profile-header">
-                            <div class="profile-avatar-container">
-                                <img id="profileAvatar" src="https://ui-avatars.com/api/?name=ضيف&background=C89B3C&color=fff" alt="صورة المستخدم">
-                                <button id="changeAvatarBtn" class="change-avatar-btn">
-                                    <i class="fas fa-camera"></i>
-                                </button>
+                    <div class="profile-simple-card">
+                        <div class="profile-simple-header">
+                            <div class="profile-avatar-simple">
+                                <img id="profileAvatarSimple" src="https://ui-avatars.com/api/?name=ضيف&background=C89B3C&color=fff" alt="صورة المستخدم">
                             </div>
-                            <h2 id="profileName">ضيف</h2>
-                            <p id="profileEmail">مستخدم غير مسجل</p>
-                            <span id="adminBadge" class="badge admin-badge hidden">مسؤول</span>
-                            <p id="profileJoinDate" class="join-date">تاريخ الانضمام: غير محدد</p>
+                            <h2 id="profileNameSimple" class="profile-name">ضيف</h2>
+                            <p id="profileRoleSimple" class="profile-role">
+                                <span id="profileBadgeSimple" class="badge admin-badge hidden">مسؤول</span>
+                                <span id="profileStatusSimple">مستخدم ضيف</span>
+                            </p>
                         </div>
                         
-                        <div class="profile-body">
-                            <form id="profileForm">
-                                <div class="form-group">
-                                    <label>الاسم الكامل</label>
-                                    <input type="text" id="editDisplayName" placeholder="الاسم الكامل" value="ضيف">
+                        <div class="profile-simple-body">
+                            <div class="profile-info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-user"></i>
                                 </div>
-                                <div class="form-group">
-                                    <label>رقم الهاتف</label>
-                                    <input type="tel" id="editPhone" placeholder="رقم الهاتف">
+                                <div class="info-content">
+                                    <h4>الاسم الكامل</h4>
+                                    <p id="profileDisplayName">ضيف</p>
                                 </div>
-                                <div class="form-group">
-                                    <label>العنوان</label>
-                                    <textarea id="editAddress" placeholder="العنوان بالتفصيل" rows="3"></textarea>
-                                </div>
-                                <button type="submit" class="btn primary-btn w-100">
-                                    <i class="fas fa-save"></i> حفظ التغييرات
-                                </button>
-                            </form>
+                            </div>
                             
-                            <div class="profile-actions">
-                                <h3>الإعدادات</h3>
-                                <button id="changePasswordBtn" class="btn outline-btn w-100">
+                            <div class="profile-info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                <div class="info-content">
+                                    <h4>البريد الإلكتروني</h4>
+                                    <p id="profileEmailSimple">غير محدد</p>
+                                </div>
+                            </div>
+                            
+                            <div class="profile-info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-phone"></i>
+                                </div>
+                                <div class="info-content">
+                                    <h4>رقم الهاتف</h4>
+                                    <p id="profilePhoneSimple">غير محدد</p>
+                                </div>
+                            </div>
+                            
+                            <div class="profile-info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-calendar"></i>
+                                </div>
+                                <div class="info-content">
+                                    <h4>تاريخ الانضمام</h4>
+                                    <p id="profileJoinDateSimple">غير محدد</p>
+                                </div>
+                            </div>
+                            
+                            <div class="profile-stats">
+                                <div class="stat-item">
+                                    <span id="profileOrdersStat" class="stat-value">0</span>
+                                    <span class="stat-label">الطلبات</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span id="profileCartStat" class="stat-value">0</span>
+                                    <span class="stat-label">في السلة</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span id="profileWishlistStat" class="stat-value">0</span>
+                                    <span class="stat-label">المفضلة</span>
+                                </div>
+                            </div>
+                            
+                            <button id="editProfileBtn" class="btn primary-btn w-100 edit-profile-btn">
+                                <i class="fas fa-edit"></i> تحديث المعلومات
+                            </button>
+                            
+                            <div id="simpleEditForm" class="simple-form hidden">
+                                <h4 style="margin-bottom: 15px; color: var(--dark);">تحديث المعلومات</h4>
+                                <div class="form-group">
+                                    <input type="text" id="editNameInput" placeholder="الاسم الكامل" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <input type="tel" id="editPhoneInput" placeholder="رقم الهاتف" class="form-input">
+                                </div>
+                                <div class="form-buttons" style="display: flex; gap: 10px; margin-top: 20px;">
+                                    <button id="saveProfileBtn" class="btn primary-btn" style="flex: 1;">
+                                        <i class="fas fa-save"></i> حفظ
+                                    </button>
+                                    <button id="cancelEditBtn" class="btn outline-btn" style="flex: 1;">
+                                        <i class="fas fa-times"></i> إلغاء
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="profile-actions" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border);">
+                                <button id="changePasswordBtnSimple" class="btn outline-btn w-100" style="margin-bottom: 10px;">
                                     <i class="fas fa-key"></i> تغيير كلمة المرور
+                                </button>
+                                <button id="logoutBtnSimple" class="btn danger-btn w-100">
+                                    <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
                                 </button>
                             </div>
                         </div>
@@ -343,7 +376,6 @@
                 </div>
             </section>
 
-            <!-- لوحة الإدارة -->
             <section id="adminSection" class="admin-section hidden">
                 <div class="container">
                     <div class="admin-header">
@@ -353,7 +385,6 @@
                         <p class="admin-subtitle">مرحباً بك في لوحة إدارة المتجر</p>
                     </div>
 
-                    <!-- إحصائيات سريعة -->
                     <div class="admin-stats">
                         <div class="stat-card">
                             <div class="stat-icon">
@@ -387,13 +418,12 @@
                                 <i class="fas fa-money-bill"></i>
                             </div>
                             <div class="stat-info">
-                                <h3 id="totalRevenue">0 ر.س</h3>
+                                <h3 id="totalRevenue">0 ج</h3>
                                 <p>الإيرادات</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- تبويبات الإدارة -->
                     <div class="admin-tabs">
                         <button class="admin-tab active" data-tab="products">
                             <i class="fas fa-box"></i> المنتجات
@@ -406,10 +436,8 @@
                         </button>
                     </div>
 
-                    <!-- محتوى التبويبات -->
                     <div class="admin-tab-content">
                         
-                        <!-- تبويب إعدادات الموقع -->
                         <div id="settingsTab" class="tab-pane hidden">
                             <div class="tab-header">
                                 <h3>تعديل بيانات الموقع</h3>
@@ -437,11 +465,11 @@
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="shippingCost">تكلفة الشحن (ر.س)</label>
+                                        <label for="shippingCost">تكلفة الشحن (ج)</label>
                                         <input type="number" id="shippingCost" min="0" step="0.01" value="15">
                                     </div>
                                     <div class="form-group">
-                                        <label for="freeShippingLimit">حد الشحن المجاني (ر.س)</label>
+                                        <label for="freeShippingLimit">حد الشحن المجاني (ج)</label>
                                         <input type="number" id="freeShippingLimit" min="0" step="0.01" value="200">
                                     </div>
                                 </div>
@@ -451,7 +479,6 @@
                             </form>
                         </div>
                         
-                        <!-- تبويب المنتجات -->
                         <div id="productsTab" class="tab-pane">
                             <div class="tab-header">
                                 <h3>إدارة المنتجات</h3>
@@ -474,13 +501,11 @@
                                         </tr>
                                     </thead>
                                     <tbody id="productsTable">
-                                        <!-- سيتم ملؤه ديناميكياً -->
                                     </tbody>
                                 </table>
                             </div>
                         </div>
 
-                        <!-- تبويب المستخدمين -->
                         <div id="usersTab" class="tab-pane hidden">
                             <div class="tab-header">
                                 <h3>إدارة المستخدمين</h3>
@@ -498,7 +523,6 @@
                                         </tr>
                                     </thead>
                                     <tbody id="usersTableBody">
-                                        <!-- سيتم ملؤه ديناميكياً -->
                                     </tbody>
                                 </table>
                             </div>
@@ -507,7 +531,6 @@
                 </div>
             </section>
 
-            <!-- الخدمات -->
             <section class="services-section">
                 <div class="container">
                     <div class="services-grid">
@@ -527,15 +550,14 @@
                             <p>خدمة عملاء على مدار الساعة</p>
                         </div>
                         <div class="service-card">
-                            <i class="fas fa-undo"></i>
-                            <h3>إرجاع سهل</h3>
-                            <p>إمكانية الإرجاع خلال 14 يوم</p>
+                            <i class="fas fa-tags"></i>
+                            <h3>أسعار تنافسية</h3>
+                            <p>أفضل الأسعار في السوق</p>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- التواصل -->
             <section class="contact-section" id="contactSection">
                 <div class="container">
                     <div class="contact-content">
@@ -584,7 +606,6 @@
             </section>
         </main>
 
-        <!-- الفوتر -->
         <footer class="main-footer">
             <div class="container">
                 <div class="footer-content">
@@ -603,7 +624,6 @@
                         <a href="#" data-section="products">المنتجات</a>
                         <a href="#" data-section="contact">اتصل بنا</a>
                         <a href="#" id="footerCartLink" data-section="cart">سلة التسوق</a>
-                        <!-- رابط الإدارة سيظهر فقط للمسؤولين -->
                         <a href="#" data-section="admin" class="admin-only hidden">لوحة التحكم</a>
                     </div>
                     <div class="footer-contact">
@@ -624,9 +644,8 @@
         </footer>
     </div>
 
-    <!-- مودال إضافة/تعديل المنتج -->
     <div id="productModal" class="modal hidden">
-        <div class="modal-content">
+        <div class="modal-content medium">
             <div class="modal-header">
                 <h3 id="modalTitle">إضافة منتج جديد</h3>
                 <button class="close-modal"><i class="fas fa-times"></i></button>
@@ -638,22 +657,45 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="productName">اسم المنتج *</label>
-                            <input type="text" id="productName" required>
+                            <input type="text" id="productName" required placeholder="مثال: عطر فاخر للرجال">
                         </div>
                         <div class="form-group">
-                            <label for="productPrice">السعر (ر.س) *</label>
-                            <input type="number" id="productPrice" min="0" step="0.01" required>
+                            <label for="productPrice">السعر (ريال) *</label>
+                            <input type="number" id="productPrice" min="1" step="0.01" required placeholder="مثال: 150">
+                        </div>
+                    </div>
+
+                    <div class="image-upload-section">
+                        <label>صورة المنتج</label>
+                        
+                        <div class="image-upload-container" id="imagePreviewContainer">
+                            <div class="upload-placeholder">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>انقر لرفع صورة</p>
+                                <p class="small">الحجم الأقصى: 5MB</p>
+                            </div>
+                        </div>
+                        
+                        <div class="upload-buttons">
+                            <button type="button" id="uploadImageBtn" class="btn outline-btn">
+                                <i class="fas fa-image"></i> رفع صورة من المعرض
+                            </button>
+                            <input type="file" id="productImageFile" accept="image/*" class="hidden">
+                        </div>
+                        
+                        <div class="image-or-divider">
+                            <span>أو</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="productImageUrl">رابط الصورة (اختياري)</label>
+                            <input type="text" id="productImageUrl" placeholder="https://example.com/image.jpg">
+                            <small>اتركه فارغاً إذا قمت برفع صورة</small>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="productImage">صورة المنتج (URL)</label>
-                        <input type="text" id="productImage" placeholder="رابط الصورة">
-                        <small>مثال: https://images.unsplash.com/photo-1541643600914-78b084683601</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="productDescription">الوصف</label>
+                        <label for="productDescription">وصف المنتج</label>
                         <textarea id="productDescription" rows="3" placeholder="وصف مختصر للمنتج..."></textarea>
                     </div>
 
@@ -668,7 +710,7 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="productStock">الكمية *</label>
+                            <label for="productStock">الكمية المتاحة *</label>
                             <input type="number" id="productStock" min="0" value="10" required>
                         </div>
                     </div>
@@ -676,18 +718,22 @@
                     <div class="form-checkboxes">
                         <label class="checkbox-label">
                             <input type="checkbox" id="isNew">
+                            <span class="checkbox-custom"></span>
                             منتج جديد
                         </label>
                         <label class="checkbox-label">
                             <input type="checkbox" id="isSale">
+                            <span class="checkbox-custom"></span>
                             عرض خاص
                         </label>
                         <label class="checkbox-label">
                             <input type="checkbox" id="isBest">
+                            <span class="checkbox-custom"></span>
                             الأفضل مبيعاً
                         </label>
                         <label class="checkbox-label">
                             <input type="checkbox" id="isActive" checked>
+                            <span class="checkbox-custom"></span>
                             نشط للبيع
                         </label>
                     </div>
@@ -705,7 +751,6 @@
         </div>
     </div>
 
-    <!-- مودال التأكيد -->
     <div id="confirmModal" class="modal hidden">
         <div class="modal-content small">
             <div class="modal-body text-center">
@@ -720,7 +765,6 @@
         </div>
     </div>
 
-    <!-- مودال الرسائل -->
     <div id="messageModal" class="modal hidden">
         <div class="modal-content small">
             <div class="modal-body text-center">
@@ -734,20 +778,17 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     
-    <!-- ملفات JavaScript الخاصة بالتطبيق -->
     <script src="js/firebase-config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/products.js"></script>
     <script src="js/cart.js"></script>
     <script src="js/admin.js"></script>
     <script src="js/main.js"></script>
-    
-    <!-- تم حذف كود تهيئة Firebase المكرر من هنا -->
     
 </body>
 </html>
