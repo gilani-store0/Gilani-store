@@ -1,11 +1,9 @@
-// js/auth.js - النسخة المصلحة والمحسنة
+// js/auth.js - النهائي
 
-// حالة المستخدم
 let currentUser = null;
 let currentUserData = null;
 let isUserAdminFlag = false;
 
-// تهيئة المصادقة
 function initAuth() {
     return new Promise((resolve, reject) => {
         if (!window.auth) {
@@ -60,7 +58,6 @@ function initAuth() {
     });
 }
 
-// تسجيل الدخول باستخدام Google
 async function signInWithGoogle() {
     try {
         if (!window.auth || !firebase) throw new Error('Firebase غير متاح');
@@ -80,7 +77,6 @@ async function signInWithGoogle() {
     }
 }
 
-// تسجيل الدخول بالبريد
 async function signInWithEmail(email, password) {
     try {
         if (!window.auth) throw new Error('Firebase Auth غير متاح');
@@ -97,7 +93,6 @@ async function signInWithEmail(email, password) {
     }
 }
 
-// إنشاء حساب
 async function signUpWithEmail(email, password, displayName) {
     try {
         if (!window.auth) throw new Error('Firebase Auth غير متاح');
@@ -117,7 +112,6 @@ async function signUpWithEmail(email, password, displayName) {
     }
 }
 
-// حفظ بيانات المستخدم في Firestore
 async function saveUserData(user) {
     if (!window.db) return;
     try {
@@ -144,7 +138,6 @@ async function saveUserData(user) {
     }
 }
 
-// جلب بيانات المستخدم
 async function getUserData(user) {
     if (!user) return null;
     if (user.isGuest) return user;
@@ -166,7 +159,6 @@ async function getUserData(user) {
     return user;
 }
 
-// التحقق من حالة المسؤول
 async function checkAndUpdateAdminStatus() {
     const user = window.auth ? window.auth.currentUser : currentUser;
     if (!user || user.isGuest) {
@@ -252,7 +244,6 @@ function getErrorMessage(error) {
     return messages[code] || error.message || 'فشل العملية';
 }
 
-// تصدير الدوال
 window.initAuth = initAuth;
 window.signInWithGoogle = signInWithGoogle;
 window.signInWithEmail = signInWithEmail;

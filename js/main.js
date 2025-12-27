@@ -1,18 +1,14 @@
-// js/main.js - النسخة المصلحة والمحسنة
+// js/main.js - النهائي
 
-// ==================== متغيرات واجهة المستخدم ====================
 const UI = {
-    // إظهار شاشة المصادقة
     showAuthScreen() {
         const authScreen = document.getElementById('authScreen');
         const mainApp = document.getElementById('mainApp');
         if (authScreen) authScreen.classList.remove('hidden');
         if (mainApp) mainApp.classList.add('hidden');
         document.body.style.overflow = 'hidden';
-        console.log('شاشة تسجيل الدخول معروضة');
     },
 
-    // إظهار التطبيق الرئيسي
     showMainApp() {
         const authScreen = document.getElementById('authScreen');
         const mainApp = document.getElementById('mainApp');
@@ -23,8 +19,6 @@ const UI = {
         const yearEl = document.getElementById('currentYear');
         if (yearEl) yearEl.textContent = new Date().getFullYear();
         
-        console.log('التطبيق الرئيسي معروض');
-        
         this.updateCartCount();
         this.setupMainAppEventListeners();
         this.loadProductsSection();
@@ -32,7 +26,6 @@ const UI = {
         this.updateUserUIAfterLogin();
     },
 
-    // تحديث واجهة المستخدم بعد تسجيل الدخول
     async updateUserUIAfterLogin() {
         try {
             await refreshAdminUI();
@@ -41,7 +34,6 @@ const UI = {
         }
     },
 
-    // تحديث عداد السلة
     updateCartCount() {
         const count = typeof getCartItemCount === 'function' ? getCartItemCount() : 0;
         const cartCount = document.getElementById('cartCount');
@@ -58,7 +50,6 @@ const UI = {
         }
     },
 
-    // إظهار قسم معين وإخفاء البقية
     showSection(sectionId) {
         console.log('إظهار القسم:', sectionId);
         
@@ -82,7 +73,6 @@ const UI = {
         this.loadSectionContent(sectionId);
     },
 
-    // تحميل محتوى القسم
     async loadSectionContent(sectionId) {
         console.log('تحميل محتوى القسم:', sectionId);
         
@@ -97,9 +87,7 @@ const UI = {
                 if (typeof isUserAdmin === 'function' && isUserAdmin()) {
                     await this.loadAdminSection();
                 } else {
-                    if (typeof showMessage === 'function') {
-                        showMessage('غير مصرح', 'ليس لديك صلاحية للوصول إلى لوحة الإدارة', 'error');
-                    }
+                    if (typeof showMessage === 'function') showMessage('غير مصرح', 'ليس لديك صلاحية للوصول إلى لوحة الإدارة', 'error');
                     this.showSection('homeSection');
                 }
                 break;
@@ -109,7 +97,6 @@ const UI = {
         }
     },
 
-    // تحميل قسم المنتجات
     async loadProductsSection() {
         const productsGrid = document.getElementById('productsGrid');
         if (!productsGrid) return;
@@ -129,7 +116,6 @@ const UI = {
         }
     },
 
-    // تحميل قسم السلة
     loadCartSection() {
         if (typeof getCartItems === 'function') {
             const cartItems = getCartItems();
@@ -137,7 +123,6 @@ const UI = {
         }
     },
 
-    // تحميل قسم الإدارة
     async loadAdminSection() {
         if (typeof isUserAdmin !== 'function' || !isUserAdmin()) return;
         
@@ -165,7 +150,6 @@ const UI = {
         }
     },
 
-    // تحميل قسم الملف الشخصي
     async loadProfileSection() {
         if (typeof getCurrentUser !== 'function') return;
         const user = getCurrentUser();
@@ -174,10 +158,10 @@ const UI = {
         try {
             const userData = typeof getUserData === 'function' ? await getUserData(user) : user;
             
-            const profileName = document.getElementById('profileName');
-            const profileEmail = document.getElementById('profileEmail');
-            const profileAvatar = document.getElementById('profileAvatar');
-            const adminBadge = document.getElementById('adminBadge');
+            const profileName = document.getElementById('profileNameSimple');
+            const profileEmail = document.getElementById('profileEmailSimple');
+            const profileAvatar = document.getElementById('profileAvatarSimple');
+            const adminBadge = document.getElementById('profileBadgeSimple');
             
             if (profileName) profileName.textContent = userData.displayName || 'ضيف';
             if (profileEmail) profileEmail.textContent = userData.email || 'غير محدد';
@@ -193,7 +177,6 @@ const UI = {
         }
     },
 
-    // تحديث واجهة المستخدم ببيانات المستخدم
     updateUserUI(user, isAdmin = false) {
         if (!user) return;
 
@@ -203,7 +186,6 @@ const UI = {
             `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=C89B3C&color=fff`;
         const isGuest = user.isGuest || false;
 
-        // تحديث القائمة المتنقلة
         const elements = {
             mobileUserName: document.getElementById('mobileUserName'),
             mobileUserEmail: document.getElementById('mobileUserEmail'),
@@ -228,15 +210,12 @@ const UI = {
         this.updateCartCount();
     },
 
-    // إعداد مستمعي الأحداث للموقع الرئيسي
     setupMainAppEventListeners() {
-        // منع التكرار
         if (window.mainEventListenersSet) return;
         window.mainEventListenersSet = true;
 
         console.log('إعداد مستمعي أحداث الموقع الرئيسي...');
         
-        // 1. القائمة المتنقلة (Sidebar) - إصلاح الاستجابة
         const menuToggle = document.getElementById('menuToggle');
         const closeNav = document.getElementById('closeNav');
         const mobileNav = document.getElementById('mobileNav');
@@ -258,7 +237,6 @@ const UI = {
             };
         }
 
-        // إغلاق القائمة عند النقر خارجها
         document.addEventListener('click', (e) => {
             if (mobileNav && mobileNav.classList.contains('active') && !mobileNav.contains(e.target) && e.target !== menuToggle) {
                 mobileNav.classList.remove('active');
@@ -266,7 +244,6 @@ const UI = {
             }
         });
 
-        // 2. التنقل بين الأقسام
         document.querySelectorAll('.nav-link[data-section]').forEach(link => {
             link.onclick = (e) => {
                 e.preventDefault();
@@ -296,14 +273,62 @@ const UI = {
             };
         });
 
-        // زر السلة في الهيدر
         const cartBtn = document.getElementById('cartBtn');
         if (cartBtn) {
             cartBtn.onclick = () => this.showSection('cartSection');
         }
+        
+        const searchInput = document.getElementById('productSearch');
+        if (searchInput) {
+            let searchTimeout;
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(async () => {
+                    const query = e.target.value;
+                    if (typeof searchProducts === 'function') {
+                        const filtered = searchProducts(query);
+                        if (typeof this.renderProducts === 'function') {
+                            this.renderProducts(filtered);
+                        }
+                    }
+                }, 300);
+            });
+        }
+        
+        const startShoppingBtn = document.getElementById('startShoppingBtn');
+        if (startShoppingBtn) {
+            startShoppingBtn.onclick = () => this.showSection('productsSection');
+        }
+        
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                const filter = btn.dataset.filter;
+                if (typeof filterProducts === 'function') {
+                    const filtered = filterProducts(filter);
+                    if (typeof this.renderProducts === 'function') {
+                        this.renderProducts(filtered);
+                    }
+                }
+            });
+        });
+        
+        const sortSelect = document.getElementById('productSort');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', async (e) => {
+                if (typeof filterProducts === 'function') {
+                    const filtered = filterProducts('all');
+                    const sorted = sortProducts(filtered, e.target.value);
+                    if (typeof this.renderProducts === 'function') {
+                        this.renderProducts(sorted);
+                    }
+                }
+            });
+        }
     },
 
-    // عرض المنتجات
     renderProducts(products) {
         const productsGrid = document.getElementById('productsGrid');
         if (!productsGrid) return;
@@ -315,9 +340,17 @@ const UI = {
         
         productsGrid.innerHTML = products.map(product => {
             const categoryName = product.category || 'عطور';
+            const stockClass = product.stock <= 0 ? 'out-of-stock' : 
+                              product.stock <= 5 ? 'low-stock' : 'in-stock';
+            const stockText = product.stock <= 0 ? 'نفذت الكمية' : 
+                             product.stock <= 5 ? `آخر ${product.stock}` : 'متوفر';
+            
             return `
                 <div class="product-card" data-id="${product.id}">
-                    <div class="product-badge">${product.discount ? `خصم ${product.discount}%` : 'جديد'}</div>
+                    ${product.isNew ? '<div class="product-badge new">جديد</div>' : ''}
+                    ${product.isSale ? '<div class="product-badge sale">عرض</div>' : ''}
+                    ${product.isBest ? '<div class="product-badge best">أفضل</div>' : ''}
+                    
                     <div class="product-image-container">
                         <img src="${product.image || 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=300&h=300&fit=crop'}" 
                              alt="${product.name || 'منتج'}" 
@@ -328,8 +361,8 @@ const UI = {
                         <h3 class="product-name">${product.name || 'منتج بدون اسم'}</h3>
                         <div class="product-meta">
                             <span class="product-category">${categoryName}</span>
-                            <span class="${product.stock > 0 ? 'in-stock' : 'out-of-stock'}">
-                                ${product.stock > 0 ? `متوفر` : 'نفذت الكمية'}
+                            <span class="${stockClass}">
+                                ${stockText}
                             </span>
                         </div>
                         <div class="product-footer">
@@ -337,7 +370,7 @@ const UI = {
                                 <span class="current-price">${product.price || 0} ر.س</span>
                             </div>
                             <button class="btn primary-btn add-to-cart-btn" 
-                                    onclick="if(typeof addToCart === 'function') { addToCart('${product.id}'); UI.updateCartCount(); }"
+                                    onclick="if(typeof addToCart === 'function') { addToCart(${JSON.stringify(product)}); UI.updateCartCount(); }"
                                     ${product.stock <= 0 ? 'disabled' : ''}>
                                 <i class="fas fa-cart-plus"></i>
                             </button>
@@ -348,7 +381,6 @@ const UI = {
         }).join('');
     },
 
-    // عرض إحصائيات الإدارة
     updateAdminStats(stats) {
         const elements = {
             totalProducts: document.getElementById('totalProductsStat'),
@@ -363,7 +395,6 @@ const UI = {
         if (elements.totalRevenue) elements.totalRevenue.textContent = `${(stats.totalRevenue || 0).toFixed(2)} ر.س`;
     },
 
-    // عرض منتجات الإدارة
     renderAdminProducts(products) {
         const tableBody = document.getElementById('productsTable');
         if (!tableBody) return;
@@ -381,7 +412,7 @@ const UI = {
                 <td>${product.price} ر.س</td>
                 <td>${product.stock}</td>
                 <td>
-                    <button class="btn small-btn outline-btn" onclick="editProduct('${product.id}')"><i class="fas fa-edit"></i></button>
+                    <button class="btn small-btn outline-btn" onclick="editProductModal(${JSON.stringify(product)})"><i class="fas fa-edit"></i></button>
                     <button class="btn small-btn danger-btn" onclick="deleteProduct('${product.id}')"><i class="fas fa-trash"></i></button>
                 </td>
             </tr>
@@ -414,8 +445,6 @@ const UI = {
         `).join('');
     }
 };
-
-// ==================== معالجات الأحداث العامة ====================
 
 async function refreshAdminUI() {
     if (typeof getCurrentUser !== 'function') return;
@@ -460,12 +489,52 @@ async function processLoginSuccess(result) {
     if (typeof showToast === 'function') showToast('تم تسجيل الدخول بنجاح', false, 'success');
     
     if (isAdmin && !result.isGuest) {
-        console.log('المسؤول سجل دخوله، فتح لوحة التحكم فوراً');
+        console.log('المسؤول سجل دخوله');
         UI.showSection('adminSection');
     }
 }
 
-// ==================== بدء التطبيق ====================
+function showMessage(title, text, type = 'info') {
+    const messageModal = document.getElementById('messageModal');
+    const messageTitle = document.getElementById('messageTitle');
+    const messageText = document.getElementById('messageText');
+    const messageIcon = document.getElementById('messageIcon');
+    
+    if (!messageModal || !messageTitle || !messageText) return;
+    
+    messageTitle.textContent = title;
+    messageText.textContent = text;
+    
+    let iconClass = 'fas fa-info-circle';
+    let iconColor = 'var(--info)';
+    
+    switch(type) {
+        case 'error':
+            iconClass = 'fas fa-exclamation-triangle';
+            iconColor = 'var(--danger)';
+            break;
+        case 'success':
+            iconClass = 'fas fa-check-circle';
+            iconColor = 'var(--success)';
+            break;
+        case 'warning':
+            iconClass = 'fas fa-exclamation-circle';
+            iconColor = 'var(--warning)';
+            break;
+    }
+    
+    messageIcon.className = iconClass;
+    messageIcon.style.color = iconColor;
+    
+    messageModal.classList.remove('hidden');
+    
+    setTimeout(() => {
+        if (!messageModal.classList.contains('hidden')) {
+            messageModal.classList.add('hidden');
+        }
+    }, 3000);
+}
+
 async function initApp() {
     console.log('بدء تشغيل المتجر...');
     
@@ -484,7 +553,6 @@ async function initApp() {
             UI.updateUserUI(savedUser.user, isAdmin);
             UI.showMainApp();
             
-            // تحديث الحالة في الخلفية
             setTimeout(async () => {
                 await refreshAdminUI();
                 const currentIsAdmin = typeof isUserAdmin === 'function' ? isUserAdmin() : false;
@@ -501,6 +569,7 @@ async function initApp() {
         
     } catch (error) {
         console.error('خطأ في تهيئة التطبيق:', error);
+        UI.showMainApp();
     }
 }
 
@@ -538,12 +607,11 @@ function setupGlobalModals() {
     }
 }
 
-// تشغيل عند التحميل
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initApp);
 } else {
     initApp();
 }
 
-// جعل UI متاحاً عالمياً
 window.UI = UI;
+window.showMessage = showMessage;
