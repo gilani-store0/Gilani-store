@@ -1,5 +1,6 @@
-// js/products.js - النهائي
+// js/products.js - عرض المنتجات (النسخة المتوافقة)
 
+// حالة المنتجات
 const ProductsState = {
     products: [],
     filteredProducts: [],
@@ -14,49 +15,44 @@ const ProductsState = {
     }
 };
 
+// تهيئة المنتجات
 function initProducts() {
     console.log('تهيئة المنتجات...');
 }
 
+// تحميل المنتجات
 async function loadProducts() {
     try {
-        console.log('🔄 جاري تحميل المنتجات...');
-        
         if (!window.db) {
-            console.warn('Firestore غير متاح');
+            console.warn('Firestore غير متاح، استخدام منتجات افتراضية');
             ProductsState.products = getDefaultProducts();
             ProductsState.filteredProducts = [...ProductsState.products];
             return ProductsState.products;
         }
         
-        const snapshot = await window.db.collection('products')
-            .where('isActive', '!=', false)
-            .orderBy('createdAt', 'desc')
-            .get();
+        const snapshot = await window.db.collection('products').orderBy('createdAt', 'desc').get();
         
         ProductsState.products = [];
         snapshot.forEach(doc => {
             const product = doc.data();
             product.id = doc.id;
-            
-            if (!product.image) {
-                product.image = 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=300&h=300&fit=crop';
-            }
-            
             ProductsState.products.push(product);
         });
         
         ProductsState.filteredProducts = [...ProductsState.products];
-        console.log(`✅ تم تحميل ${ProductsState.products.length} منتج`);
+        console.log(`تم تحميل ${ProductsState.products.length} منتج`);
         return ProductsState.products;
     } catch (error) {
-        console.error('❌ خطأ في تحميل المنتجات:', error);
+        console.error('خطأ في تحميل المنتجات:', error);
+        
+        // استخدام منتجات افتراضية في حالة الخطأ
         ProductsState.products = getDefaultProducts();
         ProductsState.filteredProducts = [...ProductsState.products];
         return ProductsState.products;
     }
 }
 
+// تصفية المنتجات
 function filterProducts(filter = 'all') {
     ProductsState.currentFilter = filter;
     
@@ -74,9 +70,9 @@ function filterProducts(filter = 'all') {
     if (ProductsState.searchQuery) {
         const query = ProductsState.searchQuery.toLowerCase();
         filtered = filtered.filter(product => 
-            (product.name && product.name.toLowerCase().includes(query)) ||
-            (product.description && product.description.toLowerCase().includes(query)) ||
-            (product.category && product.category.toLowerCase().includes(query))
+            product.name?.toLowerCase().includes(query) ||
+            product.description?.toLowerCase().includes(query) ||
+            product.category?.toLowerCase().includes(query)
         );
     }
     
@@ -84,6 +80,7 @@ function filterProducts(filter = 'all') {
     return ProductsState.filteredProducts;
 }
 
+// ترتيب المنتجات
 function sortProducts(products, sortType) {
     const sorted = [...products];
     
@@ -100,19 +97,23 @@ function sortProducts(products, sortType) {
     }
 }
 
+// البحث في المنتجات
 function searchProducts(query) {
-    ProductsState.searchQuery = query.toLowerCase();
+    ProductsState.searchQuery = query;
     return filterProducts(ProductsState.currentFilter);
 }
 
+// الحصول على منتج بواسطة ID
 function getProductById(productId) {
     return ProductsState.products.find(product => product.id === productId);
 }
 
+// الحصول على اسم الفئة
 function getCategoryName(category) {
     return ProductsState.categories[category] || category;
 }
 
+// منتجات افتراضية
 function getDefaultProducts() {
     return [
         {
@@ -192,6 +193,7 @@ function getDefaultProducts() {
     ];
 }
 
+// جعل الدوال متاحة عالمياً
 window.initProducts = initProducts;
 window.loadProducts = loadProducts;
 window.filterProducts = filterProducts;
@@ -199,4 +201,3 @@ window.sortProducts = sortProducts;
 window.searchProducts = searchProducts;
 window.getProductById = getProductById;
 window.getCategoryName = getCategoryName;
-window.getDefaultProducts = getDefaultProducts;
