@@ -35,7 +35,7 @@ function initAuth() {
         
         // التحقق من حالة المصادقة الحالية
         const unsubscribe = window.auth.onAuthStateChanged(async (user) => {
-            unsubscribe(); // إلغاء الاشتراك بعد أول تحديث
+            // لا نلغي الاشتراك هنا للسماح لـ Firebase بإدارة الجلسة بشكل مستمر
             
             if (user) {
                 // مستخدم مسجل الدخول من Firebase
@@ -57,10 +57,10 @@ function initAuth() {
                     const userState = {
                         uid: user.uid,
                         email: user.email,
-                        displayName: user.displayName || currentUserData.displayName,
-                        photoURL: user.photoURL || currentUserData.photoURL,
+                        displayName: user.displayName || currentUserData?.displayName || user.email?.split('@')[0],
+                        photoURL: user.photoURL || currentUserData?.photoURL,
                         isAdmin: isUserAdminFlag,
-                        createdAt: currentUserData.createdAt || new Date().toISOString(),
+                        createdAt: currentUserData?.createdAt || new Date().toISOString(),
                         isGuest: false
                     };
                     
@@ -383,7 +383,7 @@ async function saveUserData(user) {
         const isFirstLogin = !userSnap.exists();
         
         // تعريف البريد الإلكتروني الخاص بالمسؤول
-        const adminEmails = ["yxr.249@gmail.com", "admin@qb-store.com"];
+        const adminEmails = ["yxr.249@gmail.com", "admin@qb-store.com", "yxr.249@gmail.com"]; // أضفنا الإيميل للتأكيد
         
         // تحديد إذا كان المستخدم مسؤولاً
         const shouldBeAdmin = adminEmails.includes(user.email?.toLowerCase());
@@ -393,14 +393,14 @@ async function saveUserData(user) {
             email: user.email,
             displayName: user.displayName || user.email?.split('@')[0] || 'مستخدم',
             photoURL: user.photoURL,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            createdAt: isFirstLogin ? firebase.firestore.FieldValue.serverTimestamp() : userSnap.data().createdAt,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
             lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-            // إذا كان أول دخول وكان البريد ضمن قائمة المسؤولين، أو كان مسؤولاً سابقاً
-            isAdmin: isFirstLogin ? shouldBeAdmin : (userSnap.data()?.isAdmin || false),
+            // إذا كان البريد ضمن قائمة المسؤولين، فهو مسؤول دائماً (للتأكد من التفعيل)
+            isAdmin: shouldBeAdmin || (userSnap.exists() ? userSnap.data().isAdmin : false),
             phone: userSnap.exists() ? userSnap.data().phone || '' : '',
             address: userSnap.exists() ? userSnap.data().address || '' : '',
-            isGuest: false // المستخدمين المسجلين ليسوا ضيوفاً
+            isGuest: false 
         };
         
         console.log(`حفظ بيانات المستخدم: ${user.email}, isAdmin: ${userData.isAdmin}, isGuest: ${userData.isGuest}`);

@@ -227,6 +227,11 @@ function setupAdminEventListeners() {
         if (e.target.closest('#settingsTab') || e.target.closest('.admin-tab[data-tab="settings"]')) {
             await loadSiteSettingsForAdmin();
         }
+        
+        // ==================== إضافة حدث لتبويب الطلبات ====================
+        if (e.target.closest('#ordersTab') || e.target.closest('.admin-tab[data-tab="orders"]')) {
+            await loadOrdersManagement();
+        }
     });
     
     // زر إضافة منتج جديد
@@ -496,6 +501,270 @@ function getDefaultProducts() {
     ];
 }
 
+// ==================== إدارة الطلبات ====================
+
+// تحميل قسم إدارة الطلبات
+async function loadOrdersManagement() {
+    try {
+        const orders = await getAllOrders();
+        renderOrdersManagement(orders);
+    } catch (error) {
+        console.error('خطأ في تحميل الطلبات للإدارة:', error);
+    }
+}
+
+// عرض الطلبات للإدارة
+function renderOrdersManagement(orders) {
+    const tableBody = document.getElementById('ordersTableBody');
+    if (!tableBody) return;
+    
+    if (!orders || orders.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center">
+                    <div class="empty-state">
+                        <i class="fas fa-shopping-bag"></i>
+                        <p>لا توجد طلبات</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tableBody.innerHTML = orders.map(order => {
+        const statusOptions = ['pending', 'processing', 'completed', 'cancelled'];
+        const statusText = {
+            'pending': 'قيد الانتظار',
+            'processing': 'قيد التجهيز',
+            'completed': 'مكتمل',
+            'cancelled': 'ملغي'
+        };
+        
+        return `
+            <tr>
+                <td>${order.id ? order.id.substring(0, 8) + '...' : 'N/A'}</td>
+                <td>${order.userName || 'ضيف'}</td>
+                <td>${order.userPhone || 'غير محدد'}</td>
+                <td>${order.items ? order.items.length : 0} منتج</td>
+                <td>${order.total ? order.total.toFixed(2) : '0.00'} ر.س</td>
+                <td>
+                    <select class="status-select" data-order-id="${order.id}">
+                        ${statusOptions.map(status => `
+                            <option value="${status}" ${order.status === status ? 'selected' : ''}>
+                                ${statusText[status]}
+                            </option>
+                        `).join('')}
+                    </select>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn small-btn view-order" data-order-id="${order.id}">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn small-btn primary-btn whatsapp-order" data-order-id="${order.id}">
+                            <i class="fab fa-whatsapp"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    // إضافة مستمعي الأحداث
+    setupOrdersManagementEvents();
+}
+
+// إعداد أحداث إدارة الطلبات
+function setupOrdersManagementEvents() {
+    // تغيير حالة الطلب
+    document.querySelectorAll('.status-select').forEach(select => {
+        select.addEventListener('change', async function(e) {
+            const orderId = this.dataset.orderId;
+            const newStatus = this.value;
+            
+            try {
+                const result = await updateOrderStatus(orderId, newStatus);
+                if (result.success) {
+                    showToast('تم تحديث حالة الطلب', false, 'success');
+                } else {
+                    showToast('خطأ في تحديث حالة الطلب', true);
+                }
+            } catch (error) {
+                console.error('خطأ في تحديث حالة الطلب:', error);
+                showToast('خطأ في تحديث حالة الطلب', true);
+            }
+        });
+    });
+    
+    // عرض تفاصيل الطلب
+    document.querySelectorAll('.view-order').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const orderId = this.dataset.orderId;
+            viewOrderDetails(orderId);
+        });
+    });
+    
+    // إرسال عبر واتساب
+    document.querySelectorAll('.whatsapp-order').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const orderId = this.dataset.orderId;
+            sendOrderWhatsApp(orderId);
+        });
+    });
+}
+
+// عرض تفاصيل الطلب
+async function viewOrderDetails(orderId) {
+    try {
+        const orders = await getAllOrders();
+        const order = orders.find(o => o.id === orderId);
+        
+        if (!order) {
+            showToast('الطلب غير موجود', true);
+            return;
+        }
+        
+        const statusText = {
+            'pending': 'قيد الانتظار',
+            'processing': 'قيد التجهيز',
+            'completed': 'مكتمل',
+            'cancelled': 'ملغي'
+        };
+        
+        const modalHTML = `
+            <div class="modal">
+                <div class="modal-content medium">
+                    <div class="modal-header">
+                        <h3>تفاصيل الطلب #${order.id.substring(0, 8)}...</h3>
+                        <button class="close-modal"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="order-details">
+                            <div class="detail-row">
+                                <strong>العميل:</strong> ${order.userName || 'غير محدد'}
+                            </div>
+                            <div class="detail-row">
+                                <strong>الهاتف:</strong> ${order.userPhone || 'غير محدد'}
+                            </div>
+                            <div class="detail-row">
+                                <strong>العنوان:</strong> ${order.userAddress || 'غير محدد'}
+                            </div>
+                            <div class="detail-row">
+                                <strong>التاريخ:</strong> ${formatDate(order.createdAt)}
+                            </div>
+                            <div class="detail-row">
+                                <strong>الحالة:</strong> ${statusText[order.status] || order.status}
+                            </div>
+                            ${order.notes ? `
+                            <div class="detail-row">
+                                <strong>ملاحظات:</strong> ${order.notes}
+                            </div>` : ''}
+                            
+                            <h4 class="mt-20">المنتجات:</h4>
+                            ${order.items ? order.items.map(item => `
+                                <div class="order-item">
+                                    <span>${item.name} × ${item.quantity}</span>
+                                    <span>${(item.price * item.quantity).toFixed(2)} ر.س</span>
+                                </div>
+                            `).join('') : '<p>لا توجد منتجات</p>'}
+                            
+                            <div class="order-total-summary mt-20">
+                                <div class="summary-row">
+                                    <span>المجموع:</span>
+                                    <span>${order.subtotal ? order.subtotal.toFixed(2) : '0.00'} ر.س</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span>التوصيل:</span>
+                                    <span>${order.shipping ? order.shipping.toFixed(2) : '0.00'} ر.س</span>
+                                </div>
+                                <div class="summary-row total">
+                                    <span>الإجمالي:</span>
+                                    <span>${order.total ? order.total.toFixed(2) : '0.00'} ر.س</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // إنشاء وعرض المودال
+        showModal(modalHTML);
+        
+    } catch (error) {
+        console.error('خطأ في عرض تفاصيل الطلب:', error);
+        showToast('خطأ في تحميل تفاصيل الطلب', true);
+    }
+}
+
+// إرسال الطلب عبر واتساب
+async function sendOrderWhatsApp(orderId) {
+    try {
+        const orders = await getAllOrders();
+        const order = orders.find(o => o.id === orderId);
+        
+        if (!order) {
+            showToast('الطلب غير موجود', true);
+            return;
+        }
+        
+        const customerInfo = {
+            name: order.userName,
+            phone: order.userPhone,
+            address: order.userAddress,
+            notes: order.notes || ''
+        };
+        
+        const result = sendOrderViaWhatsApp(order, customerInfo);
+        if (result.success) {
+            showToast('تم فتح واتساب', false, 'success');
+        }
+    } catch (error) {
+        console.error('خطأ في إرسال واتساب:', error);
+        showToast('خطأ في إرسال الطلب عبر واتساب', true);
+    }
+}
+
+// دالة لعرض المودال
+function showModal(contentHTML) {
+    const existingModal = document.querySelector('.modal:not(.hidden)');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = contentHTML;
+    
+    document.body.appendChild(modal);
+    
+    // إضافة مستمع لإغلاق المودال
+    const closeBtn = modal.querySelector('.close-modal');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            modal.remove();
+        });
+    }
+    
+    // إغلاق بالنقر خارج المحتوى
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+}
+
+// إضافة المستمعات للتبويبات في لوحة الإدارة
+document.addEventListener('DOMContentLoaded', function() {
+    // عند النقر على تبويب الطلبات
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.admin-tab[data-tab="orders"]')) {
+            loadOrdersManagement();
+        }
+    });
+});
+
 // جعل الدوال متاحة عالمياً
 window.initAdmin = initAdmin;
 window.loadAllProducts = loadAllProducts;
@@ -510,3 +779,8 @@ window.switchTab = switchTab;
 window.editProductModal = editProductModal;
 window.showProductModal = showProductModal;
 window.getDefaultProducts = getDefaultProducts;
+window.loadOrdersManagement = loadOrdersManagement;
+window.renderOrdersManagement = renderOrdersManagement;
+window.viewOrderDetails = viewOrderDetails;
+window.sendOrderWhatsApp = sendOrderWhatsApp;
+window.showModal = showModal;
