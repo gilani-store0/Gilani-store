@@ -1,4 +1,4 @@
-// js/auth.js - النسخة المكتملة
+// js/auth.js - النسخة المُعدّلة
 
 // حالة المستخدم
 let currentUser = null;
@@ -39,40 +39,35 @@ function initAuth() {
                 currentUser = user;
                 
                 try {
-                    currentUserData = await getUserData(user);
-                    isUserAdminFlag = currentUserData?.isAdmin || false;
+                    // الاعتماد على checkAndUpdateAdminStatus لتحديد حالة الأدمن
+                    const isAdmin = await checkAndUpdateAdminStatus();
                     
-                    console.log('بيانات المستخدم المحملة:', currentUserData);
-                    console.log('حالة المسؤول:', isUserAdminFlag);
+                    // currentUserData يتم تحديثه داخل getUserData
+                    const userData = await getUserData(user);
                     
-                    const userState = {
-                        uid: user.uid,
-                        email: user.email,
-                        displayName: user.displayName || currentUserData?.displayName || user.email?.split('@')[0],
-                        photoURL: user.photoURL || currentUserData?.photoURL,
-                        isAdmin: isUserAdminFlag,
-                        createdAt: currentUserData?.createdAt || new Date().toISOString(),
-                        isGuest: false
-                    };
+                    console.log('بيانات المستخدم المحملة:', userData);
+                    console.log('حالة المسؤول النهائية:', isAdmin);
                     
-                    localStorage.setItem('jamalek_user', JSON.stringify(userState));
+                    // تحديث الحالة بعد تسجيل الدخول بدون تمرير حالة الأدمن
+                    await updateUserStatusAfterLogin(user, false);
                     
                     resolve({ 
                         success: true, 
                         user, 
                         userData: currentUserData, 
-                        isAdmin: isUserAdminFlag,
+                        isAdmin: isAdmin,
                         isGuest: false
                     });
                 } catch (error) {
                     console.error('خطأ في تحميل بيانات المستخدم:', error);
+                    isUserAdminFlag = false; // التأكد من أن الحالة false عند الخطأ
                     
                     const userState = {
                         uid: user.uid,
                         email: user.email,
                         displayName: user.displayName || user.email?.split('@')[0] || 'مستخدم',
                         photoURL: user.photoURL,
-                        isAdmin: false,
+                        isAdmin: false, // القيمة هنا يجب أن تكون false دائمًا
                         createdAt: new Date().toISOString(),
                         isGuest: false
                     };
@@ -92,6 +87,8 @@ function initAuth() {
                 currentUser = null;
                 currentUserData = null;
                 isUserAdminFlag = false;
+                localStorage.removeItem('jamalek_user');
+                document.body.classList.remove('admin-mode');
                 resolve({ success: false, user: null, isGuest: true });
             }
         }, (error) => {
@@ -116,18 +113,16 @@ async function signInWithGoogle() {
         console.log('تم تسجيل الدخول بنجاح باستخدام Google:', user.email);
         
         await saveUserData(user);
+        await updateUserStatusAfterLogin(user, false);
+        const isAdmin = await checkAndUpdateAdminStatus();
         
-        currentUser = user;
-        currentUserData = await getUserData(user);
-        isUserAdminFlag = currentUserData?.isAdmin || false;
-        
-        console.log('حالة المسؤول بعد تسجيل الدخول:', isUserAdminFlag);
+        console.log('حالة المسؤول بعد تسجيل الدخول:', isAdmin);
         
         return { 
             success: true, 
             user,
             userData: currentUserData,
-            isAdmin: isUserAdminFlag,
+            isAdmin: isAdmin,
             isGuest: false
         };
     } catch (error) {
@@ -158,15 +153,14 @@ async function signInWithEmail(email, password) {
         console.log('تم تسجيل الدخول بنجاح:', user.email);
         
         await updateLastLogin(user.uid);
-        
-        const userData = await getUserData(user);
-        isUserAdminFlag = userData?.isAdmin || false;
+        await updateUserStatusAfterLogin(user, false);
+        const isAdmin = await checkAndUpdateAdminStatus();
         
         return { 
             success: true, 
             user,
-            userData,
-            isAdmin: isUserAdminFlag,
+            userData: currentUserData,
+            isAdmin: isAdmin,
             isGuest: false
         };
     } catch (error) {
@@ -208,15 +202,14 @@ async function signUpWithEmail(email, password, displayName) {
         }
         
         await saveUserData(user);
-        
-        const userData = await getUserData(user);
-        isUserAdminFlag = userData?.isAdmin || false;
+        await updateUserStatusAfterLogin(user, false);
+        const isAdmin = await checkAndUpdateAdminStatus();
         
         return { 
             success: true, 
             user,
-            userData,
-            isAdmin: isUserAdminFlag,
+            userData: currentUserData,
+            isAdmin: isAdmin,
             isGuest: false
         };
     } catch (error) {
@@ -332,6 +325,7 @@ async function signOut() {
         isUserAdminFlag = false;
         
         localStorage.removeItem('jamalek_user');
+        document.body.classList.remove('admin-mode');
         console.log('تم مسح بيانات المستخدم من localStorage');
         
         return { success: true };
@@ -354,13 +348,11 @@ async function saveUserData(user) {
         
         const isFirstLogin = !userSnap.exists();
         
-        // تعريف البريد الإلكتروني الخاص بالمسؤول
         const adminEmails = [
             "yxr.249@gmail.com", 
             "admin@qb-store.com"
         ];
         
-        // تحديد إذا كان المستخدم مسؤولاً
         const shouldBeAdmin = adminEmails.includes(user.email?.toLowerCase());
         
         const userData = {
@@ -384,14 +376,8 @@ async function saveUserData(user) {
             currentUserData = { ...currentUserData, ...userData };
         }
         
-        isUserAdminFlag = userData.isAdmin;
-        
-        // تحديث class الأدمن للـ body
-        if (userData.isAdmin) {
-            document.body.classList.add('admin-mode');
-        }
-        
-        console.log('تم حفظ بيانات المستخدم، حالة المسؤول:', isUserAdminFlag);
+        // لا نحدد حالة الأدمن هنا مباشرة
+        console.log('تم حفظ بيانات المستخدم بنجاح');
         
         return { success: true };
     } catch (error) {
@@ -405,12 +391,13 @@ async function getUserData(user) {
     try {
         if (user.isGuest) {
             console.log('المستخدم ضيف، إرجاع بيانات محلية');
+            currentUserData = user;
             return user;
         }
         
         if (!window.db) {
             console.warn('Firestore غير متاح، استخدام بيانات محلية');
-            return {
+            const localData = {
                 uid: user.uid,
                 email: user.email,
                 displayName: user.displayName || 'مستخدم',
@@ -419,6 +406,8 @@ async function getUserData(user) {
                 isGuest: false,
                 createdAt: new Date()
             };
+            currentUserData = localData;
+            return localData;
         }
         
         const userRef = window.db.collection("users").doc(user.uid);
@@ -428,6 +417,7 @@ async function getUserData(user) {
             console.log('تم جلب بيانات المستخدم من Firestore');
             const userData = userSnap.data();
             userData.isGuest = false;
+            currentUserData = userData; // تحديث الحالة العامة
             return userData;
         } else {
             console.log('المستخدم غير موجود في Firestore، سيتم إنشاؤه');
@@ -435,11 +425,12 @@ async function getUserData(user) {
             const newSnap = await userRef.get();
             const newData = newSnap.data();
             newData.isGuest = false;
+            currentUserData = newData; // تحديث الحالة العامة
             return newData;
         }
     } catch (error) {
         console.error('خطأ في جلب بيانات المستخدم:', error);
-        return {
+        const errorData = {
             uid: user.uid,
             email: user.email,
             displayName: user.displayName || 'مستخدم',
@@ -448,6 +439,8 @@ async function getUserData(user) {
             isGuest: false,
             createdAt: new Date()
         };
+        currentUserData = errorData;
+        return errorData;
     }
 }
 
@@ -536,11 +529,6 @@ function setAdminStatus(status) {
     isUserAdminFlag = status;
     console.log('تم تعيين حالة المسؤول إلى:', status);
     
-    if (currentUserData) {
-        currentUserData.isAdmin = status;
-        localStorage.setItem('jamalek_user', JSON.stringify(currentUserData));
-    }
-    
     // تحديث class الأدمن للـ body
     if (status) {
         document.body.classList.add('admin-mode');
@@ -584,19 +572,16 @@ function loadUserFromLocalStorage() {
             const userData = JSON.parse(savedUser);
             currentUser = userData;
             currentUserData = userData;
-            isUserAdminFlag = userData.isAdmin || false;
+            // لا نثق بحالة الأدمن من localStorage
+            isUserAdminFlag = false; 
             console.log('تم تحميل المستخدم من localStorage:', userData.displayName);
-            console.log('حالة المسؤول من localStorage:', isUserAdminFlag);
             
-            // تحديث class الأدمن للـ body
-            if (isUserAdminFlag && !userData.isGuest) {
-                document.body.classList.add('admin-mode');
-            }
+            // لا تقم بإضافة admin-mode هنا، انتظر التحقق من Firestore
             
             return { 
                 success: true, 
                 user: userData, 
-                isAdmin: isUserAdminFlag,
+                isAdmin: false, // القيمة الأولية دائمًا false
                 isGuest: userData.isGuest || false
             };
         }
@@ -627,64 +612,60 @@ async function testFirebaseConnection() {
     }
 }
 
-// التحقق من صلاحية المسؤول وتحديث الواجهة
+// التحقق من صلاحية المسؤول وتحديث الواجهة (مصدر الحقيقة الوحيد)
 async function checkAndUpdateAdminStatus() {
     try {
         const user = getCurrentUser();
         
-        if (user && user.isGuest) {
-            console.log('المستخدم ضيف، لا يمكن أن يكون مسؤولاً');
+        if (!user || user.isGuest) {
+            console.log('المستخدم ضيف أو غير مسجل، لا يمكن أن يكون مسؤولاً');
             setAdminStatus(false);
             return false;
         }
         
-        if (user && !user.isGuest) {
-            const userData = await getUserData(user);
-            
-            if (userData && userData.isAdmin) {
-                setAdminStatus(true);
-                console.log('المستخدم مسؤول:', userData.email);
-                return true;
-            } else {
-                console.log('المستخدم ليس مسؤولاً:', user.email);
-                setAdminStatus(false);
-                return false;
-            }
-        }
+        // جلب أحدث البيانات من Firestore
+        const userDataFromDb = await getUserData(user);
         
-        return false;
+        if (userDataFromDb && userDataFromDb.isAdmin) {
+            console.log('✅ التحقق من Firestore: المستخدم مسؤول:', user.email);
+            setAdminStatus(true);
+            isUserAdminFlag = true; // تحديث الحالة العامة
+            return true;
+        } else {
+            console.log('❌ التحقق من Firestore: المستخدم ليس مسؤولاً:', user.email);
+            setAdminStatus(false);
+            isUserAdminFlag = false; // تحديث الحالة العامة
+            return false;
+        }
     } catch (error) {
-        console.error('خطأ في التحقق من حالة المسؤول:', error);
+        console.error('خطأ في التحقق من حالة المسؤول من Firestore:', error);
+        setAdminStatus(false);
+        isUserAdminFlag = false;
         return false;
     }
 }
 
 // تحديث حالة المستخدم بعد تسجيل الدخول
-async function updateUserStatusAfterLogin(user, isAdmin = false, isGuest = false) {
+async function updateUserStatusAfterLogin(user, isGuest = false) {
     try {
         currentUser = user;
-        isUserAdminFlag = isAdmin;
         
         if (!isGuest) {
+            // حفظ البيانات الأساسية فقط بدون حالة الأدمن
             const userState = {
                 uid: user.uid,
                 email: user.email,
                 displayName: user.displayName || user.email?.split('@')[0] || 'مستخدم',
                 photoURL: user.photoURL,
-                isAdmin: isAdmin,
+                isAdmin: false, // القيمة المحفوظة دائمًا false للأمان
                 createdAt: user.createdAt || new Date().toISOString(),
                 isGuest: false
             };
             
             localStorage.setItem('jamalek_user', JSON.stringify(userState));
-            
-            // تحديث class الأدمن للـ body
-            if (isAdmin) {
-                document.body.classList.add('admin-mode');
-            }
         }
         
-        console.log('تم تحديث حالة المستخدم:', user.displayName, 'isAdmin:', isAdmin, 'isGuest:', isGuest);
+        console.log('تم تحديث حالة المستخدم الأساسية في localStorage:', user.displayName);
         return true;
     } catch (error) {
         console.error('خطأ في تحديث حالة المستخدم:', error);

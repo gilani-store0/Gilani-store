@@ -30,11 +30,7 @@ const UI = {
 
     // تحديث واجهة المستخدم بعد تسجيل الدخول
     async updateUserUIAfterLogin() {
-        const user = getCurrentUser();
-        if (user) {
-            const isAdmin = await checkAndUpdateAdminStatus();
-            this.updateUserUI(user, isAdmin);
-        }
+        await refreshAdminUI();
     },
 
     // تحديث عداد السلة
@@ -804,14 +800,36 @@ const UI = {
 
 // ==================== معالجات الأحداث العامة ====================
 
-// معالجة تسجيل الدخول باستخدام Google
-async function handleGoogleSignIn() {
-    const result = await signInWithGoogle();
+// معالجة تسجيل الدخول باستخدام Googl};
+
+// 🔄 تحديث واجهة المستخدم بعد التحقق الحقيقي من صلاحيات الأدمن
+async function refreshAdminUI() {
+    const user = getCurrentUser();
+    if (!user) return;
+
+    const isAdmin = await checkAndUpdateAdminStatus();
+
+    console.log('🔄 refreshAdminUI | isAdmin:', isAdmin);
+
+    UI.updateUserUI(user, isAdmin);
+
+    // تحديث أي عناصر خاصة بالأدمن
+    document.querySelectorAll('.admin-only').forEach(el => {
+        if (isAdmin && !user.isGuest) {
+            el.classList.remove('hidden');
+        } else {
+            el.classList.add('hidden');
+        }
+    });
+}
+
+async function handleGoogleSignIn() {   const result = await signInWithGoogle();
     if (result.success) {
         await updateUserStatusAfterLogin(result.user, result.isAdmin, result.isGuest);
         await checkAndUpdateAdminStatus();
         UI.updateUserUI(result.user, result.isAdmin);
         UI.showMainApp();
+        await refreshAdminUI();
         showToast('تم تسجيل الدخول بنجاح', false, 'success');
         
         if (result.isAdmin && !result.isGuest) {
@@ -887,6 +905,7 @@ function setupForms() {
                 await updateUserStatusAfterLogin(result.user, result.isAdmin, result.isGuest);
                 UI.updateUserUI(result.user, result.isAdmin);
                 UI.showMainApp();
+                await refreshAdminUI();
                 showToast(
                     displayNameInput.classList.contains('hidden') ? 
                     'تم تسجيل الدخول بنجاح' : 'تم إنشاء الحساب بنجاح',
@@ -947,6 +966,9 @@ async function initApp() {
             
             UI.updateUserUI(savedUser.user, isAdmin);
             UI.showMainApp();
+            setTimeout(async () => {
+                await refreshAdminUI();
+            }, 300);
             
             if (isAdmin && !savedUser.isGuest) {
                 setTimeout(() => {
