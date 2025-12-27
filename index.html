@@ -110,11 +110,11 @@
 
     <!-- التطبيق الرئيسي -->
     <div id="mainApp" class="hidden">
-        <!-- الهيدر -->
+        <!-- الهيدر المبسط -->
         <header class="main-header">
             <div class="container">
                 <div class="header-content">
-                    <!-- أقصى اليمين: قائمة الخيارات واللوجو -->
+                    <!-- اليمين: زر القائمة -->
                     <div class="header-group-right">
                         <button id="menuToggle" class="icon-btn" title="القائمة">
                             <i class="fas fa-bars"></i>
@@ -131,39 +131,18 @@
                         <input type="text" id="productSearch" placeholder="ابحث عن منتج...">
                     </div>
 
-                    <!-- أقصى اليسار: الأزرار -->
+                    <!-- اليسار: سلة التسوق فقط -->
                     <div class="header-group-left">
-                        <!-- زر الإدارة (يظهر للمسؤول فقط) -->
-                        <button id="adminHeaderBtn" class="icon-btn hidden" title="لوحة التحكم">
-                            <i class="fas fa-cog"></i>
-                        </button>
-                        
-                        <!-- زر السلة -->
                         <button id="cartBtn" class="icon-btn" title="سلة التسوق">
                             <i class="fas fa-shopping-cart"></i>
                             <span id="cartCount" class="cart-count hidden">0</span>
-                        </button>
-                        
-                        <!-- زر الطلبات -->
-                        <button id="ordersBtn" class="icon-btn hidden" title="طلباتي">
-                            <i class="fas fa-shopping-bag"></i>
-                        </button>
-                        
-                        <!-- زر الحساب -->
-                        <button id="userToggle" class="icon-btn" title="حسابي">
-                            <i class="far fa-user"></i>
-                        </button>
-                        
-                        <!-- زر تسجيل الخروج -->
-                        <button id="logoutBtn" class="icon-btn hidden" title="تسجيل الخروج">
-                            <i class="fas fa-sign-out-alt"></i>
                         </button>
                     </div>
                 </div>
             </div>
         </header>
 
-        <!-- قائمة الجوال -->
+        <!-- قائمة الجوال الكاملة -->
         <nav class="mobile-nav" id="mobileNav">
             <div class="nav-header">
                 <div class="nav-logo">
@@ -175,6 +154,20 @@
                 </button>
             </div>
             
+            <!-- معلومات المستخدم -->
+            <div class="nav-user-info" id="mobileUserInfo">
+                <div class="user-avatar">
+                    <img id="mobileUserAvatar" src="https://ui-avatars.com/api/?name=ضيف&background=C89B3C&color=fff" 
+                         alt="صورة المستخدم" class="user-avatar-img">
+                </div>
+                <div class="user-details">
+                    <h4 id="mobileUserName">ضيف</h4>
+                    <p id="mobileUserEmail" class="user-email">مستخدم غير مسجل</p>
+                    <span id="mobileAdminBadge" class="badge admin-badge hidden">مسؤول</span>
+                </div>
+            </div>
+            
+            <!-- روابط التنقل الرئيسية -->
             <div class="nav-links">
                 <a href="#" class="nav-link" data-section="home">
                     <i class="fas fa-home"></i> الرئيسية
@@ -182,49 +175,50 @@
                 <a href="#" class="nav-link" data-section="products">
                     <i class="fas fa-store"></i> المنتجات
                 </a>
-                <a href="#" class="nav-link" data-section="contact">
-                    <i class="fas fa-phone"></i> اتصل بنا
-                </a>
-                
-                <!-- أقسام المستخدم المسجل -->
-                <a href="#" id="cartMobileBtn" class="nav-link hidden" data-section="cart">
+                <a href="#" class="nav-link" data-section="cart">
                     <i class="fas fa-shopping-cart"></i> سلة التسوق
                     <span id="cartMobileCount" class="cart-count-mobile hidden">0</span>
                 </a>
-                <a href="#" id="ordersMobileBtn" class="nav-link hidden" data-section="orders">
-                    <i class="fas fa-shopping-bag"></i> طلباتي
-                </a>
-                
-                <!-- قسم الأدمن (يظهر للمسؤولين فقط) -->
-                <a href="#" id="adminMobileBtn" class="nav-link admin-only hidden" data-section="admin">
-                    <i class="fas fa-cog"></i> لوحة التحكم
+                <a href="#" class="nav-link" data-section="contact">
+                    <i class="fas fa-phone"></i> اتصل بنا
                 </a>
             </div>
             
-            <div class="nav-actions">
-                <!-- معلومات المستخدم -->
-                <div id="mobileUserInfo" class="mobile-user-info hidden">
-                    <img id="mobileUserAvatar" src="https://ui-avatars.com/api/?name=ضيف&background=C89B3C&color=fff" alt="صورة المستخدم" class="user-avatar-img">
-                    <div class="user-details">
-                        <p id="mobileUserName">ضيف</p>
-                        <p id="mobileUserEmail" class="user-email">مستخدم غير مسجل</p>
-                    </div>
-                </div>
-                
-                <!-- زر الحساب -->
-                <a href="#" id="profileMobileBtn" class="nav-link" data-section="profile">
+            <!-- روابط المستخدم -->
+            <div class="nav-user-links">
+                <a href="#" class="nav-link user-link" data-section="profile">
                     <i class="far fa-user"></i> حسابي
                 </a>
                 
+                <!-- لوحة التحكم للمسؤولين فقط -->
+                <a href="#" id="adminMobileBtn" class="nav-link admin-only hidden" data-section="admin">
+                    <i class="fas fa-cog"></i> لوحة التحكم
+                </a>
+                
                 <!-- زر تسجيل الدخول/الخروج -->
-                <button id="mobileAuthBtn" class="btn outline-btn w-100">
+                <button id="mobileAuthBtn" class="nav-link auth-btn">
                     <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
                 </button>
                 
-                <!-- زر تسجيل الخروج -->
-                <button id="mobileLogoutBtn" class="btn danger-btn w-100 hidden">
+                <button id="mobileLogoutBtn" class="nav-link logout-btn hidden">
                     <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
                 </button>
+            </div>
+            
+            <!-- معلومات المتجر -->
+            <div class="nav-store-info">
+                <div class="nav-info-item">
+                    <i class="fas fa-phone"></i>
+                    <span>+249 93 300 2015</span>
+                </div>
+                <div class="nav-info-item">
+                    <i class="fas fa-envelope"></i>
+                    <span>yxr.249@gmail.com</span>
+                </div>
+                <div class="nav-info-item">
+                    <i class="fas fa-clock"></i>
+                    <span>9 صباحاً - 10 مساءً</span>
+                </div>
             </div>
         </nav>
 
@@ -276,19 +270,6 @@
                 </div>
             </section>
 
-            <!-- تفاصيل المنتج -->
-            <section id="productDetailSection" class="product-detail-section hidden">
-                <div class="container">
-                    <button id="backToProducts" class="btn outline-btn mb-20">
-                        <i class="fas fa-arrow-right"></i> العودة للمنتجات
-                    </button>
-                    
-                    <div id="productDetailContent" class="product-detail-content">
-                        <!-- سيتم ملؤه ديناميكياً -->
-                    </div>
-                </div>
-            </section>
-
             <!-- سلة التسوق -->
             <section id="cartSection" class="cart-section hidden">
                 <div class="container">
@@ -311,26 +292,6 @@
                         <div class="cart-summary" id="cartSummary">
                             <!-- سيتم ملؤه ديناميكياً -->
                         </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- صفحة الطلبات -->
-            <section id="ordersSection" class="orders-section hidden">
-                <div class="container">
-                    <h2 class="section-title">
-                        <i class="fas fa-shopping-bag"></i> طلباتي
-                    </h2>
-                    <p class="section-subtitle">تتبع حالة طلباتك السابقة والحالية</p>
-                    
-                    <div class="orders-tabs">
-                        <button class="orders-tab active" data-status="all">جميع الطلبات</button>
-                        <button class="orders-tab" data-status="processing">قيد التجهيز</button>
-                        <button class="orders-tab" data-status="completed">مكتملة</button>
-                    </div>
-                    
-                    <div id="ordersList" class="orders-list">
-                        <!-- سيتم ملؤه ديناميكياً -->
                     </div>
                 </div>
             </section>
@@ -437,9 +398,6 @@
                         <button class="admin-tab active" data-tab="products">
                             <i class="fas fa-box"></i> المنتجات
                         </button>
-                        <button class="admin-tab" data-tab="orders">
-                            <i class="fas fa-shopping-bag"></i> إدارة الطلبات
-                        </button>
                         <button class="admin-tab" data-tab="users">
                             <i class="fas fa-users"></i> المستخدمين
                         </button>
@@ -516,31 +474,6 @@
                                         </tr>
                                     </thead>
                                     <tbody id="productsTable">
-                                        <!-- سيتم ملؤه ديناميكياً -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- تبويب الطلبات -->
-                        <div id="ordersTab" class="tab-pane hidden">
-                            <div class="tab-header">
-                                <h3>إدارة الطلبات</h3>
-                            </div>
-                            <div class="table-container">
-                                <table class="admin-table">
-                                    <thead>
-                                        <tr>
-                                            <th>رقم الطلب</th>
-                                            <th>العميل</th>
-                                            <th>الهاتف</th>
-                                            <th>المنتجات</th>
-                                            <th>الإجمالي</th>
-                                            <th>الحالة</th>
-                                            <th>الإجراءات</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="ordersTableBody">
                                         <!-- سيتم ملؤه ديناميكياً -->
                                     </tbody>
                                 </table>
@@ -811,10 +744,24 @@
     <script src="js/auth.js"></script>
     <script src="js/products.js"></script>
     <script src="js/cart.js"></script>
-    <script src="js/orders.js"></script>
-    <script src="js/checkout.js"></script>
     <script src="js/admin.js"></script>
     <script src="js/main.js"></script>
+    
+    <!-- تهيئة Firebase -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('الصفحة تم تحميلها، تهيئة Firebase...');
+        
+        setTimeout(() => {
+            if (typeof firebase !== 'undefined') {
+                initializeFirebase();
+                console.log('Firebase SDK محمّل وتمت تهيئته');
+            } else {
+                console.error('Firebase SDK لم يتم تحميله!');
+            }
+        }, 100);
+    });
+    </script>
     
 </body>
 </html>
