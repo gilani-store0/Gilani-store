@@ -276,6 +276,19 @@
                 </div>
             </section>
 
+            <!-- تفاصيل المنتج -->
+            <section id="productDetailSection" class="product-detail-section hidden">
+                <div class="container">
+                    <button id="backToProducts" class="btn outline-btn mb-20">
+                        <i class="fas fa-arrow-right"></i> العودة للمنتجات
+                    </button>
+                    
+                    <div id="productDetailContent" class="product-detail-content">
+                        <!-- سيتم ملؤه ديناميكياً -->
+                    </div>
+                </div>
+            </section>
+
             <!-- سلة التسوق -->
             <section id="cartSection" class="cart-section hidden">
                 <div class="container">
@@ -424,6 +437,9 @@
                         <button class="admin-tab active" data-tab="products">
                             <i class="fas fa-box"></i> المنتجات
                         </button>
+                        <button class="admin-tab" data-tab="orders">
+                            <i class="fas fa-shopping-bag"></i> إدارة الطلبات
+                        </button>
                         <button class="admin-tab" data-tab="users">
                             <i class="fas fa-users"></i> المستخدمين
                         </button>
@@ -500,6 +516,31 @@
                                         </tr>
                                     </thead>
                                     <tbody id="productsTable">
+                                        <!-- سيتم ملؤه ديناميكياً -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- تبويب الطلبات -->
+                        <div id="ordersTab" class="tab-pane hidden">
+                            <div class="tab-header">
+                                <h3>إدارة الطلبات</h3>
+                            </div>
+                            <div class="table-container">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>رقم الطلب</th>
+                                            <th>العميل</th>
+                                            <th>الهاتف</th>
+                                            <th>المنتجات</th>
+                                            <th>الإجمالي</th>
+                                            <th>الحالة</th>
+                                            <th>الإجراءات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ordersTableBody">
                                         <!-- سيتم ملؤه ديناميكياً -->
                                     </tbody>
                                 </table>
@@ -760,7 +801,7 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs (الإصدار المتوافق 9.x) -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -770,103 +811,10 @@
     <script src="js/auth.js"></script>
     <script src="js/products.js"></script>
     <script src="js/cart.js"></script>
+    <script src="js/orders.js"></script>
+    <script src="js/checkout.js"></script>
     <script src="js/admin.js"></script>
     <script src="js/main.js"></script>
-    
-    <!-- تهيئة Firebase بعد تحميل جميع المكتبات -->
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('الصفحة تم تحميلها، تهيئة Firebase...');
-        
-        // انتظر قليلاً للتأكد من تحميل Firebase SDK
-        setTimeout(() => {
-            if (typeof firebase !== 'undefined') {
-                initializeFirebase();
-                console.log('Firebase SDK محمّل وتمت تهيئته');
-            } else {
-                console.error('Firebase SDK لم يتم تحميله!');
-            }
-        }, 100);
-    });
-    </script>
-    
-    <!-- في نهاية ملف index.html قبل </body> -->
-
-<script>
-// تحقق من الدومين عند التحميل
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🌐 تحميل الصفحة على:', window.location.hostname);
-    
-    const isGitHubPages = window.location.hostname.includes('github.io');
-    const isLocalhost = window.location.hostname === 'localhost' || 
-                       window.location.hostname === '127.0.0.1';
-    
-    // إضافة معلومات للـ console
-    console.log('📊 معلومات الدومين:', {
-        hostname: window.location.hostname,
-        protocol: window.location.protocol,
-        isGitHubPages: isGitHubPages,
-        isLocalhost: isLocalhost,
-        pathname: window.location.pathname
-    });
-    
-    // إضافة class للـ body إذا كان على GitHub Pages
-    if (isGitHubPages) {
-        document.body.classList.add('github-pages');
-        console.log('✅ تم تفعيل وضع GitHub Pages');
-        
-        // إضافة رسالة تنبيه
-        setTimeout(() => {
-            console.log('💡 تلميح: إذا لم يعمل Firebase، تأكد من إضافة الدومين إلى Firebase Console');
-            console.log('💡 اضغط F12 لرؤية الأخطاء في Console');
-        }, 2000);
-    }
-    
-    // تهيئة Firebase بعد تحميل جميع المكتبات
-    setTimeout(() => {
-        if (typeof firebase !== 'undefined') {
-            initializeFirebase();
-            console.log('✅ Firebase SDK محمّل وتمت تهيئته');
-            
-            // اختبار الاتصال
-            setTimeout(async () => {
-                if (window.testFirebaseConnection) {
-                    const result = await testFirebaseConnection();
-                    console.log('🧪 نتيجة اختبار Firebase:', result);
-                }
-            }, 2000);
-        } else {
-            console.error('❌ Firebase SDK لم يتم تحميله!');
-            
-            // عرض رسالة للمستخدم
-            if (isGitHubPages) {
-                alert('⚠️ Firebase لم يتم تحميله. قد يكون هناك مشكلة في الاتصال بالإنترنت أو في إعدادات GitHub Pages.');
-            }
-        }
-    }, 500);
-});
-
-// دالة للمساعدة في تطوير
-window.debugFirebase = function() {
-    console.log('🔍 معلومات تصحيح Firebase:', {
-        firebase: typeof firebase,
-        auth: window.auth ? 'موجود' : 'غير موجود',
-        db: window.db ? 'موجود' : 'غير موجود',
-        currentUser: window.auth?.currentUser?.email || 'لا يوجد',
-        hostname: window.location.hostname
-    });
-};
-
-// اختصار للطوارئ
-window.makeAdmin = function(email) {
-    if (!email) {
-        email = prompt('أدخل البريد الإلكتروني:');
-    }
-    if (email) {
-        emergencyMakeAdmin(email);
-    }
-};
-</script>
     
 </body>
 </html>
