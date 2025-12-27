@@ -420,8 +420,8 @@
                                     <input type="text" id="storeNameInput" placeholder="اسم المتجر" value="QB" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="emailInput">البريد الإلكتروني للتواصل</label>
-                                    <input type="email" id="emailInput" placeholder="example@store.com" value="yxr.249@gmail.com" required>
+                                    <label for="settingsEmailInput">البريد الإلكتروني للتواصل</label>
+                                    <input type="email" id="settingsEmailInput" placeholder="example@store.com" value="yxr.249@gmail.com" required>
                                 </div>
                                 <div class="form-group">
                                     <label for="phone1Input">رقم الهاتف 1</label>
@@ -545,11 +545,11 @@
                         <div class="contact-info">
                             <div class="contact-item">
                                 <i class="fas fa-phone"></i>
-                                <span id="contactPhone">+249 93 00 2015</span>
+                                <span id="contactPhone">+249 93 300 2015</span>
                             </div>
                             <div class="contact-item">
                                 <i class="fas fa-envelope"></i>
-                                <span id="contactEmail">yxr.249@gmail.co.</span>
+                                <span id="contactEmail">yxr.249@gmail.com</span>
                             </div>
                             <div class="contact-item">
                                 <i class="fas fa-map-marker-alt"></i>
@@ -747,21 +747,7 @@
     <script src="js/admin.js"></script>
     <script src="js/main.js"></script>
     
-    <!-- تهيئة Firebase -->
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('الصفحة تم تحميلها، تهيئة Firebase...');
-        
-        setTimeout(() => {
-            if (typeof firebase !== 'undefined') {
-                initializeFirebase();
-                console.log('Firebase SDK محمّل وتمت تهيئته');
-            } else {
-                console.error('Firebase SDK لم يتم تحميله!');
-            }
-        }, 100);
-    });
-    </script>
+    <!-- تم حذف كود تهيئة Firebase المكرر من هنا -->
     
 </body>
 </html>
