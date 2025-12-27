@@ -1,4 +1,4 @@
-// js/auth.js - النسخة الكاملة المحدثة
+// js/auth.js - معالجة المصادقة (النسخة المحسنة والمصححة)
 
 // حالة المستخدم
 let currentUser = null;
@@ -9,176 +9,205 @@ let isUserAdminFlag = false;
 function initAuth() {
     return new Promise((resolve, reject) => {
         if (!window.auth) {
-            console.warn('⚠️ Firebase Auth غير متاح، استخدام وضع الضيف');
-            const guestUser = createGuestUser();
+            console.warn('Firebase Auth غير متاح، استخدام وضع الضيف');
+            const guestUser = {
+                uid: 'guest_' + Date.now(),
+                email: null,
+                displayName: 'ضيف',
+                photoURL: null,
+                isGuest: true,
+                createdAt: new Date().toISOString()
+            };
+            
             currentUser = guestUser;
             currentUserData = guestUser;
             isUserAdminFlag = false;
-            resolve({ success: true, user: guestUser, userData: guestUser, isAdmin: false });
+            
+            resolve({ 
+                success: true, 
+                user: guestUser, 
+                userData: guestUser, 
+                isAdmin: false,
+                isGuest: true
+            });
             return;
         }
         
-        console.log('🔐 بدء مراقبة حالة المصادقة Firebase');
-        
-        // مراقبة حالة المصادقة
+        // التحقق من حالة المصادقة الحالية
         const unsubscribe = window.auth.onAuthStateChanged(async (user) => {
-            unsubscribe();
+            unsubscribe(); // إلغاء الاشتراك بعد أول تحديث
             
             if (user) {
-                console.log('✅ Firebase Auth: مستخدم مسجل -', user.email);
+                // مستخدم مسجل الدخول من Firebase
+                console.log('المستخدم مسجل الدخول من Firebase:', user.email);
+                currentUser = user;
                 
                 try {
-                    // حفظ بيانات المستخدم أولاً
-                    await saveUserData(user);
+                    // تحميل بيانات المستخدم من Firestore
+                    currentUserData = await getUserData(user);
                     
-                    // جلب البيانات المحدثة
-                    const userData = await getUserData(user);
-                    currentUser = user;
-                    currentUserData = userData;
+                    // التحقق من حالة المسؤول
+                    isUserAdminFlag = currentUserData?.isAdmin || false;
                     
-                    // التحقق من صلاحيات المسؤول
-                    const isAdmin = await verifyAdminStatus(user);
-                    isUserAdminFlag = isAdmin;
+                    console.log('بيانات المستخدم المحملة:', currentUserData);
+                    console.log('حالة المسؤول:', isUserAdminFlag);
+                    console.log('هل هو ضيف؟:', false);
                     
-                    console.log('✅ حالة المسؤول النهائية:', isAdmin);
+                    // تحديث localStorage
+                    const userState = {
+                        uid: user.uid,
+                        email: user.email,
+                        displayName: user.displayName || currentUserData.displayName,
+                        photoURL: user.photoURL || currentUserData.photoURL,
+                        isAdmin: isUserAdminFlag,
+                        createdAt: currentUserData.createdAt || new Date().toISOString(),
+                        isGuest: false
+                    };
                     
-                    // حفظ في localStorage
+                    localStorage.setItem('jamalek_user', JSON.stringify(userState));
+                    
+                    resolve({ 
+                        success: true, 
+                        user, 
+                        userData: currentUserData, 
+                        isAdmin: isUserAdminFlag,
+                        isGuest: false
+                    });
+                } catch (error) {
+                    console.error('خطأ في تحميل بيانات المستخدم:', error);
+                    
+                    // في حالة الخطأ، ننشئ بيانات افتراضية (وليس ضيفاً)
                     const userState = {
                         uid: user.uid,
                         email: user.email,
                         displayName: user.displayName || user.email?.split('@')[0] || 'مستخدم',
                         photoURL: user.photoURL,
-                        isAdmin: isAdmin,
-                        createdAt: userData.createdAt || new Date().toISOString(),
+                        isAdmin: false,
+                        createdAt: new Date().toISOString(),
                         isGuest: false
                     };
+                    
                     localStorage.setItem('jamalek_user', JSON.stringify(userState));
                     
-                    resolve({ success: true, user, userData, isAdmin });
-                    
-                } catch (error) {
-                    console.error('❌ خطأ في معالجة بيانات المستخدم:', error);
-                    resolve({ success: false, error: 'خطأ في معالجة بيانات المستخدم' });
+                    resolve({ 
+                        success: true, 
+                        user, 
+                        userData: userState, 
+                        isAdmin: false,
+                        isGuest: false
+                    });
                 }
             } else {
-                console.log('👤 Firebase Auth: لا يوجد مستخدم مسجل');
+                // لا يوجد مستخدم مسجل من Firebase
+                console.log('لا يوجد مستخدم مسجل من Firebase');
                 currentUser = null;
                 currentUserData = null;
                 isUserAdminFlag = false;
-                resolve({ success: false, user: null });
+                resolve({ success: false, user: null, isGuest: true });
             }
         }, (error) => {
-            console.error('❌ خطأ في مراقبة حالة المصادقة:', error);
+            console.error('خطأ في مراقبة حالة المصادقة:', error);
             reject(error);
         });
     });
 }
 
-// إنشاء مستخدم ضيف
-function createGuestUser() {
-    return {
-        uid: 'guest_' + Date.now(),
-        email: null,
-        displayName: 'ضيف',
-        photoURL: null,
-        isGuest: true,
-        createdAt: new Date().toISOString()
-    };
-}
-
-// تحقق من صلاحيات المسؤول
-async function verifyAdminStatus(user = null) {
-    try {
-        const targetUser = user || getCurrentUser();
-        
-        if (!targetUser || targetUser.isGuest) {
-            console.log('👤 المستخدم ضيف أو غير موجود');
-            return false;
-        }
-        
-        console.log('🔍 التحقق من صلاحيات المسؤول لـ:', targetUser.email);
-        
-        const userData = await getUserData(targetUser);
-        
-        if (!userData) {
-            console.warn('⚠️ لا توجد بيانات مستخدم');
-            return false;
-        }
-        
-        const isAdmin = userData.isAdmin === true;
-        setAdminStatus(isAdmin);
-        
-        console.log(`✅ نتيجة التحقق: ${targetUser.email} - isAdmin: ${isAdmin}`);
-        return isAdmin;
-        
-    } catch (error) {
-        console.error('❌ خطأ في التحقق من صلاحيات المسؤول:', error);
-        return false;
-    }
-}
-
 // تسجيل الدخول باستخدام Google
 async function signInWithGoogle() {
     try {
-        console.log('🌐 بدء تسجيل الدخول باستخدام Google...');
+        console.log('بدء تسجيل الدخول باستخدام Google...');
         
         if (!window.auth || !firebase) {
             throw new Error('Firebase غير متاح');
         }
         
+        // استخدام firebase من النافذة العامة
         const provider = new firebase.auth.GoogleAuthProvider();
+        console.log('المزود:', provider);
+        
         const result = await window.auth.signInWithPopup(provider);
         const user = result.user;
+        console.log('تم تسجيل الدخول بنجاح باستخدام Google:', user.email);
         
-        console.log('✅ تم تسجيل الدخول بـ Google:', user.email);
-        
-        // حفظ بيانات المستخدم
+        // حفظ بيانات المستخدم في Firestore
         await saveUserData(user);
         
-        return { success: true, user };
+        // تحديث حالة المستخدم الحالي
+        currentUser = user;
+        currentUserData = await getUserData(user);
+        isUserAdminFlag = currentUserData?.isAdmin || false;
+        
+        console.log('حالة المسؤول بعد تسجيل الدخول:', isUserAdminFlag);
+        
+        return { 
+            success: true, 
+            user,
+            userData: currentUserData,
+            isAdmin: isUserAdminFlag,
+            isGuest: false
+        };
     } catch (error) {
-        console.error('❌ خطأ تسجيل الدخول بـ Google:', error);
-        return { success: false, error: getErrorMessage(error) };
+        console.error('تفاصيل خطأ تسجيل الدخول باستخدام Google:', error);
+        return { 
+            success: false, 
+            error: getErrorMessage(error),
+            isGuest: true
+        };
     }
 }
 
 // تسجيل الدخول باستخدام البريد الإلكتروني
 async function signInWithEmail(email, password) {
     try {
-        console.log('📧 محاولة تسجيل الدخول بالبريد:', email);
+        console.log('محاولة تسجيل الدخول بالبريد:', email);
         
         if (!window.auth) {
             throw new Error('Firebase Auth غير متاح');
         }
         
+        // التحقق من صحة المدخلات
         if (!email || !password) {
             throw new Error('البريد الإلكتروني وكلمة المرور مطلوبان');
         }
         
         const result = await window.auth.signInWithEmailAndPassword(email.trim(), password);
         const user = result.user;
+        console.log('تم تسجيل الدخول بنجاح:', user.email);
         
-        console.log('✅ تم تسجيل الدخول بنجاح:', user.email);
+        // تحديث آخر وقت دخول
+        await updateLastLogin(user.uid);
         
-        // حفظ بيانات المستخدم
-        await saveUserData(user);
+        // تحميل بيانات المستخدم
+        const userData = await getUserData(user);
+        isUserAdminFlag = userData?.isAdmin || false;
         
-        return { success: true, user };
+        return { 
+            success: true, 
+            user,
+            userData,
+            isAdmin: isUserAdminFlag,
+            isGuest: false
+        };
     } catch (error) {
-        console.error('❌ خطأ تسجيل الدخول:', error);
-        return { success: false, error: getErrorMessage(error) };
+        console.error('تفاصيل خطأ تسجيل الدخول:', error);
+        return { 
+            success: false, 
+            error: getErrorMessage(error),
+            isGuest: true
+        };
     }
 }
 
 // إنشاء حساب جديد
 async function signUpWithEmail(email, password, displayName) {
     try {
-        console.log('👤 إنشاء حساب جديد:', email);
+        console.log('إنشاء حساب جديد:', email);
         
         if (!window.auth) {
             throw new Error('Firebase Auth غير متاح');
         }
         
+        // التحقق من صحة المدخلات
         if (!email || !password) {
             throw new Error('البريد الإلكتروني وكلمة المرور مطلوبان');
         }
@@ -189,36 +218,73 @@ async function signUpWithEmail(email, password, displayName) {
         
         const result = await window.auth.createUserWithEmailAndPassword(email.trim(), password);
         const user = result.user;
-        
-        console.log('✅ تم إنشاء الحساب:', user.email);
+        console.log('تم إنشاء الحساب:', user.email);
         
         // تحديث اسم المستخدم
         if (displayName && displayName.trim()) {
-            await user.updateProfile({ displayName: displayName.trim() });
-            console.log('✅ تم تحديث اسم المستخدم:', displayName);
+            await user.updateProfile({ 
+                displayName: displayName.trim() 
+            });
+            console.log('تم تحديث اسم المستخدم:', displayName);
         }
         
-        // حفظ بيانات المستخدم
+        // حفظ بيانات المستخدم في Firestore
         await saveUserData(user);
         
-        return { success: true, user };
+        // تحميل بيانات المستخدم
+        const userData = await getUserData(user);
+        isUserAdminFlag = userData?.isAdmin || false;
+        
+        return { 
+            success: true, 
+            user,
+            userData,
+            isAdmin: isUserAdminFlag,
+            isGuest: false
+        };
     } catch (error) {
-        console.error('❌ خطأ إنشاء الحساب:', error);
-        return { success: false, error: getErrorMessage(error) };
+        console.error('تفاصيل خطأ إنشاء الحساب:', error);
+        return { 
+            success: false, 
+            error: getErrorMessage(error),
+            isGuest: true
+        };
+    }
+}
+
+// تحديث آخر وقت دخول
+async function updateLastLogin(userId) {
+    try {
+        if (!window.db) return;
+        
+        const userRef = window.db.collection("users").doc(userId);
+        await userRef.update({
+            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        console.log('تم تحديث آخر وقت دخول للمستخدم:', userId);
+    } catch (error) {
+        console.error('خطأ في تحديث آخر وقت دخول:', error);
     }
 }
 
 // تسجيل الدخول كضيف
 function signInAsGuest() {
     try {
-        console.log('👤 تسجيل الدخول كضيف...');
+        console.log('تسجيل الدخول كضيف...');
+        const guestUser = {
+            uid: 'guest_' + Date.now(),
+            email: null,
+            displayName: 'ضيف',
+            photoURL: null,
+            isGuest: true,
+            createdAt: new Date().toISOString()
+        };
         
-        const guestUser = createGuestUser();
         currentUser = guestUser;
         currentUserData = guestUser;
         isUserAdminFlag = false;
         
-        // حفظ في localStorage
+        // حفظ حالة المستخدم في localStorage
         const userState = {
             uid: guestUser.uid,
             email: guestUser.email,
@@ -230,12 +296,73 @@ function signInAsGuest() {
         };
         
         localStorage.setItem('jamalek_user', JSON.stringify(userState));
-        console.log('✅ تم تسجيل الدخول كضيف');
+        console.log('تم تسجيل الدخول كضيف');
         
-        return { success: true, user: guestUser, userData: guestUser };
+        return { 
+            success: true, 
+            user: guestUser, 
+            userData: guestUser,
+            isAdmin: false,
+            isGuest: true
+        };
     } catch (error) {
-        console.error('❌ خطأ في تسجيل الدخول كضيف:', error);
-        return { success: false, error: 'خطأ في تسجيل الدخول كضيف' };
+        console.error('خطأ في تسجيل الدخول كضيف:', error);
+        return { 
+            success: false, 
+            error: 'خطأ في تسجيل الدخول كضيف',
+            isGuest: true
+        };
+    }
+}
+
+// استعادة كلمة المرور
+async function resetPassword(email) {
+    try {
+        console.log('إعادة تعيين كلمة المرور لـ:', email);
+        
+        if (!window.auth) {
+            throw new Error('Firebase Auth غير متاح');
+        }
+        
+        if (!email || !email.includes('@')) {
+            throw new Error('البريد الإلكتروني غير صحيح');
+        }
+        
+        await window.auth.sendPasswordResetEmail(email.trim());
+        console.log('تم إرسال رابط إعادة التعيين');
+        
+        return { success: true };
+    } catch (error) {
+        console.error('تفاصيل خطأ إعادة تعيين كلمة المرور:', error);
+        return { 
+            success: false, 
+            error: getErrorMessage(error) 
+        };
+    }
+}
+
+// تسجيل الخروج
+async function signOut() {
+    try {
+        console.log('تسجيل الخروج...');
+        
+        if (currentUser && !currentUser.isGuest && window.auth) {
+            await window.auth.signOut();
+            console.log('تم تسجيل الخروج من Firebase');
+        }
+        
+        currentUser = null;
+        currentUserData = null;
+        isUserAdminFlag = false;
+        
+        // مسح حالة المستخدم من localStorage
+        localStorage.removeItem('jamalek_user');
+        console.log('تم مسح بيانات المستخدم من localStorage');
+        
+        return { success: true };
+    } catch (error) {
+        console.error('خطأ في تسجيل الخروج:', error);
+        return { success: false, error: 'خطأ في تسجيل الخروج' };
     }
 }
 
@@ -243,61 +370,56 @@ function signInAsGuest() {
 async function saveUserData(user) {
     try {
         if (!window.db) {
-            console.warn('⚠️ Firestore غير متاح، تجاهل حفظ بيانات المستخدم');
+            console.warn('Firestore غير متاح، تجاهل حفظ بيانات المستخدم');
             return { success: false };
         }
         
         const userRef = window.db.collection("users").doc(user.uid);
+        
+        // جلب البيانات الحالية أولاً
         const userSnap = await userRef.get();
         
-        // قائمة المسؤولين
-        const adminEmails = [
-            "yxr.249@gmail.com", 
-            "admin@qb-store.com",
-            "admin@qb.com"
-        ].map(email => email.toLowerCase());
-        
-        // تحديد حالة المسؤول
+        // التحقق إذا كان هذا هو أول دخول للمستخدم
         const isFirstLogin = !userSnap.exists();
-        let isAdmin = false;
         
-        if (isFirstLogin) {
-            // أول دخول: تحقق من البريد
-            isAdmin = adminEmails.includes(user.email?.toLowerCase());
-            console.log(`📝 أول دخول للمستخدم ${user.email}: isAdmin = ${isAdmin}`);
-        } else {
-            // مستخدم قديم: استخدم الصلاحية المحفوظة
-            isAdmin = userSnap.data()?.isAdmin === true;
-            console.log(`📝 مستخدم قديم ${user.email}: isAdmin = ${isAdmin}`);
-        }
+        // تعريف البريد الإلكتروني الخاص بالمسؤول
+        const adminEmails = ["yxr.249@gmail.com", "admin@qb-store.com"];
         
-        // بيانات المستخدم
+        // تحديد إذا كان المستخدم مسؤولاً
+        const shouldBeAdmin = adminEmails.includes(user.email?.toLowerCase());
+        
         const userData = {
             uid: user.uid,
             email: user.email,
             displayName: user.displayName || user.email?.split('@')[0] || 'مستخدم',
             photoURL: user.photoURL,
-            createdAt: userSnap.exists() ? userSnap.data().createdAt : firebase.firestore.FieldValue.serverTimestamp(),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
             lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-            isAdmin: isAdmin,
+            // إذا كان أول دخول وكان البريد ضمن قائمة المسؤولين، أو كان مسؤولاً سابقاً
+            isAdmin: isFirstLogin ? shouldBeAdmin : (userSnap.data()?.isAdmin || false),
             phone: userSnap.exists() ? userSnap.data().phone || '' : '',
-            address: userSnap.exists() ? userSnap.data().address || '' : ''
+            address: userSnap.exists() ? userSnap.data().address || '' : '',
+            isGuest: false // المستخدمين المسجلين ليسوا ضيوفاً
         };
         
-        console.log(`💾 حفظ بيانات المستخدم: ${user.email}, isAdmin: ${userData.isAdmin}`);
+        console.log(`حفظ بيانات المستخدم: ${user.email}, isAdmin: ${userData.isAdmin}, isGuest: ${userData.isGuest}`);
         await userRef.set(userData, { merge: true });
         
-        // تحديث البيانات المحلية
-        currentUserData = userData;
-        setAdminStatus(isAdmin);
+        // تحديث الذاكرة المحلية
+        if (currentUserData && currentUserData.uid === user.uid) {
+            currentUserData = { ...currentUserData, ...userData };
+        }
         
-        console.log('✅ تم حفظ بيانات المستخدم');
+        // تحديث حالة المسؤول
+        isUserAdminFlag = userData.isAdmin;
+        
+        console.log('تم حفظ بيانات المستخدم، حالة المسؤول:', isUserAdminFlag);
+        
         return { success: true };
-        
     } catch (error) {
-        console.error('❌ خطأ في حفظ بيانات المستخدم:', error);
-        return { success: false, error: error.message };
+        console.error('خطأ في حفظ بيانات المستخدم:', error);
+        return { success: false };
     }
 }
 
@@ -306,17 +428,19 @@ async function getUserData(user) {
     try {
         // إذا كان ضيفاً، ارجع بياناته المحلية
         if (user.isGuest) {
+            console.log('المستخدم ضيف، إرجاع بيانات محلية');
             return user;
         }
         
         if (!window.db) {
-            console.warn('⚠️ Firestore غير متاح، استخدام بيانات محلية');
+            console.warn('Firestore غير متاح، استخدام بيانات محلية');
             return {
                 uid: user.uid,
                 email: user.email,
                 displayName: user.displayName || 'مستخدم',
                 photoURL: user.photoURL,
                 isAdmin: false,
+                isGuest: false,
                 createdAt: new Date()
             };
         }
@@ -325,17 +449,32 @@ async function getUserData(user) {
         const userSnap = await userRef.get();
         
         if (userSnap.exists()) {
-            console.log('✅ تم جلب بيانات المستخدم من Firestore');
-            return userSnap.data();
+            console.log('تم جلب بيانات المستخدم من Firestore');
+            const userData = userSnap.data();
+            console.log('بيانات المستخدم المسترجعة:', userData);
+            
+            // تأكد من أن isGuest = false للمستخدمين المسجلين
+            userData.isGuest = false;
+            return userData;
         } else {
-            console.log('⚠️ المستخدم غير موجود في Firestore، سيتم إنشاؤه');
+            console.log('المستخدم غير موجود في Firestore، سيتم إنشاؤه');
             await saveUserData(user);
             const newSnap = await userRef.get();
-            return newSnap.data();
+            const newData = newSnap.data();
+            newData.isGuest = false;
+            return newData;
         }
     } catch (error) {
-        console.error('❌ خطأ في جلب بيانات المستخدم:', error);
-        return null;
+        console.error('خطأ في جلب بيانات المستخدم:', error);
+        return {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName || 'مستخدم',
+            photoURL: user.photoURL,
+            isAdmin: false,
+            isGuest: false,
+            createdAt: new Date()
+        };
     }
 }
 
@@ -343,7 +482,7 @@ async function getUserData(user) {
 async function updateUserData(userId, userData) {
     try {
         if (!window.db) {
-            console.warn('⚠️ Firestore غير متاح');
+            console.warn('Firestore غير متاح، تجاهل تحديث البيانات');
             return { success: false, error: 'Firestore غير متاح' };
         }
         
@@ -353,18 +492,25 @@ async function updateUserData(userId, userData) {
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
-        console.log('✅ تم تحديث بيانات المستخدم');
+        // تحديث الذاكرة المحلية
+        if (currentUserData && currentUserData.uid === userId) {
+            currentUserData = { ...currentUserData, ...userData };
+        }
+        
         return { success: true };
     } catch (error) {
-        console.error('❌ خطأ في تحديث بيانات المستخدم:', error);
+        console.error('خطأ في تحديث بيانات المستخدم:', error);
         return { success: false, error: error.message };
     }
 }
 
-// جلب جميع المستخدمين
+// جلب جميع المستخدمين (للأدمن فقط)
 async function getAllUsers() {
     try {
-        if (!window.db) return [];
+        if (!window.db) {
+            console.warn('Firestore غير متاح، ارجاع قائمة فارغة');
+            return [];
+        }
         
         const snapshot = await window.db.collection("users").get();
         const users = [];
@@ -377,8 +523,24 @@ async function getAllUsers() {
         
         return users;
     } catch (error) {
-        console.error('❌ خطأ في جلب المستخدمين:', error);
+        console.error('خطأ في جلب المستخدمين:', error);
         return [];
+    }
+}
+
+// جلب عدد المستخدمين
+async function getUsersCount() {
+    try {
+        if (!window.db) {
+            console.warn('Firestore غير متاح، ارجاع 0');
+            return 0;
+        }
+        
+        const snapshot = await window.db.collection("users").get();
+        return snapshot.size;
+    } catch (error) {
+        console.error('خطأ في جلب عدد المستخدمين:', error);
+        return 0;
     }
 }
 
@@ -400,131 +562,13 @@ function isUserAdmin() {
 // تعيين حالة المسؤول
 function setAdminStatus(status) {
     isUserAdminFlag = status;
-    console.log(`🔄 تم تعيين حالة المسؤول إلى: ${status}`);
+    console.log('تم تعيين حالة المسؤول إلى:', status);
     
+    // تحديث الذاكرة المحلية
     if (currentUserData) {
         currentUserData.isAdmin = status;
-        // تحديث localStorage
-        const savedUser = localStorage.getItem('jamalek_user');
-        if (savedUser) {
-            try {
-                const userData = JSON.parse(savedUser);
-                userData.isAdmin = status;
-                localStorage.setItem('jamalek_user', JSON.stringify(userData));
-            } catch (e) {
-                console.error('❌ خطأ في تحديث localStorage:', e);
-            }
-        }
+        localStorage.setItem('jamalek_user', JSON.stringify(currentUserData));
     }
-}
-
-// تحميل حالة المستخدم من localStorage
-function loadUserFromLocalStorage() {
-    try {
-        const savedUser = localStorage.getItem('jamalek_user');
-        if (savedUser) {
-            const userData = JSON.parse(savedUser);
-            currentUser = userData;
-            currentUserData = userData;
-            isUserAdminFlag = userData.isAdmin || false;
-            console.log('✅ تم تحميل المستخدم من localStorage:', userData.displayName);
-            return { success: true, user: userData, isAdmin: isUserAdminFlag };
-        }
-        console.log('📭 لا يوجد مستخدم محفوظ في localStorage');
-        return { success: false, user: null };
-    } catch (error) {
-        console.error('❌ خطأ في تحميل حالة المستخدم:', error);
-        return { success: false, user: null };
-    }
-}
-
-// التحقق من المصادقة وتحديث الواجهة
-async function checkAndUpdateAuth() {
-    try {
-        console.log('🔄 التحقق من حالة المصادقة...');
-        
-        if (!window.auth) {
-            console.warn('⚠️ Firebase Auth غير متاح');
-            return { success: false, isGuest: true };
-        }
-        
-        const user = window.auth.currentUser;
-        
-        if (user) {
-            console.log('✅ مستخدم Firebase مسجل:', user.email);
-            
-            // تحديث البيانات
-            await saveUserData(user);
-            const userData = await getUserData(user);
-            const isAdmin = await verifyAdminStatus(user);
-            
-            currentUser = user;
-            currentUserData = userData;
-            setAdminStatus(isAdmin);
-            
-            // حفظ في localStorage
-            const userState = {
-                uid: user.uid,
-                email: user.email,
-                displayName: user.displayName || user.email?.split('@')[0] || 'مستخدم',
-                photoURL: user.photoURL,
-                isAdmin: isAdmin,
-                createdAt: userData.createdAt || new Date().toISOString(),
-                isGuest: false
-            };
-            localStorage.setItem('jamalek_user', JSON.stringify(userState));
-            
-            return { success: true, user, userData, isAdmin, isGuest: false };
-        } else {
-            console.log('👤 لا يوجد مستخدم Firebase مسجل');
-            return { success: false, isGuest: true };
-        }
-    } catch (error) {
-        console.error('❌ خطأ في التحقق من المصادقة:', error);
-        return { success: false, isGuest: true };
-    }
-}
-
-// دالة طوارئ لجعل مستخدم مسؤولاً
-function emergencyMakeAdmin(email) {
-    if (!window.db) {
-        console.error('❌ Firestore غير متاح');
-        alert('Firestore غير متاح');
-        return;
-    }
-    
-    if (!confirm(`هل أنت متأكد من جعل ${email} مسؤولاً؟`)) return;
-    
-    window.db.collection("users")
-        .where("email", "==", email.toLowerCase())
-        .get()
-        .then(snapshot => {
-            if (snapshot.empty) {
-                alert(`المستخدم ${email} غير موجود`);
-                return;
-            }
-            
-            snapshot.forEach(doc => {
-                window.db.collection("users").doc(doc.id).update({
-                    isAdmin: true,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                }).then(() => {
-                    alert(`✅ تم جعل ${email} مسؤولاً`);
-                    
-                    // تحديث الواجهة إذا كان المستخدم الحالي
-                    if (currentUser && currentUser.email === email) {
-                        setAdminStatus(true);
-                        if (window.UI && window.UI.updateUserUI) {
-                            window.UI.updateUserUI(currentUser, true);
-                        }
-                    }
-                });
-            });
-        })
-        .catch(error => {
-            console.error('❌ خطأ في البحث:', error);
-            alert(`خطأ: ${error.message}`);
-        });
 }
 
 // دالة مساعدة لتحويل كود الخطأ إلى رسالة مفهومة
@@ -532,6 +576,9 @@ function getErrorMessage(error) {
     if (!error) return 'حدث خطأ غير متوقع';
     
     const errorCode = error.code || '';
+    console.log('كود الخطأ:', errorCode);
+    console.log('رسالة الخطأ الأصلية:', error.message);
+    
     const errorMessages = {
         'auth/invalid-email': 'البريد الإلكتروني غير صحيح',
         'auth/user-disabled': 'هذا الحساب معطل',
@@ -545,21 +592,154 @@ function getErrorMessage(error) {
         'auth/popup-closed-by-user': 'تم إغلاق نافذة التسجيل',
         'auth/cancelled-popup-request': 'تم إلغاء عملية التسجيل',
         'auth/requires-recent-login': 'يجب تسجيل الدخول مرة أخرى لإكمال هذه العملية',
-        'auth/invalid-credential': 'بيانات الاعتماد غير صالحة',
-        'auth/invalid-login-credentials': 'بيانات تسجيل الدخول غير صحيحة',
-        'auth/unauthorized-domain': 'الدومين غير مصرح به. أضف ' + window.location.hostname + ' إلى Firebase Console',
+        'auth/invalid-credential': 'بيانات الاعتماد غير صالحة. تحقق من البريد الإلكتروني وكلمة المرور',
+        'auth/invalid-login-credentials': 'بيانات تسجيل الدخول غير صحيحة. تحقق من البريد الإلكتروني وكلمة المرور',
+        'auth/app-deleted': 'تم حذف التطبيق',
+        'auth/app-not-authorized': 'التطبيق غير مصرح له',
+        'auth/argument-error': 'خطأ في المدخلات',
+        'auth/invalid-api-key': 'مفتاح API غير صالح',
+        'auth/invalid-user-token': 'رمز المستخدم غير صالح',
+        'auth/user-token-expired': 'انتهت صلاحية رمز المستخدم',
+        'auth/unauthorized-domain': 'نطاق غير مصرح به',
+        'auth/web-storage-unsupported': 'التخزين عبر الويب غير مدعوم',
+        'auth/missing-android-pkg-name': 'اسم حزمة Android مفقود',
+        'auth/missing-continue-uri': 'رابط المتابعة مفقود',
+        'auth/missing-ios-bundle-id': 'معرف حزمة iOS مفقود',
+        'auth/invalid-continue-uri': 'رابط المتابعة غير صالح',
+        'auth/unauthorized-continue-uri': 'رابط المتابعة غير مصرح به',
         'default': 'حدث خطأ غير متوقع: ' + (error.message || 'يرجى المحاولة مرة أخرى')
     };
     
     return errorMessages[errorCode] || errorMessages['default'];
 }
 
-// ========== جعل الدوال متاحة عالمياً ==========
+// تحميل حالة المستخدم من localStorage
+function loadUserFromLocalStorage() {
+    try {
+        const savedUser = localStorage.getItem('jamalek_user');
+        if (savedUser) {
+            const userData = JSON.parse(savedUser);
+            currentUser = userData;
+            currentUserData = userData;
+            isUserAdminFlag = userData.isAdmin || false;
+            console.log('تم تحميل المستخدم من localStorage:', userData.displayName);
+            console.log('حالة المسؤول من localStorage:', isUserAdminFlag);
+            console.log('هل هو ضيف؟:', userData.isGuest || false);
+            return { 
+                success: true, 
+                user: userData, 
+                isAdmin: isUserAdminFlag,
+                isGuest: userData.isGuest || false
+            };
+        }
+        console.log('لا يوجد مستخدم محفوظ في localStorage');
+        return { success: false, user: null, isGuest: true };
+    } catch (error) {
+        console.error('خطأ في تحميل حالة المستخدم:', error);
+        return { success: false, user: null, isGuest: true };
+    }
+}
+
+// اختبار اتصال Firebase
+async function testFirebaseConnection() {
+    try {
+        console.log('اختبار اتصال Firebase...');
+        
+        if (!window.auth || !window.db) {
+            return { success: false, error: 'Firebase غير مهيأ' };
+        }
+        
+        // اختبار Auth
+        const authUser = window.auth.currentUser;
+        console.log('المستخدم الحالي في Auth:', authUser?.email || 'لا يوجد');
+        
+        // اختبار Firestore (محاولة قراءة مستند صغير)
+        const testRef = window.db.collection('test').doc('connection');
+        try {
+            await testRef.get();
+            console.log('Firestore متصل');
+        } catch (e) {
+            console.log('Firestore قد يحتاج إلى تهيئة القواعد');
+        }
+        
+        return { success: true };
+    } catch (error) {
+        console.error('فشل اختبار اتصال Firebase:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+// التحقق من صلاحية المسؤول وتحديث الواجهة
+async function checkAndUpdateAdminStatus() {
+    try {
+        const user = getCurrentUser();
+        
+        // إذا كان ضيفاً، فلا يمكن أن يكون مسؤولاً
+        if (user && user.isGuest) {
+            console.log('المستخدم ضيف، لا يمكن أن يكون مسؤولاً');
+            setAdminStatus(false);
+            return false;
+        }
+        
+        // إذا كان مستخدماً عادياً، تحقق من Firebase
+        if (user && !user.isGuest) {
+            const userData = await getUserData(user);
+            
+            if (userData && userData.isAdmin) {
+                setAdminStatus(true);
+                console.log('المستخدم مسؤول:', userData.email);
+                return true;
+            } else {
+                console.log('المستخدم ليس مسؤولاً:', user.email);
+                setAdminStatus(false);
+                return false;
+            }
+        }
+        
+        return false;
+    } catch (error) {
+        console.error('خطأ في التحقق من حالة المسؤول:', error);
+        return false;
+    }
+}
+
+// تحديث حالة المستخدم بعد تسجيل الدخول
+async function updateUserStatusAfterLogin(user, isAdmin = false, isGuest = false) {
+    try {
+        currentUser = user;
+        isUserAdminFlag = isAdmin;
+        
+        // تحديث localStorage
+        if (!isGuest) {
+            const userState = {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName || user.email?.split('@')[0] || 'مستخدم',
+                photoURL: user.photoURL,
+                isAdmin: isAdmin,
+                createdAt: user.createdAt || new Date().toISOString(),
+                isGuest: false
+            };
+            
+            localStorage.setItem('jamalek_user', JSON.stringify(userState));
+        }
+        
+        console.log('تم تحديث حالة المستخدم:', user.displayName, 'isAdmin:', isAdmin, 'isGuest:', isGuest);
+        return true;
+    } catch (error) {
+        console.error('خطأ في تحديث حالة المستخدم:', error);
+        return false;
+    }
+}
+
+// جعل الدوال متاحة عالمياً
 window.initAuth = initAuth;
 window.signInWithGoogle = signInWithGoogle;
 window.signInWithEmail = signInWithEmail;
 window.signUpWithEmail = signUpWithEmail;
 window.signInAsGuest = signInAsGuest;
+window.resetPassword = resetPassword;
+window.signOut = signOut;
 window.getCurrentUser = getCurrentUser;
 window.getCurrentUserData = getCurrentUserData;
 window.getUserData = getUserData;
@@ -567,8 +747,9 @@ window.isUserAdmin = isUserAdmin;
 window.setAdminStatus = setAdminStatus;
 window.updateUserData = updateUserData;
 window.getAllUsers = getAllUsers;
+window.getUsersCount = getUsersCount;
 window.loadUserFromLocalStorage = loadUserFromLocalStorage;
-window.checkAndUpdateAuth = checkAndUpdateAuth;
-window.verifyAdminStatus = verifyAdminStatus;
-window.emergencyMakeAdmin = emergencyMakeAdmin;
 window.getErrorMessage = getErrorMessage;
+window.testFirebaseConnection = testFirebaseConnection;
+window.checkAndUpdateAdminStatus = checkAndUpdateAdminStatus;
+window.updateUserStatusAfterLogin = updateUserStatusAfterLogin;
