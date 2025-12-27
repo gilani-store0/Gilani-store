@@ -1,4 +1,4 @@
-// js/cart.js - إدارة سلة التسوق والمفضلة
+// js/cart.js - النهائي
 
 const CartState = {
     items: [],
@@ -13,11 +13,9 @@ const WishlistState = {
     itemCount: 0
 };
 
-// تهيئة السلة
 function initCart() {
     console.log('تهيئة سلة التسوق...');
     
-    // تحميل السلة من localStorage
     const savedCart = localStorage.getItem('jamalek_cart');
     if (savedCart) {
         try {
@@ -29,7 +27,6 @@ function initCart() {
         }
     }
     
-    // تحميل المفضلة من localStorage
     const savedWishlist = localStorage.getItem('jamalek_wishlist');
     if (savedWishlist) {
         try {
@@ -41,12 +38,8 @@ function initCart() {
             WishlistState.itemCount = 0;
         }
     }
-    
-    console.log('سلة التسوق جاهزة:', CartState.items.length, 'عناصر');
-    console.log('المفضلة جاهزة:', WishlistState.itemCount, 'عناصر');
 }
 
-// تحديث إحصائيات السلة
 function updateCartStats() {
     CartState.itemCount = CartState.items.reduce((sum, item) => sum + item.quantity, 0);
     CartState.total = CartState.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -54,19 +47,15 @@ function updateCartStats() {
     updateCartUI();
 }
 
-// حفظ السلة في التخزين المحلي
 function saveCartToStorage() {
     localStorage.setItem('jamalek_cart', JSON.stringify(CartState.items));
 }
 
-// حفظ المفضلة في التخزين المحلي
 function saveWishlistToStorage() {
     localStorage.setItem('jamalek_wishlist', JSON.stringify(WishlistState.items));
 }
 
-// تحديث واجهة سلة التسوق
 function updateCartUI() {
-    // تحديث عداد السلة
     const cartCount = document.getElementById('cartCount');
     const cartMobileCount = document.getElementById('cartMobileCount');
     
@@ -89,7 +78,6 @@ function updateCartUI() {
     }
 }
 
-// إضافة منتج إلى السلة
 function addToCart(product, quantity = 1) {
     const existingItem = CartState.items.find(item => item.id === product.id);
     
@@ -111,14 +99,12 @@ function addToCart(product, quantity = 1) {
     return true;
 }
 
-// إزالة منتج من السلة
 function removeFromCart(productId) {
     CartState.items = CartState.items.filter(item => item.id !== productId);
     updateCartStats();
     return true;
 }
 
-// تحديث كمية المنتج في السلة
 function updateCartQuantity(productId, change) {
     const item = CartState.items.find(item => item.id === productId);
     
@@ -136,7 +122,6 @@ function updateCartQuantity(productId, change) {
     return false;
 }
 
-// إضافة منتج إلى المفضلة
 function addToWishlist(product) {
     const existingItem = WishlistState.items.find(item => item.id === product.id);
     
@@ -159,66 +144,54 @@ function addToWishlist(product) {
     return false;
 }
 
-// التحقق إذا كان المنتج في المفضلة
 function isInWishlist(productId) {
     return WishlistState.items.some(item => item.id === productId);
 }
 
-// الحصول على عناصر السلة
 function getCartItems() {
     return [...CartState.items];
 }
 
-// الحصول على عناصر المفضلة
 function getWishlistItems() {
     return [...WishlistState.items];
 }
 
-// تفريغ السلة
 function clearCart() {
     CartState.items = [];
     updateCartStats();
     return true;
 }
 
-// الحصول على إجمالي السعر
 function getCartTotal() {
     return CartState.total;
 }
 
-// الحصول على تكلفة الشحن
 function getShippingCost() {
     return CartState.total >= CartState.freeShippingLimit ? 0 : CartState.shipping;
 }
 
-// الحصول على الإجمالي النهائي
 function getFinalTotal() {
     return CartState.total + getShippingCost();
 }
 
-// الحصول على عدد العناصر في السلة
 function getCartItemCount() {
     return CartState.itemCount;
 }
 
-// الحصول على عدد العناصر في المفضلة
 function getWishlistItemCount() {
     return WishlistState.itemCount;
 }
 
-// تحديث تكلفة الشحن
 function updateShippingCost(cost) {
     CartState.shipping = cost;
     return cost;
 }
 
-// تحديث حد الشحن المجاني
 function updateFreeShippingLimit(limit) {
     CartState.freeShippingLimit = limit;
     return limit;
 }
 
-// تحديث واجهة المفضلة
 function updateWishlistUI() {
     const wishlistCount = document.getElementById('wishlistCount');
     const wishlistMobileCount = document.getElementById('wishlistMobileCount');
@@ -242,9 +215,7 @@ function updateWishlistUI() {
     }
 }
 
-// عرض إشعار
 function showToast(message, isError = false, type = 'info') {
-    // إزالة عنصر Toast إذا كان موجوداً
     const existingToast = document.querySelector('.toast');
     if (existingToast) {
         existingToast.remove();
@@ -256,14 +227,12 @@ function showToast(message, isError = false, type = 'info') {
     
     document.body.appendChild(toast);
     
-    // إخفاء Toast بعد 3 ثواني
     setTimeout(() => {
         toast.style.animation = 'slideUp 0.3s ease forwards';
         setTimeout(() => toast.remove(), 300);
     }, 3000);
 }
 
-// جعل الدوال متاحة عالمياً
 window.initCart = initCart;
 window.addToCart = addToCart;
 window.removeFromCart = removeFromCart;
