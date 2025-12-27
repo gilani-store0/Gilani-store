@@ -111,11 +111,6 @@ async function loadSiteSettingsForAdmin() {
             document.getElementById('freeShippingLimit').value = settings.freeShippingLimit || 200;
         }
         
-        // تحديث حقل البريد في إعدادات الموقع
-        if (document.getElementById('settingsEmailInput')) {
-            document.getElementById('settingsEmailInput').value = settings.email || 'yxr.249@gmail.com';
-        }
-        
         return settings;
     } catch (error) {
         console.error('خطأ في تحميل إعدادات الموقع للإدارة:', error);
@@ -262,7 +257,8 @@ function setupAdminEventListeners() {
     if (productForm) {
         productForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            await saveProduct();
+            showToast('سيتم تنفيذ هذه الميزة في التحديث القادم', false, 'info');
+            document.getElementById('productModal').classList.add('hidden');
         });
     }
     
@@ -271,145 +267,8 @@ function setupAdminEventListeners() {
     if (siteSettingsForm) {
         siteSettingsForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            await saveSiteSettings();
+            showToast('سيتم تنفيذ هذه الميزة في التحديث القادم', false, 'info');
         });
-    }
-    
-    // إعدادات زر التأكيد
-    const confirmBtn = document.getElementById('confirmBtn');
-    const cancelBtn = document.getElementById('cancelBtn');
-    
-    if (confirmBtn) confirmBtn.addEventListener('click', executePendingAction);
-    if (cancelBtn) cancelBtn.addEventListener('click', clearConfirmation);
-}
-
-// حفظ المنتج
-async function saveProduct() {
-    try {
-        const productId = document.getElementById('editProductId').value;
-        const productData = {
-            name: document.getElementById('productName').value,
-            price: parseFloat(document.getElementById('productPrice').value),
-            image: document.getElementById('productImage').value || 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=300&h=300&fit=crop',
-            description: document.getElementById('productDescription').value,
-            category: document.getElementById('productCategory').value,
-            stock: parseInt(document.getElementById('productStock').value),
-            isNew: document.getElementById('isNew').checked,
-            isSale: document.getElementById('isSale').checked,
-            isBest: document.getElementById('isBest').checked,
-            isActive: document.getElementById('isActive').checked,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        if (!productData.name || !productData.price || isNaN(productData.price) || isNaN(productData.stock)) {
-            showToast('الرجاء ملء جميع الحقول المطلوبة بشكل صحيح', true, 'error');
-            return;
-        }
-        
-        if (window.db) {
-            if (productId) {
-                // تحديث منتج موجود
-                await window.db.collection("products").doc(productId).update(productData);
-                showToast('تم تحديث المنتج بنجاح', false, 'success');
-            } else {
-                // إضافة منتج جديد
-                productData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-                productData.views = 0;
-                await window.db.collection("products").add(productData);
-                showToast('تم إضافة المنتج بنجاح', false, 'success');
-            }
-            
-            // تحديث القائمة
-            const products = await loadAllProducts();
-            renderAdminProducts(products);
-            
-            // إغلاق المودال
-            document.getElementById('productModal').classList.add('hidden');
-        } else {
-            showToast('Firestore غير متاح، تعذر حفظ المنتج', true, 'error');
-        }
-    } catch (error) {
-        console.error('خطأ في حفظ المنتج:', error);
-        showToast('حدث خطأ أثناء حفظ المنتج: ' + error.message, true, 'error');
-    }
-}
-
-// حفظ إعدادات الموقع
-async function saveSiteSettings() {
-    try {
-        if (!window.db) {
-            showToast('Firestore غير متاح، تعذر حفظ الإعدادات', true, 'error');
-            return;
-        }
-        
-        const settings = {
-            storeName: document.getElementById('storeNameInput').value,
-            email: document.getElementById('settingsEmailInput').value,
-            phone1: document.getElementById('phone1Input').value,
-            phone2: document.getElementById('phone2Input').value || '',
-            address: document.getElementById('addressInput').value,
-            shippingCost: parseFloat(document.getElementById('shippingCost').value) || 15,
-            freeShippingLimit: parseFloat(document.getElementById('freeShippingLimit').value) || 200,
-            workingHours: "من الأحد إلى الخميس: 9 صباحاً - 10 مساءً",
-            storeDescription: "متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية",
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        await window.db.collection("settings").doc("site_config").set(settings, { merge: true });
-        showToast('تم حفظ إعدادات الموقع بنجاح', false, 'success');
-    } catch (error) {
-        console.error('خطأ في حفظ إعدادات الموقع:', error);
-        showToast('حدث خطأ أثناء حفظ الإعدادات: ' + error.message, true, 'error');
-    }
-}
-
-// حذف المنتج
-async function deleteProduct(productId) {
-    setupConfirmation(
-        'هل أنت متأكد من حذف هذا المنتج؟',
-        'هذا الإجراء لا يمكن التراجع عنه وسيتم حذف المنتج نهائياً',
-        async () => {
-            try {
-                if (window.db) {
-                    await window.db.collection("products").doc(productId).delete();
-                    showToast('تم حذف المنتج بنجاح', false, 'success');
-                    
-                    // تحديث القائمة
-                    const products = await loadAllProducts();
-                    renderAdminProducts(products);
-                } else {
-                    showToast('Firestore غير متاح، تعذر حذف المنتج', true, 'error');
-                }
-            } catch (error) {
-                console.error('خطأ في حذف المنتج:', error);
-                showToast('حدث خطأ أثناء حذف المنتج: ' + error.message, true, 'error');
-            }
-        },
-        productId
-    );
-}
-
-// جلب جميع المستخدمين
-async function getAllUsers() {
-    try {
-        if (!window.db) {
-            console.warn('Firestore غير متاح');
-            return [];
-        }
-        
-        const snapshot = await window.db.collection("users").orderBy("createdAt", "desc").get();
-        const users = [];
-        
-        snapshot.forEach((doc) => {
-            const user = doc.data();
-            user.id = doc.id;
-            users.push(user);
-        });
-        
-        return users;
-    } catch (error) {
-        console.error("خطأ في جلب المستخدمين:", error);
-        return [];
     }
 }
 
@@ -504,7 +363,15 @@ function renderAdminProducts(products) {
     tableBody.querySelectorAll('.delete-product').forEach(btn => {
         btn.addEventListener('click', () => {
             const productId = btn.dataset.id;
-            deleteProduct(productId);
+            const product = products.find(p => p.id === productId);
+            setupConfirmation(
+                'هل أنت متأكد من حذف هذا المنتج؟',
+                product ? `سوف يتم حذف "${product.name}" نهائياً` : '',
+                async () => {
+                    showToast('تم حذف المنتج بنجاح (وهمي)', false, 'success');
+                    // في الإصدار الحقيقي، هنا سيتم استدعاء دالة الحذف من Firestore
+                }
+            );
         });
     });
 }
@@ -559,9 +426,7 @@ function renderAdminUsers(users) {
     // إضافة مستمعي الأحداث
     tableBody.querySelectorAll('.edit-user').forEach(btn => {
         btn.addEventListener('click', () => {
-            const userId = btn.dataset.id;
-            const user = users.find(u => u.uid === userId);
-            showToast(`تعديل بيانات المستخدم ${user?.displayName || ''} ستكون متاحة قريباً`, false, 'info');
+            showToast('ميزة تعديل المستخدم ستكون متاحة قريباً', false, 'info');
         });
     });
 }
@@ -575,7 +440,6 @@ function showProductModal() {
     // تعيين القيم الافتراضية
     document.getElementById('productStock').value = 10;
     document.getElementById('isActive').checked = true;
-    document.getElementById('productImage').value = 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=300&h=300&fit=crop';
     
     document.getElementById('productModal').classList.remove('hidden');
 }
@@ -646,7 +510,3 @@ window.switchTab = switchTab;
 window.editProductModal = editProductModal;
 window.showProductModal = showProductModal;
 window.getDefaultProducts = getDefaultProducts;
-window.saveProduct = saveProduct;
-window.saveSiteSettings = saveSiteSettings;
-window.getAllUsers = getAllUsers;
-window.deleteProduct = deleteProduct;
