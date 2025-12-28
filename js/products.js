@@ -29,8 +29,8 @@ async function loadProducts() {
             return ProductsState.products;
         }
         
+        // جلب جميع المنتجات النشطة
         const snapshot = await window.db.collection('products')
-            .where('isActive', '!=', false)
             .orderBy('createdAt', 'desc')
             .get();
         
@@ -38,6 +38,9 @@ async function loadProducts() {
         snapshot.forEach(doc => {
             const product = doc.data();
             product.id = doc.id;
+            
+            // تصفية المنتجات غير النشطة برمجياً لتجنب مشاكل الفهارس في Firestore
+            if (product.isActive === false) return;
             
             if (!product.image) {
                 product.image = 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=300&h=300&fit=crop';

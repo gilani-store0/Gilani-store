@@ -117,11 +117,12 @@ async function uploadProductImage(file) {
         
         showToast('جاري رفع الصورة...', false, 'info');
         
-        // رفع الملف مع ضغط
-        const uploadTask = await fileRef.put(file, {
-            contentType: file.type
-        });
+        // رفع الملف مع تحديد نوع المحتوى
+        const metadata = {
+            contentType: file.type || 'image/jpeg'
+        };
         
+        const uploadTask = await fileRef.put(file, metadata);
         const downloadURL = await uploadTask.ref.getDownloadURL();
         
         showToast('تم رفع الصورة بنجاح', false, 'success');
@@ -196,7 +197,7 @@ async function saveProduct() {
             if (productId) {
                 // تحديث منتج موجود
                 productRef = window.db.collection("products").doc(productId);
-                await productRef.update(productData);
+                await productRef.set(productData, { merge: true });
                 showToast('✅ تم تحديث المنتج بنجاح', false, 'success');
             } else {
                 // إضافة منتج جديد
@@ -208,14 +209,20 @@ async function saveProduct() {
             // تفريغ الحقول وإعادة التعيين
             resetProductForm();
             
-            // تحديث القائمة
+            // تحديث القائمة في الإدارة
             const products = await loadAllProducts();
             renderAdminProducts(products);
             
+            // تحديث المنتجات في الواجهة الأمامية إذا كانت الدالة متاحة
+            if (typeof loadProducts === 'function') {
+                await loadProducts();
+            }
+            
             // إغلاق المودال بعد تأخير بسيط
             setTimeout(() => {
-                document.getElementById('productModal').classList.add('hidden');
-            }, 1500);
+                const modal = document.getElementById('productModal');
+                if (modal) modal.classList.add('hidden');
+            }, 1000);
             
         } else {
             showToast('Firestore غير متاح، تعذر حفظ المنتج', true, 'error');
@@ -485,73 +492,9 @@ function setupAdminEventListeners() {
 
 // عرض منتجات الإدارة
 function renderAdminProducts(products) {
-    const tableBody = document.getElementById('productsTable');
-    if (!tableBody) return;
-    
-    if (!products || products.length === 0) {
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="7" class="text-center">
-                    <div class="empty-state">
-                        <i class="fas fa-box-open"></i>
-                        <p>لا توجد منتجات</p>
-                    </div>
-                </td>
-            </tr>
-        `;
-        return;
+    if (typeof UI !== 'undefined' && typeof UI.renderAdminProducts === 'function') {
+        UI.renderAdminProducts(products);
     }
-    
-    tableBody.innerHTML = products.map(product => `
-        <tr>
-            <td>
-                <img src="${product.image || 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=300&h=300&fit=crop'}" 
-                     alt="${product.name}" 
-                     class="product-thumb"
-                     onerror="this.src='https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=300&h=300&fit=crop'">
-            </td>
-            <td>
-                <strong>${product.name}</strong>
-                ${product.description ? `<br><small class="text-muted">${product.description.substring(0, 50)}...</small>` : ''}
-            </td>
-            <td>${product.price} ر.س</td>
-            <td>${product.stock || 0}</td>
-            <td>
-                <span class="product-status ${product.isActive !== false ? 'status-active' : 'status-inactive'}">
-                    ${product.isActive !== false ? 'نشط' : 'غير نشط'}
-                </span>
-            </td>
-            <td>${formatDate(product.createdAt)}</td>
-            <td>
-                <div class="action-buttons">
-                    <button class="btn small-btn edit-product" data-id="${product.id}">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn small-btn danger-btn delete-product" data-id="${product.id}">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </td>
-        </tr>
-    `).join('');
-    
-    // إضافة مستمعي الأحداث للأزرار
-    tableBody.querySelectorAll('.edit-product').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const productId = btn.dataset.id;
-            const product = products.find(p => p.id === productId);
-            if (product) {
-                editProductModal(product);
-            }
-        });
-    });
-    
-    tableBody.querySelectorAll('.delete-product').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const productId = btn.dataset.id;
-            deleteProduct(productId);
-        });
-    });
 }
 
 // تحميل إعدادات الموقع للإدارة
@@ -814,7 +757,18 @@ function getDefaultProducts() {
     ];
 }
 
+// دالة عرض التنبيهات
+function showToast(message, isPersistent = false, type = 'info') {
+    if (typeof showMessage === 'function') {
+        showMessage(type === 'error' ? 'خطأ' : 'تنبيه', message, type);
+    } else {
+        console.log(`Toast [${type}]: ${message}`);
+        alert(message);
+    }
+}
+
 // جعل الدوال متاحة عالمياً
+window.showToast = showToast;
 window.initAdmin = initAdmin;
 window.loadAllProducts = loadAllProducts;
 window.getSiteSettings = getSiteSettings;

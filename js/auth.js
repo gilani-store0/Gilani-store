@@ -228,6 +228,7 @@ function loadUserFromLocalStorage() {
 async function signOut() {
     if (window.auth) await window.auth.signOut();
     localStorage.removeItem('jamalek_user');
+    document.body.classList.remove('admin-mode');
     location.reload();
 }
 

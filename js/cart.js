@@ -216,21 +216,11 @@ function updateWishlistUI() {
 }
 
 function showToast(message, isError = false, type = 'info') {
-    const existingToast = document.querySelector('.toast');
-    if (existingToast) {
-        existingToast.remove();
+    if (typeof window.showMessage === 'function') {
+        window.showMessage(isError || type === 'error' ? 'خطأ' : 'تنبيه', message, isError || type === 'error' ? 'error' : type);
+    } else {
+        console.log(`Toast [${type}]: ${message}`);
     }
-    
-    const toast = document.createElement('div');
-    toast.className = `toast ${isError ? 'toast-error' : type === 'success' ? 'toast-success' : type === 'warning' ? 'toast-warning' : 'toast-info'}`;
-    toast.textContent = message;
-    
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.style.animation = 'slideUp 0.3s ease forwards';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
 }
 
 window.initCart = initCart;

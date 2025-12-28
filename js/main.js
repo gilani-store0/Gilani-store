@@ -259,47 +259,13 @@ const UI = {
                 
                 const targetSection = sectionMap[sectionId];
                 if (targetSection) {
-                    if (sectionId === 'admin' && (typeof isUserAdmin !== 'function' || !isUserAdmin())) {
-                        if (typeof showMessage === 'function') showMessage('غير مصرح', 'ليس لديك صلاحية للوصول إلى لوحة الإدارة', 'error');
-                        return;
-                    }
-                    
                     this.showSection(targetSection);
-                    if (mobileNav) {
-                        mobileNav.classList.remove('active');
-                        document.body.style.overflow = 'auto';
-                    }
+                    if (mobileNav) mobileNav.classList.remove('active');
+                    document.body.style.overflow = 'auto';
                 }
             };
         });
 
-        const cartBtn = document.getElementById('cartBtn');
-        if (cartBtn) {
-            cartBtn.onclick = () => this.showSection('cartSection');
-        }
-        
-        const searchInput = document.getElementById('productSearch');
-        if (searchInput) {
-            let searchTimeout;
-            searchInput.addEventListener('input', (e) => {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(async () => {
-                    const query = e.target.value;
-                    if (typeof searchProducts === 'function') {
-                        const filtered = searchProducts(query);
-                        if (typeof this.renderProducts === 'function') {
-                            this.renderProducts(filtered);
-                        }
-                    }
-                }, 300);
-            });
-        }
-        
-        const startShoppingBtn = document.getElementById('startShoppingBtn');
-        if (startShoppingBtn) {
-            startShoppingBtn.onclick = () => this.showSection('productsSection');
-        }
-        
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -308,9 +274,7 @@ const UI = {
                 const filter = btn.dataset.filter;
                 if (typeof filterProducts === 'function') {
                     const filtered = filterProducts(filter);
-                    if (typeof this.renderProducts === 'function') {
-                        this.renderProducts(filtered);
-                    }
+                    this.renderProducts(filtered);
                 }
             });
         });
@@ -321,9 +285,7 @@ const UI = {
                 if (typeof filterProducts === 'function') {
                     const filtered = filterProducts('all');
                     const sorted = sortProducts(filtered, e.target.value);
-                    if (typeof this.renderProducts === 'function') {
-                        this.renderProducts(sorted);
-                    }
+                    this.renderProducts(sorted);
                 }
             });
         }
@@ -339,7 +301,7 @@ const UI = {
         }
         
         productsGrid.innerHTML = products.map(product => {
-            const categoryName = product.category || 'عطور';
+            const categoryName = typeof getCategoryName === 'function' ? getCategoryName(product.category) : product.category || 'عطور';
             const stockClass = product.stock <= 0 ? 'out-of-stock' : 
                               product.stock <= 5 ? 'low-stock' : 'in-stock';
             const stockText = product.stock <= 0 ? 'نفذت الكمية' : 
@@ -370,7 +332,7 @@ const UI = {
                                 <span class="current-price">${product.price || 0} ر.س</span>
                             </div>
                             <button class="btn primary-btn add-to-cart-btn" 
-                                    onclick="if(typeof addToCart === 'function') { addToCart(${JSON.stringify(product)}); UI.updateCartCount(); }"
+                                    onclick="if(typeof addToCart === 'function') { addToCart(${JSON.stringify(product).replace(/"/g, '&quot;')}); UI.updateCartCount(); }"
                                     ${product.stock <= 0 ? 'disabled' : ''}>
                                 <i class="fas fa-cart-plus"></i>
                             </button>
@@ -400,23 +362,37 @@ const UI = {
         if (!tableBody) return;
         
         if (!products || products.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="6" class="text-center">لا توجد منتجات</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="7" class="text-center">لا توجد منتجات</td></tr>';
             return;
         }
         
-        tableBody.innerHTML = products.map(product => `
-            <tr>
-                <td><img src="${product.image}" width="40" height="40" style="border-radius:4px"></td>
-                <td>${product.name}</td>
-                <td>${product.category}</td>
-                <td>${product.price} ر.س</td>
-                <td>${product.stock}</td>
-                <td>
-                    <button class="btn small-btn outline-btn" onclick="editProductModal(${JSON.stringify(product)})"><i class="fas fa-edit"></i></button>
-                    <button class="btn small-btn danger-btn" onclick="deleteProduct('${product.id}')"><i class="fas fa-trash"></i></button>
-                </td>
-            </tr>
-        `).join('');
+        tableBody.innerHTML = products.map(product => {
+            const productJson = JSON.stringify(product).replace(/"/g, '&quot;');
+            return `
+                <tr>
+                    <td><img src="${product.image || 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=300&h=300&fit=crop'}" width="40" height="40" style="border-radius:4px"></td>
+                    <td><strong>${product.name}</strong></td>
+                    <td>${typeof getCategoryName === 'function' ? getCategoryName(product.category) : product.category}</td>
+                    <td>${product.price} ر.س</td>
+                    <td>${product.stock || 0}</td>
+                    <td>
+                        <span class="product-status ${product.isActive !== false ? 'status-active' : 'status-inactive'}">
+                            ${product.isActive !== false ? 'نشط' : 'غير نشط'}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn small-btn edit-product" onclick="editProductModal(${productJson})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn small-btn danger-btn delete-product" onclick="deleteProduct('${product.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
     },
 
     renderCartItems(cartItems) {
@@ -424,73 +400,187 @@ const UI = {
         if (!container) return;
         
         if (!cartItems || cartItems.length === 0) {
-            container.innerHTML = '<div class="empty-state"><p>السلة فارغة</p></div>';
+            container.innerHTML = '<div class="empty-cart"><i class="fas fa-shopping-basket"></i><p>سلة التسوق فارغة</p></div>';
             return;
         }
         
         container.innerHTML = cartItems.map(item => `
             <div class="cart-item">
-                <img src="${item.image}" width="60">
-                <div class="item-info">
+                <img src="${item.image}" alt="${item.name}">
+                <div class="item-details">
                     <h4>${item.name}</h4>
                     <p>${item.price} ر.س</p>
                 </div>
-                <div class="item-qty">
-                    <button onclick="updateCartQuantity('${item.id}', -1); UI.loadCartSection();">-</button>
+                <div class="item-quantity">
+                    <button onclick="updateQuantity('${item.id}', -1)">-</button>
                     <span>${item.quantity}</span>
-                    <button onclick="updateCartQuantity('${item.id}', 1); UI.loadCartSection();">+</button>
+                    <button onclick="updateQuantity('${item.id}', 1)">+</button>
                 </div>
-                <button class="remove-btn" onclick="removeFromCart('${item.id}'); UI.loadCartSection();"><i class="fas fa-times"></i></button>
+                <button class="remove-item" onclick="removeFromCart('${item.id}')"><i class="fas fa-trash"></i></button>
             </div>
         `).join('');
     }
 };
 
 async function refreshAdminUI() {
-    if (typeof getCurrentUser !== 'function') return;
-    const user = getCurrentUser();
-    if (!user) return;
-
-    const isAdmin = typeof checkAndUpdateAdminStatus === 'function' ? await checkAndUpdateAdminStatus() : false;
-    UI.updateUserUI(user, isAdmin);
-
-    document.querySelectorAll('.admin-only').forEach(el => {
-        el.classList.toggle('hidden', !(isAdmin && !user.isGuest));
-    });
-}
-
-async function handleGoogleSignIn() {
-    if (typeof signInWithGoogle !== 'function') return;
-    const result = await signInWithGoogle();
-    if (result.success) {
-        await processLoginSuccess(result);
-    } else {
-        if (typeof showMessage === 'function') showMessage('خطأ', result.error || 'فشل تسجيل الدخول', 'error');
+    if (typeof isUserAdmin === 'function' && isUserAdmin()) {
+        const stats = typeof getStoreStats === 'function' ? await getStoreStats() : null;
+        if (stats) UI.updateAdminStats(stats);
+        
+        const products = typeof loadAllProducts === 'function' ? await loadAllProducts() : [];
+        UI.renderAdminProducts(products);
     }
 }
 
-async function handleGuestSignIn() {
-    if (typeof signInAsGuest !== 'function') return;
-    const result = await signInAsGuest();
-    if (result.success) {
-        await processLoginSuccess(result);
+async function initApp() {
+    console.log('بدء تشغيل المتجر...');
+    
+    try {
+        if (typeof initializeFirebase === 'function') initializeFirebase();
+        
+        // تهيئة نظام المصادقة أولاً
+        let authResult = { success: false };
+        if (typeof initAuth === 'function') {
+            authResult = await initAuth();
+        }
+        
+        if (typeof initProducts === 'function') initProducts();
+        if (typeof initCart === 'function') initCart();
+        if (typeof initAdmin === 'function') initAdmin();
+        
+        UI.setupMainAppEventListeners();
+        setupForms();
+        setupGlobalModals();
+        
+        if (authResult.success && authResult.user) {
+            UI.updateUserUI(authResult.user, authResult.isAdmin);
+            UI.showMainApp();
+            
+            setTimeout(async () => {
+                await refreshAdminUI();
+            }, 100);
+        } else {
+            // محاولة التحميل من LocalStorage كحل احتياطي سريع
+            const savedUser = typeof loadUserFromLocalStorage === 'function' ? loadUserFromLocalStorage() : { success: false };
+            if (savedUser.success && savedUser.user) {
+                UI.updateUserUI(savedUser.user, savedUser.user.isAdmin);
+                UI.showMainApp();
+            } else {
+                UI.showAuthScreen();
+            }
+        }
+        
+    } catch (error) {
+        console.error('خطأ في تهيئة التطبيق:', error);
+        UI.showMainApp();
     }
 }
 
-async function processLoginSuccess(result) {
-    if (typeof updateUserStatusAfterLogin === 'function') {
-        await updateUserStatusAfterLogin(result.user, result.isGuest);
+function setupForms() {
+    // تسجيل الدخول بالبريد
+    const emailAuthForm = document.getElementById('emailAuthForm');
+    if (emailAuthForm) {
+        emailAuthForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('emailInput').value;
+            const password = document.getElementById('passwordInput').value;
+            const displayNameInput = document.getElementById('displayNameInput');
+            
+            let result;
+            if (displayNameInput.classList.contains('hidden')) {
+                result = typeof signInWithEmail === 'function' ? await signInWithEmail(email, password) : { success: false };
+            } else {
+                const displayName = displayNameInput.value;
+                result = typeof signUpWithEmail === 'function' ? await signUpWithEmail(email, password, displayName) : { success: false };
+            }
+            
+            if (result.success) {
+                UI.updateUserUI(result.user, result.isAdmin);
+                UI.showMainApp();
+            } else {
+                if (typeof showMessage === 'function') showMessage('خطأ', result.error || 'فشل العملية', 'error');
+            }
+        };
     }
-    
-    const isAdmin = result.isAdmin || false;
-    UI.updateUserUI(result.user, isAdmin);
-    UI.showMainApp();
-    
-    if (typeof showToast === 'function') showToast('تم تسجيل الدخول بنجاح', false, 'success');
-    
-    if (isAdmin && !result.isGuest) {
-        console.log('المسؤول سجل دخوله');
-        UI.showSection('adminSection');
+
+    // تسجيل الدخول بـ Google
+    const googleBtn = document.getElementById('googleSignInBtn');
+    if (googleBtn) {
+        googleBtn.onclick = async () => {
+            const result = typeof signInWithGoogle === 'function' ? await signInWithGoogle() : { success: false };
+            if (result.success) {
+                UI.updateUserUI(result.user, result.isAdmin);
+                UI.showMainApp();
+            } else if (result.error) {
+                if (typeof showMessage === 'function') showMessage('خطأ', result.error, 'error');
+            }
+        };
+    }
+
+    // تسجيل الدخول كضيف
+    const guestBtn = document.getElementById('guestSignInBtn');
+    if (guestBtn) {
+        guestBtn.onclick = () => {
+            const result = typeof signInAsGuest === 'function' ? signInAsGuest() : { success: false };
+            if (result.success) {
+                UI.updateUserUI(result.user, false);
+                UI.showMainApp();
+            }
+        };
+    }
+
+    // تسجيل الخروج
+    const logoutBtn = document.getElementById('mobileLogoutBtn');
+    if (logoutBtn) {
+        logoutBtn.onclick = async () => {
+            if (typeof signOut === 'function') await signOut();
+        };
+    }
+
+    // التبديل بين تسجيل الدخول وإنشاء حساب
+    const toggleSignUpBtn = document.getElementById('toggleSignUpMode');
+    if (toggleSignUpBtn) {
+        toggleSignUpBtn.onclick = () => {
+            const displayNameInput = document.getElementById('displayNameInput');
+            const submitBtn = document.getElementById('signInWithEmailBtn');
+            const isLogin = displayNameInput.classList.contains('hidden');
+            
+            if (isLogin) {
+                displayNameInput.classList.remove('hidden');
+                submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> إنشاء حساب';
+                toggleSignUpBtn.textContent = 'لديك حساب بالفعل؟ سجل دخولك';
+            } else {
+                displayNameInput.classList.add('hidden');
+                submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> تسجيل الدخول';
+                toggleSignUpBtn.textContent = 'إنشاء حساب جديد';
+            }
+        };
+    }
+
+    // إظهار نموذج البريد
+    const showEmailBtn = document.getElementById('showEmailFormBtn');
+    if (showEmailBtn) {
+        showEmailBtn.onclick = () => {
+            document.getElementById('authOptions').classList.add('hidden');
+            document.getElementById('emailAuthSection').classList.remove('hidden');
+        };
+    }
+
+    // العودة لخيارات التسجيل
+    const backToOptionsBtn = document.getElementById('backToOptions');
+    if (backToOptionsBtn) {
+        backToOptionsBtn.onclick = () => {
+            document.getElementById('authOptions').classList.remove('hidden');
+            document.getElementById('emailAuthSection').classList.add('hidden');
+        };
+    }
+}
+
+function setupGlobalModals() {
+    const messageModal = document.getElementById('messageModal');
+    if (messageModal) {
+        const closeBtn = messageModal.querySelector('.close-modal') || document.getElementById('messageCloseBtn');
+        if (closeBtn) closeBtn.onclick = () => messageModal.classList.add('hidden');
     }
 }
 
@@ -523,88 +613,16 @@ function showMessage(title, text, type = 'info') {
             break;
     }
     
-    messageIcon.className = iconClass;
-    messageIcon.style.color = iconColor;
+    if (messageIcon) {
+        messageIcon.className = iconClass;
+        messageIcon.style.color = iconColor;
+    }
     
     messageModal.classList.remove('hidden');
     
     setTimeout(() => {
-        if (!messageModal.classList.contains('hidden')) {
-            messageModal.classList.add('hidden');
-        }
+        messageModal.classList.add('hidden');
     }, 3000);
-}
-
-async function initApp() {
-    console.log('بدء تشغيل المتجر...');
-    
-    try {
-        if (typeof initializeFirebase === 'function') initializeFirebase();
-        if (typeof initProducts === 'function') initProducts();
-        if (typeof initCart === 'function') initCart();
-        if (typeof initAdmin === 'function') initAdmin();
-        
-        UI.setupMainAppEventListeners();
-        
-        const savedUser = typeof loadUserFromLocalStorage === 'function' ? loadUserFromLocalStorage() : { success: false };
-        
-        if (savedUser.success && savedUser.user) {
-            const isAdmin = savedUser.user.isAdmin || false;
-            UI.updateUserUI(savedUser.user, isAdmin);
-            UI.showMainApp();
-            
-            setTimeout(async () => {
-                await refreshAdminUI();
-                const currentIsAdmin = typeof isUserAdmin === 'function' ? isUserAdmin() : false;
-                if (currentIsAdmin && !savedUser.user.isGuest) {
-                    UI.showSection('adminSection');
-                }
-            }, 100);
-        } else {
-            UI.showAuthScreen();
-        }
-        
-        setupForms();
-        setupGlobalModals();
-        
-    } catch (error) {
-        console.error('خطأ في تهيئة التطبيق:', error);
-        UI.showMainApp();
-    }
-}
-
-function setupForms() {
-    const emailAuthForm = document.getElementById('emailAuthForm');
-    if (emailAuthForm) {
-        emailAuthForm.onsubmit = async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('emailInput').value;
-            const password = document.getElementById('passwordInput').value;
-            const displayNameInput = document.getElementById('displayNameInput');
-            
-            let result;
-            if (displayNameInput.classList.contains('hidden')) {
-                result = typeof signInWithEmail === 'function' ? await signInWithEmail(email, password) : { success: false };
-            } else {
-                const displayName = displayNameInput.value;
-                result = typeof signUpWithEmail === 'function' ? await signUpWithEmail(email, password, displayName) : { success: false };
-            }
-            
-            if (result.success) {
-                await processLoginSuccess(result);
-            } else {
-                if (typeof showMessage === 'function') showMessage('خطأ', result.error || 'فشل العملية', 'error');
-            }
-        };
-    }
-}
-
-function setupGlobalModals() {
-    const messageModal = document.getElementById('messageModal');
-    if (messageModal) {
-        const closeBtn = messageModal.querySelector('.close-modal') || document.getElementById('messageCloseBtn');
-        if (closeBtn) closeBtn.onclick = () => messageModal.classList.add('hidden');
-    }
 }
 
 if (document.readyState === 'loading') {
@@ -615,3 +633,4 @@ if (document.readyState === 'loading') {
 
 window.UI = UI;
 window.showMessage = showMessage;
+window.refreshAdminUI = refreshAdminUI;

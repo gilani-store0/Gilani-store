@@ -99,8 +99,12 @@ async function uploadImageToStorage(file) {
         
         console.log('📤 رفع الصورة:', fileName);
         
-        await fileRef.put(file);
-        const downloadURL = await fileRef.getDownloadURL();
+        const metadata = {
+            contentType: file.type || 'image/jpeg'
+        };
+        
+        const uploadTask = await fileRef.put(file, metadata);
+        const downloadURL = await uploadTask.ref.getDownloadURL();
         
         console.log('✅ تم رفع الصورة:', downloadURL);
         return downloadURL;
