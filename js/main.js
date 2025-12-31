@@ -1,4 +1,4 @@
-// main.js - النسخة الكاملة المعدلة مع نظام تسجيل مستخدمين جديد
+// main.js - النسخة الكاملة المحسنة مع التعديلات الجديدة
 
 // ======================== تهيئة التطبيق ========================
 
@@ -10,6 +10,12 @@ let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
 let allProducts = [];
 let siteCurrency = 'ر.س';
 let siteSettings = {};
+let lastToastTime = 0;
+let selectedProductForQuantity = null;
+
+// متغيرات إدارة الهيدر عند التمرير
+let lastScrollTop = 0;
+let isHeaderVisible = true;
 
 // تهيئة Firebase
 const firebaseConfig = {
@@ -23,9 +29,64 @@ const firebaseConfig = {
 
 let app, auth, db;
 
+// دالة لضبط تنسيق الصفحة
+function adjustLayout() {
+    // ضبط عرض الهيدر
+    const headerContent = document.querySelector('.header-content');
+    if (headerContent) {
+        headerContent.style.display = 'grid';
+        headerContent.style.gridTemplateColumns = 'auto 1fr auto';
+        headerContent.style.alignItems = 'center';
+        headerContent.style.gap = '15px';
+        headerContent.style.padding = '15px 20px';
+    }
+    
+    // ضبط عرض البحث
+    const searchContainer = document.querySelector('.search-container');
+    if (searchContainer) {
+        searchContainer.style.width = '300px';
+        searchContainer.style.margin = '0';
+    }
+    
+    // ضبط عرض المنتجات
+    const productsGrid = document.querySelector('.products-grid');
+    if (productsGrid) {
+        productsGrid.style.display = 'grid';
+        productsGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
+        productsGrid.style.gap = '25px';
+        productsGrid.style.margin = '0';
+    }
+}
+
+// دالة إدارة الهيدر عند التمرير
+function handleScroll() {
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const header = document.querySelector('.header');
+    
+    if (scrollTop > lastScrollTop && scrollTop > 100) {
+        // التمرير للأسفل - إخفاء الهيدر
+        if (isHeaderVisible) {
+            header.style.transform = 'translateY(-100%)';
+            header.style.transition = 'transform 0.3s ease';
+            isHeaderVisible = false;
+        }
+    } else if (scrollTop < lastScrollTop) {
+        // التمرير للأعلى - إظهار الهيدر
+        if (!isHeaderVisible || scrollTop < 50) {
+            header.style.transform = 'translateY(0)';
+            isHeaderVisible = true;
+        }
+    }
+    
+    lastScrollTop = scrollTop;
+}
+
 // بدء التطبيق
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('🚀 بدء تحميل تطبيق Queen Beauty...');
+    
+    // ضبط التنسيق أولاً
+    adjustLayout();
     
     try {
         // تهيئة Firebase
@@ -35,8 +96,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         console.log('✅ Firebase مهيأ بنجاح');
         
-        // تحميل إعدادات الموقع
-        await loadSiteConfig();
+        // تحميل إعدادات الموقع والألوان
+        await Promise.all([
+            loadSiteConfig(),
+            loadThemeColors()
+        ]);
         
         // إعداد جميع الأحداث
         setupAllEventListeners();
@@ -45,12 +109,27 @@ document.addEventListener('DOMContentLoaded', async function() {
         // التحقق من المستخدم الحالي
         await checkCurrentUser();
         
+        // إضافة مستمع الحدث للتمرير
+        window.addEventListener('scroll', handleScroll);
+        
+        // إعادة إظهار الهيدر عند النقر على أي رابط
+        document.querySelectorAll('a[data-section]').forEach(link => {
+            link.addEventListener('click', () => {
+                const header = document.querySelector('.header');
+                header.style.transform = 'translateY(0)';
+                isHeaderVisible = true;
+            });
+        });
+        
     } catch (error) {
         console.error('❌ خطأ في تهيئة Firebase:', error);
         // الاستمرار في وضع الضيف حتى بدون Firebase
         setupAllEventListeners();
         setupRegistrationEventListeners();
         checkCurrentUser();
+        
+        // إضافة مستمع الحدث للتمرير حتى مع الخطأ
+        window.addEventListener('scroll', handleScroll);
     }
 });
 
@@ -79,6 +158,7 @@ function signInAsGuest() {
     
     // إظهار التطبيق الرئيسي
     showMainApp();
+    showSection('home'); // عرض الصفحة الرئيسية
     updateUserProfile();
     loadProducts();
     updateCartCount();
@@ -114,6 +194,7 @@ async function signInWithGoogle() {
         }));
         
         showMainApp();
+        showSection('home'); // عرض الصفحة الرئيسية
         updateUserProfile();
         loadProducts();
         updateCartCount();
@@ -132,6 +213,20 @@ function validateEmail(email) {
     return re.test(email);
 }
 
+// مسح حقول التسجيل
+function clearRegistrationForm() {
+    document.getElementById('registerName').value = '';
+    document.getElementById('registerEmail').value = '';
+    document.getElementById('registerPassword').value = '';
+    document.getElementById('registerPhone').value = '';
+    
+    const authMessage = document.getElementById('emailAuthMessage');
+    if (authMessage) {
+        authMessage.textContent = '';
+        authMessage.className = 'auth-message';
+    }
+}
+
 // إنشاء حساب جديد
 async function signUpWithEmail(email, password, name, phone = '') {
     try {
@@ -140,17 +235,17 @@ async function signUpWithEmail(email, password, name, phone = '') {
         // التحقق من المدخلات
         if (!email || !password || !name) {
             showToast('الرجاء ملء جميع الحقول المطلوبة', 'warning');
-            return;
+            return false;
         }
         
         if (password.length < 6) {
             showToast('كلمة المرور يجب أن تكون 6 أحرف على الأقل', 'warning');
-            return;
+            return false;
         }
         
         if (!validateEmail(email)) {
             showToast('البريد الإلكتروني غير صالح', 'warning');
-            return;
+            return false;
         }
         
         // 1. إنشاء المستخدم في Firebase Authentication
@@ -205,6 +300,7 @@ async function signUpWithEmail(email, password, name, phone = '') {
         
         // 5. إظهار التطبيق الرئيسي
         showMainApp();
+        showSection('home'); // عرض الصفحة الرئيسية
         updateUserProfile();
         loadProducts();
         updateCartCount();
@@ -216,10 +312,13 @@ async function signUpWithEmail(email, password, name, phone = '') {
         // 7. إخفاء نموذج التسجيل
         hideEmailAuthForm();
         
-        // 8. تحديث الإحصائيات في لوحة التحكم (إذا كان المستخدم أدمن)
-        if (isAdmin && db) {
-            setTimeout(() => {
-                window.firebaseModules.updateDoc(
+        // 8. مسح الحقول
+        clearRegistrationForm();
+        
+        // 9. تحديث الإحصائيات في لوحة التحكم
+        if (db) {
+            try {
+                await window.firebaseModules.updateDoc(
                     window.firebaseModules.doc(db, "stats", "users"),
                     {
                         totalUsers: window.firebaseModules.increment(1),
@@ -227,8 +326,12 @@ async function signUpWithEmail(email, password, name, phone = '') {
                     },
                     { merge: true }
                 );
-            }, 1000);
+            } catch (statsError) {
+                console.log('⚠️ لا يمكن تحديث الإحصائيات:', statsError);
+            }
         }
+        
+        return true;
         
     } catch (error) {
         console.error('❌ خطأ في إنشاء الحساب:', error);
@@ -255,6 +358,7 @@ async function signUpWithEmail(email, password, name, phone = '') {
         }
         
         showToast(errorMessage, 'error');
+        return false;
     }
 }
 
@@ -285,6 +389,7 @@ async function signInWithEmail(email, password) {
         }));
         
         showMainApp();
+        showSection('home'); // عرض الصفحة الرئيسية
         updateUserProfile();
         loadProducts();
         updateCartCount();
@@ -407,7 +512,6 @@ async function checkAdminPermissions(userId) {
         
         if (userSnap.exists()) {
             const userData = userSnap.data();
-            console.log('📄 بيانات المستخدم:', userData);
             
             if (userData.isAdmin === true || userData.role === 'admin') {
                 isAdmin = true;
@@ -444,8 +548,6 @@ function updateAdminButton() {
     if (adminBtn) {
         if (isAdmin && !isGuest) {
             adminBtn.style.display = 'flex';
-            adminBtn.style.alignItems = 'center';
-            adminBtn.style.justifyContent = 'center';
             console.log('✅ زر الأدمن معروض');
         } else {
             adminBtn.style.display = 'none';
@@ -487,7 +589,8 @@ function signOutUser() {
     showToast('تم تسجيل الخروج بنجاح', 'success');
 }
 
-// التحقق من المستخدم الحالي
+// ======================== التحقق من المستخدم الحالي ========================
+
 async function checkCurrentUser() {
     const savedUser = localStorage.getItem('currentUser');
     
@@ -501,6 +604,7 @@ async function checkCurrentUser() {
                 isGuest = true;
                 isAdmin = false;
                 showMainApp();
+                showSection('home'); // عرض الصفحة الرئيسية
                 updateUserProfile();
                 loadProducts();
                 updateCartCount();
@@ -520,6 +624,7 @@ async function checkCurrentUser() {
                 }
                 
                 showMainApp();
+                showSection('home'); // عرض الصفحة الرئيسية
                 updateUserProfile();
                 loadProducts();
                 updateCartCount();
@@ -528,9 +633,76 @@ async function checkCurrentUser() {
         } catch (e) {
             console.log('خطأ في تحليل بيانات المستخدم:', e);
             showAuthScreen();
+            
+            // إضافة زر للدخول كضيف على شاشة المصادقة
+            addGuestButtonToAuthScreen();
         }
     } else {
+        // ⬅️ **التعديل الجديد: عرض شاشة المصادقة عند التحديث**
         showAuthScreen();
+        
+        // إضافة زر للدخول كضيف على شاشة المصادقة
+        addGuestButtonToAuthScreen();
+    }
+}
+
+// دالة مساعدة لإضافة زر الدخول كضيف
+function addGuestButtonToAuthScreen() {
+    const authOptions = document.querySelector('.auth-options');
+    if (!authOptions) return;
+    
+    // التحقق إذا كان الزر موجوداً بالفعل
+    const existingGuestBtn = document.querySelector('.guest-auth-btn');
+    if (existingGuestBtn) return;
+    
+    const guestBtn = document.createElement('button');
+    guestBtn.className = 'auth-btn guest-btn guest-auth-btn';
+    guestBtn.innerHTML = '<i class="fas fa-user-clock"></i> الدخول كضيف للمتابعة';
+    guestBtn.addEventListener('click', signInAsGuest);
+    
+    authOptions.appendChild(guestBtn);
+}
+
+// ======================== تحميل الألوان ========================
+
+// تحميل إعدادات الألوان
+async function loadThemeColors() {
+    try {
+        if (!db) return;
+        
+        const colorsRef = window.firebaseModules.doc(db, "settings", "theme_colors");
+        const colorsSnap = await window.firebaseModules.getDoc(colorsRef);
+        
+        if (colorsSnap.exists()) {
+            const colors = colorsSnap.data();
+            applyThemeColors(colors);
+        }
+    } catch (error) {
+        console.error('خطأ في تحميل إعدادات الألوان:', error);
+    }
+}
+
+// تطبيق الألوان على الموقع
+function applyThemeColors(colors) {
+    const root = document.documentElement;
+    
+    if (colors.primaryColor) {
+        root.style.setProperty('--primary-color', colors.primaryColor);
+    }
+    if (colors.secondaryColor) {
+        root.style.setProperty('--secondary-color', colors.secondaryColor);
+    }
+    if (colors.successColor) {
+        root.style.setProperty('--success-color', colors.successColor);
+    }
+    if (colors.dangerColor) {
+        root.style.setProperty('--danger-color', colors.dangerColor);
+    }
+    if (colors.warningColor) {
+        root.style.setProperty('--warning-color', colors.warningColor);
+    }
+    if (colors.lightColor) {
+        root.style.setProperty('--light-color', colors.lightColor);
     }
 }
 
@@ -583,15 +755,7 @@ async function loadProducts() {
         console.log(`✅ تم تحميل ${allProducts.length} منتج من Firebase`);
         
         displayProducts();
-        displayFeaturedProducts();
-        
-        // اختبار: البحث عن المنتج المحدد 7suAJZDW7qqDMho1922R
-        const testProduct = allProducts.find(p => p.id === '7suAJZDW7qqDMho1922R');
-        if (testProduct) {
-            console.log('✅ المنتج 7suAJZDW7qqDMho1922R موجود:', testProduct.name);
-        } else {
-            console.log('❌ المنتج 7suAJZDW7qqDMho1922R غير موجود في النتائج');
-        }
+        displayFeaturedProducts(); // ⬅️ استخدام الدالة الجديدة مع الفلاتر
         
     } catch (error) {
         console.error('❌ خطأ في تحميل المنتجات من Firebase:', error);
@@ -617,7 +781,7 @@ function displayProducts(products = allProducts) {
         const isInFavorites = favorites.some(f => f.id === product.id);
         
         return `
-            <div class="product-card" data-id="${product.id}">
+            <div class="product-card" data-id="${product.id}" data-category="${product.category}">
                 <div class="product-image">
                     <img src="${product.image}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/300x200?text=صورة'">
                     ${isNew ? '<div class="badge new">جديد</div>' : ''}
@@ -632,10 +796,10 @@ function displayProducts(products = allProducts) {
                         ${product.originalPrice ? `<span class="original-price">${product.originalPrice} ${siteCurrency}</span>` : ''}
                     </div>
                     <div class="product-stock">
-                        <span>المخزون: ${product.stock || 0}</span>
+                        <i class="fas fa-box"></i> المخزون: ${product.stock || 0}
                     </div>
                     <div class="product-actions">
-                        <button class="action-btn add-to-cart" onclick="addToCart('${product.id}')">
+                        <button class="action-btn add-to-cart" onclick="openQuantityModal('${product.id}')">
                             <i class="fas fa-cart-plus"></i> أضف للسلة
                         </button>
                         <button class="action-btn favorite-btn ${isInFavorites ? 'active' : ''}" onclick="toggleFavorite('${product.id}')">
@@ -648,41 +812,122 @@ function displayProducts(products = allProducts) {
     }).join('');
 }
 
-// عرض المنتجات المميزة
+// ======================== عرض المنتجات المميزة مع الفلاتر ========================
+
 function displayFeaturedProducts() {
     const featuredGrid = document.getElementById('featuredProductsGrid');
     if (!featuredGrid) return;
     
-    const featuredProducts = allProducts.filter(p => 
-        p.isBest === true || p.isBest === 'true'
-    ).slice(0, 6);
+    // عرض جميع المنتجات بدلاً من الأفضل فقط
+    const featuredProducts = [...allProducts];
     
     if (featuredProducts.length === 0) {
-        featuredGrid.innerHTML = '<p class="no-products">لا توجد منتجات مميزة حالياً</p>';
+        featuredGrid.innerHTML = '<p class="no-products">لا توجد منتجات حالياً</p>';
         return;
     }
     
-    featuredGrid.innerHTML = featuredProducts.map(product => {
+    // إنشاء زر إظهار المزيد إذا كان هناك أكثر من 6 منتجات
+    const initialLimit = 6;
+    let displayProducts = featuredProducts.slice(0, initialLimit);
+    let hasMore = featuredProducts.length > initialLimit;
+    
+    featuredGrid.innerHTML = displayProducts.map(product => {
+        const isNew = product.isNew === true || product.isNew === 'true';
+        const isSale = product.isSale === true || product.isSale === 'true';
+        const isBest = product.isBest === true || product.isBest === 'true';
+        const isInFavorites = favorites.some(f => f.id === product.id);
+        
         return `
-            <div class="product-card" data-id="${product.id}">
+            <div class="product-card" data-id="${product.id}" data-category="${product.category}">
                 <div class="product-image">
                     <img src="${product.image}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/300x200?text=صورة'">
-                    <div class="badge best">الأفضل</div>
+                    ${isNew ? '<div class="badge new">جديد</div>' : ''}
+                    ${isSale ? '<div class="badge sale">عرض</div>' : ''}
+                    ${isBest ? '<div class="badge best">الأفضل</div>' : ''}
                 </div>
                 <div class="product-info">
                     <h3>${product.name}</h3>
                     <div class="product-price">
                         <span class="current-price">${product.price} ${siteCurrency}</span>
+                        ${product.originalPrice ? `<span class="original-price">${product.originalPrice} ${siteCurrency}</span>` : ''}
                     </div>
                     <div class="product-actions">
-                        <button class="action-btn add-to-cart" onclick="addToCart('${product.id}')">
+                        <button class="action-btn add-to-cart" onclick="openQuantityModal('${product.id}')">
                             <i class="fas fa-cart-plus"></i> أضف للسلة
+                        </button>
+                        <button class="action-btn favorite-btn ${isInFavorites ? 'active' : ''}" onclick="toggleFavorite('${product.id}')">
+                            <i class="fas fa-heart"></i>
                         </button>
                     </div>
                 </div>
             </div>
         `;
     }).join('');
+    
+    // إضافة زر "عرض المزيد" إذا كان هناك منتجات أكثر
+    if (hasMore) {
+        const showMoreBtn = document.createElement('button');
+        showMoreBtn.className = 'btn-primary show-more-btn';
+        showMoreBtn.innerHTML = '<i class="fas fa-arrow-down"></i> عرض المزيد';
+        showMoreBtn.style.cssText = `
+            margin: 20px auto;
+            display: block;
+            padding: 12px 30px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-family: 'Cairo';
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        `;
+        showMoreBtn.addEventListener('click', () => {
+            showSection('products');
+        });
+        featuredGrid.appendChild(showMoreBtn);
+    }
+    
+    // إعداد أحداث الفلاتر
+    setupFeaturedFilters();
+}
+
+// إعداد أحداث الفلاتر للمنتجات المميزة
+function setupFeaturedFilters() {
+    document.querySelectorAll('.featured-filters .filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const filter = this.dataset.filter;
+            
+            // تحديد الأزرار النشطة
+            document.querySelectorAll('.featured-filters .filter-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            // تصفية المنتجات
+            const productCards = document.querySelectorAll('#featuredProductsGrid .product-card');
+            const showMoreBtn = document.querySelector('#featuredProductsGrid .show-more-btn');
+            
+            productCards.forEach(card => {
+                if (filter === 'all') {
+                    card.style.display = 'block';
+                } else {
+                    const category = card.dataset.category;
+                    if (category === filter) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                }
+            });
+            
+            // إخفاء زر "عرض المزيد" عند التصفية
+            if (showMoreBtn) {
+                showMoreBtn.style.display = filter === 'all' ? 'block' : 'none';
+            }
+        });
+    });
 }
 
 // منتجات تجريبية
@@ -740,10 +985,52 @@ function displaySampleProducts() {
     displayFeaturedProducts();
 }
 
+// ======================== نافذة تحديد الكمية ========================
+
+function openQuantityModal(productId) {
+    const product = allProducts.find(p => p.id === productId);
+    if (!product) {
+        showToast('المنتج غير موجود', 'error');
+        return;
+    }
+    
+    selectedProductForQuantity = product;
+    
+    // تحديث اسم المنتج
+    document.getElementById('quantityProductName').textContent = product.name;
+    
+    // إعادة تعيين الكمية
+    document.getElementById('selectedQuantity').value = 1;
+    
+    // إظهار النافذة
+    document.getElementById('quantityModal').classList.add('active');
+}
+
+function closeQuantityModal() {
+    document.getElementById('quantityModal').classList.remove('active');
+    selectedProductForQuantity = null;
+}
+
+function addToCartFromModal() {
+    if (!selectedProductForQuantity) return;
+    
+    const quantity = parseInt(document.getElementById('selectedQuantity').value) || 1;
+    addToCartWithQuantity(selectedProductForQuantity.id, quantity);
+    closeQuantityModal();
+}
+
+function buyNowFromModal() {
+    if (!selectedProductForQuantity) return;
+    
+    const quantity = parseInt(document.getElementById('selectedQuantity').value) || 1;
+    buyNowDirect(selectedProductForQuantity.id, quantity);
+    closeQuantityModal();
+}
+
 // ======================== إدارة السلة ========================
 
-// إضافة منتج للسلة
-function addToCart(productId) {
+// إضافة منتج للسلة بكمية محددة
+function addToCartWithQuantity(productId, quantity = 1) {
     const product = allProducts.find(p => p.id === productId);
     if (!product) {
         showToast('المنتج غير موجود', 'error');
@@ -756,15 +1043,20 @@ function addToCart(productId) {
         return;
     }
     
+    if (quantity > product.stock) {
+        showToast(`الكمية المطلوبة غير متوفرة. المخزون الحالي: ${product.stock}`, 'warning');
+        return;
+    }
+    
     const existingItem = cartItems.find(item => item.id === productId);
     
     if (existingItem) {
         // التحقق من توفر الكمية في المخزون
-        if (existingItem.quantity >= product.stock) {
-            showToast('لا توجد كمية متاحة إضافية في المخزون', 'warning');
+        if (existingItem.quantity + quantity > product.stock) {
+            showToast(`لا توجد كمية كافية في المخزون. المتاح: ${product.stock - existingItem.quantity}`, 'warning');
             return;
         }
-        existingItem.quantity++;
+        existingItem.quantity += quantity;
     } else {
         cartItems.push({
             id: product.id,
@@ -772,7 +1064,7 @@ function addToCart(productId) {
             price: product.price,
             originalPrice: product.originalPrice,
             image: product.image,
-            quantity: 1,
+            quantity: quantity,
             stock: product.stock
         });
     }
@@ -788,7 +1080,7 @@ function addToCart(productId) {
         updateCartDisplay();
     }
     
-    showToast('تمت إضافة المنتج إلى السلة', 'success');
+    showToast(`تمت إضافة ${quantity} من المنتج إلى السلة`, 'success');
 }
 
 // تحديث عدد العناصر في السلة
@@ -816,7 +1108,8 @@ function updateCartDisplay() {
         return;
     }
     
-    cartItemsElement.style.display = 'block';
+    cartItemsElement.style.display = 'flex';
+    cartItemsElement.style.flexDirection = 'column';
     emptyCartMessage.style.display = 'none';
     if (cartSummary) cartSummary.style.display = 'block';
     
@@ -950,6 +1243,129 @@ function clearCart() {
     }
 }
 
+// ======================== الشراء المباشر عبر واتساب ========================
+
+function buyNowDirect(productId, quantity = 1) {
+    const product = allProducts.find(p => p.id === productId);
+    if (!product) {
+        showToast('المنتج غير موجود', 'error');
+        return;
+    }
+    
+    // التحقق من المخزون
+    if (product.stock <= 0) {
+        showToast('المنتج غير متوفر في المخزون', 'warning');
+        return;
+    }
+    
+    if (quantity > product.stock) {
+        showToast(`الكمية المطلوبة غير متوفرة. المخزون الحالي: ${product.stock}`, 'warning');
+        return;
+    }
+    
+    const shippingCost = siteSettings.shippingCost || 15;
+    const freeShippingLimit = siteSettings.freeShippingLimit || 200;
+    const subtotal = product.price * quantity;
+    const finalShippingCost = subtotal < freeShippingLimit ? shippingCost : 0;
+    const total = subtotal + finalShippingCost;
+    
+    // إنشاء رسالة الطلب
+    const customerName = currentUser?.displayName || 'زائر';
+    const phoneNumber = currentUser?.phone || 'غير محدد';
+    
+    const message = `🌟 طلب جديد من Queen Beauty 🌟\n\n` +
+                   `👤 العميل: ${customerName}\n` +
+                   `📞 الهاتف: ${phoneNumber}\n` +
+                   `📦 المنتج: ${product.name}\n` +
+                   `🔢 الكمية: ${quantity}\n` +
+                   `💰 سعر الوحدة: ${product.price} ${siteCurrency}\n` +
+                   `💵 المجموع: ${subtotal} ${siteCurrency}\n` +
+                   `🚚 رسوم الشحن: ${finalShippingCost} ${siteCurrency}\n` +
+                   `💎 الإجمالي: ${total} ${siteCurrency}\n\n` +
+                   `📍 العنوان: ${currentUser?.address || 'سيتم تحديده لاحقاً'}\n` +
+                   `📝 ملاحظات: ${quantity > 1 ? 'طلب كمية متعددة' : 'طلب فردي'}`;
+    
+    // ترميز الرسالة لرابط واتساب
+    const encodedMessage = encodeURIComponent(message);
+    
+    // ✅ **رابط واتساب صحيح يعمل على جميع الأجهزة**
+    const whatsappNumber = '+249933002015';
+    const whatsappURL = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+    
+    // فتح واتساب في نافذة جديدة
+    const newWindow = window.open(whatsappURL, '_blank');
+    
+    // إذا لم تفتح النافذة (متصفح يحجب popups)
+    if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+        // محاولة بديلة: توجيه المستخدم مباشرة
+        window.location.href = whatsappURL;
+    }
+    
+    showToast('جارٍ توجيهك لواتساب لإكمال الطلب', 'success');
+}
+
+// إتمام الشراء عبر واتساب للسلة كاملة
+function checkoutToWhatsApp() {
+    if (cartItems.length === 0) {
+        showToast('السلة فارغة', 'warning');
+        return;
+    }
+    
+    const subtotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    const shippingCost = siteSettings.shippingCost || 15;
+    const freeShippingLimit = siteSettings.freeShippingLimit || 200;
+    const finalShippingCost = subtotal < freeShippingLimit ? shippingCost : 0;
+    const total = subtotal + finalShippingCost;
+    
+    // إنشاء رسالة الطلب
+    const customerName = currentUser?.displayName || 'زائر';
+    const phoneNumber = currentUser?.phone || 'غير محدد';
+    
+    let message = `🌟 طلب جديد من Queen Beauty 🌟\n\n` +
+                  `👤 العميل: ${customerName}\n` +
+                  `📞 الهاتف: ${phoneNumber}\n\n` +
+                  `🛒 محتويات الطلب:\n`;
+    
+    cartItems.forEach((item, index) => {
+        message += `${index + 1}. ${item.name} - ${item.quantity} × ${item.price} ${siteCurrency} = ${item.price * item.quantity} ${siteCurrency}\n`;
+    });
+    
+    message += `\n💰 المجموع الفرعي: ${subtotal} ${siteCurrency}\n` +
+               `🚚 رسوم الشحن: ${finalShippingCost} ${siteCurrency}\n` +
+               `💎 الإجمالي: ${total} ${siteCurrency}\n\n` +
+               `📍 العنوان: ${currentUser?.address || 'سيتم تحديده لاحقاً'}\n` +
+               `📝 عدد المنتجات: ${cartItems.length} منتج`;
+    
+    // ✅ **تصحيح رابط واتساب**
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappNumber = '+249933002015'; // ✅ أضف علامة +
+    const whatsappURL = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+    
+    console.log('🔗 رابط واتساب:', whatsappURL);
+    
+    // محاولة فتح واتساب
+    try {
+        const newWindow = window.open(whatsappURL, '_blank', 'noopener,noreferrer');
+        
+        if (!newWindow || newWindow.closed) {
+            // بديل: افتح في نفس النافذة
+            window.location.href = whatsappURL;
+        }
+        
+        // إفراغ السلة بعد إرسال الطلب
+        cartItems = [];
+        localStorage.removeItem('cart');
+        updateCartCount();
+        updateCartDisplay();
+        
+        showToast('تم إرسال طلبك عبر واتساب', 'success');
+        
+    } catch (error) {
+        console.error('❌ خطأ في فتح واتساب:', error);
+        showToast('حدث خطأ في فتح واتساب', 'error');
+    }
+}
+
 // ======================== المفضلة ========================
 
 // تبديل حالة المفضلة
@@ -1036,7 +1452,7 @@ function updateFavoritesDisplay() {
                         <span class="current-price">${product.price} ${siteCurrency}</span>
                     </div>
                     <div class="product-actions">
-                        <button class="action-btn add-to-cart" onclick="addToCart('${product.id}')">
+                        <button class="action-btn add-to-cart" onclick="openQuantityModal('${product.id}')">
                             <i class="fas fa-cart-plus"></i> أضف للسلة
                         </button>
                         <button class="action-btn favorite-btn active" onclick="toggleFavorite('${product.id}')">
@@ -1125,7 +1541,7 @@ function displayFilteredProducts(products) {
         const isInFavorites = favorites.some(f => f.id === product.id);
         
         return `
-            <div class="product-card" data-id="${product.id}">
+            <div class="product-card" data-id="${product.id}" data-category="${product.category}">
                 <div class="product-image">
                     <img src="${product.image}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/300x200?text=صورة'">
                     ${isNew ? '<div class="badge new">جديد</div>' : ''}
@@ -1140,275 +1556,12 @@ function displayFilteredProducts(products) {
                         ${product.originalPrice ? `<span class="original-price">${product.originalPrice} ${siteCurrency}</span>` : ''}
                     </div>
                     <div class="product-actions">
-                        <button class="action-btn add-to-cart" onclick="addToCart('${product.id}')">
+                        <button class="action-btn add-to-cart" onclick="openQuantityModal('${product.id}')">
                             <i class="fas fa-cart-plus"></i> أضف للسلة
                         </button>
                         <button class="action-btn favorite-btn ${isInFavorites ? 'active' : ''}" onclick="toggleFavorite('${product.id}')">
                             <i class="fas fa-heart"></i>
                         </button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-// ======================== الطلبات ========================
-
-// إنشاء طلب جديد
-async function createOrder() {
-    if (!currentUser || isGuest) {
-        showToast('يجب تسجيل الدخول لإتمام الطلب', 'warning');
-        showEmailAuthForm();
-        return;
-    }
-    
-    if (cartItems.length === 0) {
-        showToast('السلة فارغة', 'warning');
-        return;
-    }
-    
-    try {
-        const subtotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-        const shippingCost = siteSettings.shippingCost || 15;
-        const freeShippingLimit = siteSettings.freeShippingLimit || 200;
-        const finalShippingCost = subtotal < freeShippingLimit ? shippingCost : 0;
-        const total = subtotal + finalShippingCost;
-        
-        const orderData = {
-            userId: currentUser.uid,
-            items: cartItems,
-            subtotal: subtotal,
-            shippingCost: finalShippingCost,
-            total: total,
-            status: 'pending',
-            shippingAddress: '',
-            paymentMethod: 'cash',
-            customerName: currentUser.displayName || 'زائر',
-            customerEmail: currentUser.email || '',
-            orderNumber: 'ORD-' + Date.now(),
-            createdAt: new Date().toISOString()
-        };
-        
-        // حفظ الطلب في Firebase للمستخدمين المسجلين
-        if (!isGuest && db) {
-            try {
-                const ordersRef = window.firebaseModules.collection(db, "orders");
-                const docRef = await window.firebaseModules.addDoc(ordersRef, {
-                    ...orderData,
-                    createdAt: window.firebaseModules.serverTimestamp(),
-                    updatedAt: window.firebaseModules.serverTimestamp()
-                });
-                
-                orderData.id = docRef.id;
-                
-                // تحديث إحصائيات المستخدم
-                const userRef = window.firebaseModules.doc(db, "users", currentUser.uid);
-                const userDoc = await window.firebaseModules.getDoc(userRef);
-                
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    const newTotalOrders = (userData.totalOrders || 0) + 1;
-                    const newTotalSpent = (userData.totalSpent || 0) + total;
-                    
-                    await window.firebaseModules.updateDoc(userRef, {
-                        totalOrders: newTotalOrders,
-                        totalSpent: newTotalSpent,
-                        updatedAt: window.firebaseModules.serverTimestamp()
-                    });
-                }
-                
-                showToast('تم حفظ الطلب في سجلاتك', 'info');
-            } catch (firebaseError) {
-                console.error('خطأ في حفظ الطلب في Firebase:', firebaseError);
-            }
-        }
-        
-        // حفظ الطلب في localStorage
-        const orders = JSON.parse(localStorage.getItem('orders')) || [];
-        orders.push(orderData);
-        localStorage.setItem('orders', JSON.stringify(orders));
-        
-        // تفريغ السلة
-        cartItems = [];
-        localStorage.removeItem('cart');
-        updateCartCount();
-        updateCartDisplay();
-        
-        // عرض تأكيد الطلب
-        showOrderConfirmation(orderData);
-        
-        showToast('تم إنشاء الطلب بنجاح! رقم الطلب: ' + orderData.orderNumber, 'success');
-        
-        // تحديث إحصائيات الملف الشخصي
-        updateProfileStats();
-        
-    } catch (error) {
-        console.error('خطأ في إنشاء الطلب:', error);
-        showToast('حدث خطأ في إنشاء الطلب', 'error');
-    }
-}
-
-// عرض تأكيد الطلب
-function showOrderConfirmation(order) {
-    const modal = document.createElement('div');
-    modal.className = 'modal active';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>تم تأكيد طلبك!</h3>
-                <button class="close-modal" onclick="this.closest('.modal').remove()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div style="text-align: center; padding: 20px;">
-                    <i class="fas fa-check-circle" style="font-size: 60px; color: #27ae60; margin-bottom: 20px;"></i>
-                    <h3 style="color: #2c3e50; margin-bottom: 15px;">شكراً لشرائك من متجرنا</h3>
-                    <p style="margin-bottom: 10px;"><strong>رقم الطلب:</strong> ${order.orderNumber}</p>
-                    <p style="margin-bottom: 10px;"><strong>المجموع:</strong> ${order.total} ${siteCurrency}</p>
-                    <p style="margin-bottom: 20px;"><strong>الحالة:</strong> قيد المعالجة</p>
-                    <p style="color: #7f8c8d;">سيتم التواصل معك لتأكيد تفاصيل الشحن</p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" onclick="this.closest('.modal').remove()">إغلاق</button>
-                <button class="btn-primary" onclick="showSection('orders'); this.closest('.modal').remove()">عرض الطلبات</button>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-}
-
-// تحميل الطلبات من Firebase
-async function loadUserOrders() {
-    if (!currentUser || isGuest || !db) {
-        displayOrders();
-        return;
-    }
-    
-    try {
-        const ordersRef = window.firebaseModules.collection(db, "orders");
-        const q = window.firebaseModules.query(
-            ordersRef,
-            window.firebaseModules.where("userId", "==", currentUser.uid),
-            window.firebaseModules.orderBy("createdAt", "desc")
-        );
-        
-        const querySnapshot = await window.firebaseModules.getDocs(q);
-        const firebaseOrders = [];
-        
-        querySnapshot.forEach(doc => {
-            const order = doc.data();
-            order.id = doc.id;
-            // تحويل الطابع الزمني إلى تاريخ
-            if (order.createdAt && order.createdAt.toDate) {
-                order.createdAt = order.createdAt.toDate();
-            }
-            firebaseOrders.push(order);
-        });
-        
-        // دمج مع الطلبات المحلية
-        const localOrders = JSON.parse(localStorage.getItem('orders')) || [];
-        const allOrders = [...firebaseOrders, ...localOrders];
-        
-        // عرض الطلبات
-        displayOrders(allOrders);
-        
-    } catch (error) {
-        console.error('خطأ في تحميل الطلبات:', error);
-        displayOrders();
-    }
-}
-
-// عرض الطلبات السابقة
-function displayOrders(orders = null) {
-    const ordersList = document.getElementById('ordersList');
-    const emptyOrdersMessage = document.getElementById('emptyOrdersMessage');
-    
-    if (!ordersList || !emptyOrdersMessage) return;
-    
-    let ordersToDisplay = orders;
-    
-    if (!ordersToDisplay) {
-        if (isGuest) {
-            ordersToDisplay = JSON.parse(localStorage.getItem('orders')) || [];
-        } else {
-            // للمستخدمين المسجلين، يجب استدعاء loadUserOrders أولاً
-            return;
-        }
-    }
-    
-    if (!ordersToDisplay || ordersToDisplay.length === 0) {
-        ordersList.style.display = 'none';
-        emptyOrdersMessage.style.display = 'block';
-        return;
-    }
-    
-    ordersList.style.display = 'block';
-    emptyOrdersMessage.style.display = 'none';
-    
-    // ترتيب الطلبات من الأحدث للأقدم
-    ordersToDisplay.sort((a, b) => {
-        const dateA = new Date(a.createdAt || a.orderDate || 0);
-        const dateB = new Date(b.createdAt || b.orderDate || 0);
-        return dateB - dateA;
-    });
-    
-    ordersList.innerHTML = ordersToDisplay.map(order => {
-        const orderDate = new Date(order.createdAt || order.orderDate || Date.now()).toLocaleDateString('ar-SA', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
-        let statusText = 'قيد المعالجة';
-        let statusClass = 'status-pending';
-        
-        if (order.status === 'delivered') {
-            statusText = 'تم التوصيل';
-            statusClass = 'status-delivered';
-        } else if (order.status === 'shipped') {
-            statusText = 'قيد الشحن';
-            statusClass = 'status-pending';
-        } else if (order.status === 'cancelled') {
-            statusText = 'ملغى';
-            statusClass = 'status-cancelled';
-        }
-        
-        return `
-            <div class="order-card">
-                <div class="order-header">
-                    <div>
-                        <span class="order-id">رقم الطلب: ${order.orderNumber || order.id}</span>
-                        <span class="order-date">${orderDate}</span>
-                    </div>
-                    <span class="order-status ${statusClass}">${statusText}</span>
-                </div>
-                <div class="order-items">
-                    ${order.items ? order.items.map(item => `
-                        <div class="order-item">
-                            <div>
-                                <strong>${item.name}</strong>
-                                <p>${item.quantity} × ${item.price} ${siteCurrency}</p>
-                            </div>
-                            <span>${item.price * item.quantity} ${siteCurrency}</span>
-                        </div>
-                    `).join('') : ''}
-                </div>
-                <div class="order-summary">
-                    <div class="summary-item">
-                        <span>المجموع الفرعي:</span>
-                        <span>${order.subtotal || 0} ${siteCurrency}</span>
-                    </div>
-                    <div class="summary-item">
-                        <span>رسوم الشحن:</span>
-                        <span>${order.shippingCost || 0} ${siteCurrency}</span>
-                    </div>
-                    <div class="summary-item total">
-                        <span>المجموع الكلي:</span>
-                        <span>${order.total || 0} ${siteCurrency}</span>
                     </div>
                 </div>
             </div>
@@ -1619,6 +1772,9 @@ function setupAllEventListeners() {
     // أحداث النوافذ المنبثقة
     setupModalEventListeners();
     
+    // أحداث نافذة الكمية
+    setupQuantityModalEvents();
+    
     console.log('✅ جميع الأحداث جاهزة');
 }
 
@@ -1700,16 +1856,9 @@ function setupNavigationEventListeners() {
 function setupAppEventListeners() {
     // الأزرار الرئيسية
     const buttons = {
-        'shopNowBtn': () => showSection('products'),
         'continueShoppingBtn': () => showSection('products'),
         'browseProductsBtn': () => showSection('products'),
-        'startShoppingBtn': () => showSection('products'),
-        'homeBtn': () => showSection('home'),
-        'cartBtn': () => showSection('cart'),
-        'favoritesBtn': () => showSection('favorites'),
-        'profileBtn': () => showSection('profile'),
-        'logoutBtn': signOutUser,
-        'checkoutBtn': createOrder,
+        'checkoutBtn': checkoutToWhatsApp,
         'editProfileBtn': editProfile,
         'saveProfileBtn': saveProfileChanges,
         'clearCartBtn': clearCart,
@@ -1777,6 +1926,56 @@ function setupModalEventListeners() {
     });
 }
 
+// إعداد أحداث نافذة الكمية
+function setupQuantityModalEvents() {
+    // زيادة الكمية
+    const increaseBtn = document.getElementById('increaseQuantity');
+    if (increaseBtn) {
+        increaseBtn.addEventListener('click', () => {
+            const input = document.getElementById('selectedQuantity');
+            let value = parseInt(input.value) || 1;
+            if (value < 99) {
+                input.value = value + 1;
+            }
+        });
+    }
+    
+    // تقليل الكمية
+    const decreaseBtn = document.getElementById('decreaseQuantity');
+    if (decreaseBtn) {
+        decreaseBtn.addEventListener('click', () => {
+            const input = document.getElementById('selectedQuantity');
+            let value = parseInt(input.value) || 1;
+            if (value > 1) {
+                input.value = value - 1;
+            }
+        });
+    }
+    
+    // تحكم في إدخال الكمية
+    const quantityInput = document.getElementById('selectedQuantity');
+    if (quantityInput) {
+        quantityInput.addEventListener('change', function() {
+            let value = parseInt(this.value) || 1;
+            if (value < 1) value = 1;
+            if (value > 99) value = 99;
+            this.value = value;
+        });
+    }
+    
+    // زر إضافة للسلة
+    const addToCartBtn = document.getElementById('addToCartFromModal');
+    if (addToCartBtn) {
+        addToCartBtn.addEventListener('click', addToCartFromModal);
+    }
+    
+    // زر الشراء المباشر
+    const buyNowBtn = document.getElementById('buyNowFromModal');
+    if (buyNowBtn) {
+        buyNowBtn.addEventListener('click', buyNowFromModal);
+    }
+}
+
 // ======================== أحداث التسجيل ========================
 
 function setupRegistrationEventListeners() {
@@ -1823,36 +2022,17 @@ function showRegistrationForm() {
         if (formHeader) formHeader.textContent = 'إنشاء حساب جديد';
         
         // إظهار حقول التسجيل
-        const registerName = document.getElementById('registerName');
-        const registerEmail = document.getElementById('registerEmail');
-        const registerPassword = document.getElementById('registerPassword');
-        const registerPhone = document.getElementById('registerPhone');
+        const loginFields = document.getElementById('loginFields');
+        const registerFields = document.getElementById('registerFields');
         
-        if (registerName) registerName.style.display = 'block';
-        if (registerEmail) registerEmail.style.display = 'block';
-        if (registerPassword) registerPassword.style.display = 'block';
-        if (registerPhone) registerPhone.style.display = 'block';
-        
-        // إخفاء حقول تسجيل الدخول القديمة
-        const emailInput = document.getElementById('emailInput');
-        const passwordInput = document.getElementById('passwordInput');
-        
-        if (emailInput) emailInput.style.display = 'none';
-        if (passwordInput) passwordInput.style.display = 'none';
-        
-        // إظهار زر الإنشاء وإخفاء زر تسجيل الدخول
-        const signInBtn = document.getElementById('signInBtn');
-        const completeSignUpBtn = document.getElementById('completeSignUpBtn');
-        const switchToLoginBtn = document.getElementById('switchToLoginBtn');
-        
-        if (signInBtn) signInBtn.style.display = 'none';
-        if (completeSignUpBtn) completeSignUpBtn.style.display = 'block';
-        if (switchToLoginBtn) switchToLoginBtn.style.display = 'block';
+        if (loginFields) loginFields.style.display = 'none';
+        if (registerFields) registerFields.style.display = 'block';
         
         // إظهار النموذج
         emailAuthForm.style.display = 'block';
         
         // التركيز على أول حقل
+        const registerName = document.getElementById('registerName');
         if (registerName) registerName.focus();
     }
 }
@@ -1865,33 +2045,14 @@ function showLoginForm() {
         if (formHeader) formHeader.textContent = 'تسجيل الدخول';
         
         // إظهار حقول تسجيل الدخول
-        const emailInput = document.getElementById('emailInput');
-        const passwordInput = document.getElementById('passwordInput');
+        const loginFields = document.getElementById('loginFields');
+        const registerFields = document.getElementById('registerFields');
         
-        if (emailInput) emailInput.style.display = 'block';
-        if (passwordInput) passwordInput.style.display = 'block';
-        
-        // إخفاء حقول التسجيل الجديدة
-        const registerName = document.getElementById('registerName');
-        const registerEmail = document.getElementById('registerEmail');
-        const registerPassword = document.getElementById('registerPassword');
-        const registerPhone = document.getElementById('registerPhone');
-        
-        if (registerName) registerName.style.display = 'none';
-        if (registerEmail) registerEmail.style.display = 'none';
-        if (registerPassword) registerPassword.style.display = 'none';
-        if (registerPhone) registerPhone.style.display = 'none';
-        
-        // إظهار زر تسجيل الدخول وإخفاء زر الإنشاء
-        const signInBtn = document.getElementById('signInBtn');
-        const completeSignUpBtn = document.getElementById('completeSignUpBtn');
-        const switchToLoginBtn = document.getElementById('switchToLoginBtn');
-        
-        if (signInBtn) signInBtn.style.display = 'block';
-        if (completeSignUpBtn) completeSignUpBtn.style.display = 'none';
-        if (switchToLoginBtn) switchToLoginBtn.style.display = 'none';
+        if (loginFields) loginFields.style.display = 'block';
+        if (registerFields) registerFields.style.display = 'none';
         
         // التركيز على حقل البريد
+        const emailInput = document.getElementById('emailInput');
         if (emailInput) emailInput.focus();
     }
 }
@@ -1922,7 +2083,11 @@ async function handleRegistration() {
     showAuthMessage('جاري إنشاء حسابك...', 'info');
     
     // استدعاء دالة إنشاء الحساب
-    await signUpWithEmail(email, password, name, phone);
+    const success = await signUpWithEmail(email, password, name, phone);
+    
+    if (success) {
+        showAuthMessage('تم إنشاء حسابك بنجاح!', 'success');
+    }
 }
 
 async function handleLogin() {
@@ -2019,13 +2184,6 @@ function showSection(sectionId) {
             case 'favorites':
                 updateFavoritesDisplay();
                 break;
-            case 'orders':
-                if (!isGuest && db) {
-                    loadUserOrders();
-                } else {
-                    displayOrders();
-                }
-                break;
             case 'profile':
                 updateProfileStats();
                 break;
@@ -2035,6 +2193,11 @@ function showSection(sectionId) {
 
 // الإشعارات
 function showToast(message, type = 'info') {
+    // منع الرسائل المتكررة
+    const now = Date.now();
+    if (now - lastToastTime < 1000) return; // منع رسائل في أقل من ثانية
+    lastToastTime = now;
+    
     const toastContainer = document.getElementById('toastContainer');
     if (!toastContainer) return;
     
@@ -2054,13 +2217,21 @@ function showToast(message, type = 'info') {
     toastContainer.appendChild(toast);
     
     // إزالة بعد 3 ثواني
-    setTimeout(() => toast.remove(), 3000);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-100%)';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 }
 
 // ======================== التصدير للاستخدام في HTML ========================
 
 // تصدير الدوال للاستخدام في onclick في HTML
-window.addToCart = addToCart;
+window.addToCart = addToCartWithQuantity;
+window.openQuantityModal = openQuantityModal;
+window.closeQuantityModal = closeQuantityModal;
+window.addToCartFromModal = addToCartFromModal;
+window.buyNowFromModal = buyNowFromModal;
 window.toggleFavorite = toggleFavorite;
 window.updateCartQuantity = updateCartQuantity;
 window.removeFromCart = removeFromCart;
@@ -2073,11 +2244,15 @@ window.editProfile = editProfile;
 window.saveProfileChanges = saveProfileChanges;
 window.performSearch = performSearch;
 window.filterProducts = filterProducts;
-window.createOrder = createOrder;
+window.checkoutToWhatsApp = checkoutToWhatsApp;
+window.buyNowDirect = buyNowDirect;
 window.signUpWithEmail = signUpWithEmail;
 window.handleRegistration = handleRegistration;
 window.handleLogin = handleLogin;
 window.showRegistrationForm = showRegistrationForm;
 window.showLoginForm = showLoginForm;
+
+// استدعاء ضبط التنسيق عند تغيير حجم النافذة
+window.addEventListener('resize', adjustLayout);
 
 console.log('🚀 تطبيق Queen Beauty جاهز للعمل!');
