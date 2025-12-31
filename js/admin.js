@@ -1,790 +1,761 @@
-// js/admin.js - النسخة الكاملة المحدَّثة مع رفع الصور
+// admin.js - النسخة النهائية المصححة
+console.log('🚀 بدء تحميل لوحة تحكم Queen Beauty');
 
-let pendingAction = null;
-let pendingActionData = null;
-let selectedImageFile = null;
-let imagePreviewUrl = null;
+let adminDb = null;
+let siteCurrency = 'ر.س';
+let currentEditingProductId = null;
 
-// تهيئة الإدارة
-function initAdmin() {
-    console.log('تهيئة لوحة الإدارة...');
-    setupAdminEventListeners();
-    setupImageUpload();
+// فحص الاتصال بقاعدة البيانات
+async function checkFirestoreConnection() {
+    try {
+        console.log('🔍 اختبار الاتصال بقاعدة البيانات...');
+        
+        // محاولة قراءة من مجموعة settings
+        const settingsRef = window.firebaseModules.collection(adminDb, "settings");
+        const settingsSnapshot = await window.firebaseModules.getDocs(settingsRef);
+        console.log('✅ اتصال قاعدة البيانات ناجح');
+        
+        // إذا لم تكن هناك إعدادات، أنشئها
+        if (settingsSnapshot.empty) {
+            console.log('⚠️ لا توجد إعدادات، سيتم إنشاؤها...');
+            await createDefaultSettings();
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('❌ فشل الاتصال بقاعدة البيانات:', error);
+        showToast('فشل الاتصال بقاعدة البيانات: ' + error.message, 'error');
+        return false;
+    }
+}
+
+// إنشاء إعدادات افتراضية
+async function createDefaultSettings() {
+    try {
+        const settingsRef = window.firebaseModules.doc(adminDb, "settings", "site_config");
+        
+        const defaultSettings = {
+            storeName: 'Queen Beauty',
+            email: 'yxr.249@gmail.com',
+            phone: '+249933002015',
+            address: 'السودان - الخرطوم',
+            shippingCost: 15,
+            freeShippingLimit: 200,
+            workingHours: 'من الأحد إلى الخميس: 9 صباحاً - 10 مساءً',
+            aboutUs: 'متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية',
+            createdAt: window.firebaseModules.serverTimestamp(),
+            updatedAt: window.firebaseModules.serverTimestamp()
+        };
+        
+        await window.firebaseModules.setDoc(settingsRef, defaultSettings);
+        console.log('✅ تم إنشاء الإعدادات الافتراضية');
+        return true;
+    } catch (error) {
+        console.error('❌ خطأ في إنشاء الإعدادات:', error);
+        return false;
+    }
+}
+
+// التهيئة الرئيسية
+async function initAdminApp() {
+    console.log('🔧 تهيئة لوحة التحكم...');
     
-    // التحقق من صلاحية المسؤول
-    if (!isUserAdmin()) {
-        console.warn('المستخدم ليس مسؤولاً، إخفاء لوحة الإدارة');
+    // 1. التحقق من تسجيل الدخول
+    const savedUser = localStorage.getItem('currentUser');
+    if (!savedUser) {
+        showToast('يجب تسجيل الدخول أولاً', 'error');
+        setTimeout(() => window.location.href = 'index.html', 2000);
         return;
     }
+    
+    try {
+        const userData = JSON.parse(savedUser);
+        console.log('👤 بيانات المستخدم:', userData);
+        
+        // 2. التحقق من أن المستخدم ليس ضيفاً
+        if (userData.isGuest) {
+            showToast('الضيوف لا يمكنهم الدخول للوحة التحكم', 'error');
+            setTimeout(() => window.location.href = 'index.html', 2000);
+            return;
+        }
+        
+        // 3. التحقق من صلاحيات الأدمن
+        if (!userData.isAdmin && userData.role !== 'admin') {
+            showToast('ليس لديك صلاحيات الدخول للوحة التحكم', 'error');
+            setTimeout(() => window.location.href = 'index.html', 2000);
+            return;
+        }
+        
+        // 4. تهيئة Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyB1vNmCapPK0MI4H_Q0ilO7OnOgZa02jx0",
+            authDomain: "queen-beauty-b811b.firebaseapp.com",
+            projectId: "queen-beauty-b811b",
+            storageBucket: "queen-beauty-b811b.firebasestorage.app",
+            messagingSenderId: "418964206430",
+            appId: "1:418964206430:web:8c9451fc56ca7f956bd5cf"
+        };
+        
+        const adminApp = window.firebaseModules.initializeApp(firebaseConfig, 'AdminApp');
+        adminDb = window.firebaseModules.getFirestore(adminApp);
+        console.log('✅ Firebase مهيأ');
+        
+        // 5. اختبار الاتصال
+        const connectionSuccess = await checkFirestoreConnection();
+        if (!connectionSuccess) {
+            throw new Error('فشل الاتصال بقاعدة البيانات');
+        }
+        
+        // 6. إعداد الأحداث
+        setupAdminEventListeners();
+        
+        // 7. تحميل البيانات
+        await loadAdminDashboard();
+        
+        console.log('🎉 لوحة التحكم جاهزة');
+        
+    } catch (error) {
+        console.error('❌ خطأ في التهيئة:', error);
+        showToast('حدث خطأ في تحميل لوحة التحكم: ' + error.message, 'error');
+    }
 }
 
-// إعداد نظام رفع الصور
-function setupImageUpload() {
-    const imageInput = document.getElementById('productImageFile');
-    const previewContainer = document.getElementById('imagePreviewContainer');
-    const uploadBtn = document.getElementById('uploadImageBtn');
-    const imageUrlInput = document.getElementById('productImageUrl');
-    
-    if (!imageInput || !previewContainer) return;
-    
-    // اختيار صورة من المعرض
-    imageInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            // التحقق من نوع الملف
-            if (!file.type.startsWith('image/')) {
-                showToast('الرجاء اختيار ملف صورة فقط', true, 'error');
-                return;
-            }
+// تحميل لوحة التحكم
+async function loadAdminDashboard() {
+    try {
+        console.log('📊 تحميل البيانات...');
+        
+        // تحميل جميع الأقسام في نفس الوقت
+        await Promise.all([
+            loadAdminStats(),
+            loadAdminProducts(),
+            loadAdminUsers(),
+            loadAdminSettings()
+        ]);
+        
+        console.log('✅ تم تحميل جميع البيانات');
+    } catch (error) {
+        console.error('❌ خطأ في تحميل البيانات:', error);
+        showToast('حدث خطأ في تحميل البيانات', 'error');
+    }
+}
+
+// تحميل الإحصائيات
+async function loadAdminStats() {
+    try {
+        console.log('📈 جاري تحميل الإحصائيات...');
+        
+        // تحميل المستخدمين
+        const usersSnapshot = await window.firebaseModules.getDocs(
+            window.firebaseModules.collection(adminDb, "users")
+        );
+        
+        const regularUsers = usersSnapshot.docs.filter(doc => {
+            const data = doc.data();
+            return !data.isGuest && data.isAdmin !== true;
+        }).length;
+        
+        document.getElementById('adminUsersCount').textContent = regularUsers;
+        console.log('👥 عدد المستخدمين:', regularUsers);
+        
+        // تحميل المنتجات
+        const productsQuery = window.firebaseModules.query(
+            window.firebaseModules.collection(adminDb, "products"),
+            window.firebaseModules.where("isActive", "==", true)
+        );
+        
+        const productsSnapshot = await window.firebaseModules.getDocs(productsQuery);
+        document.getElementById('adminProductsCount').textContent = productsSnapshot.size;
+        console.log('📦 عدد المنتجات:', productsSnapshot.size);
+        
+    } catch (error) {
+        console.error('❌ خطأ في تحميل الإحصائيات:', error);
+        document.getElementById('adminUsersCount').textContent = '0';
+        document.getElementById('adminProductsCount').textContent = '0';
+    }
+}
+
+// تحميل المنتجات
+async function loadAdminProducts() {
+    try {
+        console.log('📦 جاري تحميل المنتجات...');
+        
+        const productsList = document.getElementById('adminProductsList');
+        if (!productsList) {
+            console.error('❌ عنصر قائمة المنتجات غير موجود');
+            return;
+        }
+        
+        // عرض تحميل
+        productsList.innerHTML = `
+            <div style="text-align: center; padding: 40px;">
+                <div style="width: 40px; height: 40px; border: 4px solid #ddd; border-top-color: #3498db; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+                <p style="color: #7f8c8d;">جاري تحميل المنتجات...</p>
+            </div>
+        `;
+        
+        // جلب المنتجات
+        const productsQuery = window.firebaseModules.query(
+            window.firebaseModules.collection(adminDb, "products")
+        );
+        
+        const snapshot = await window.firebaseModules.getDocs(productsQuery);
+        console.log('📥 عدد المنتجات المستلمة:', snapshot.size);
+        
+        if (snapshot.empty) {
+            console.log('⚠️ لا توجد منتجات');
+            productsList.innerHTML = `
+                <div style="text-align: center; padding: 60px 20px;">
+                    <i class="fas fa-box-open fa-3x" style="color: #95a5a6; margin-bottom: 20px;"></i>
+                    <h3 style="color: #2c3e50; margin-bottom: 10px;">لا توجد منتجات</h3>
+                    <p style="color: #7f8c8d; margin-bottom: 20px;">قم بإضافة منتج جديد</p>
+                    <button class="btn-primary" onclick="openAddProductModal()" 
+                            style="padding: 12px 25px; background: #27ae60; color: white; border: none; border-radius: 10px; font-family: 'Cairo'; cursor: pointer;">
+                        <i class="fas fa-plus"></i> إضافة منتج جديد
+                    </button>
+                </div>
+            `;
+            return;
+        }
+        
+        // عرض المنتجات
+        let productsHTML = '';
+        snapshot.forEach(doc => {
+            const product = doc.data();
+            const productId = doc.id;
             
-            // التحقق من حجم الملف (5MB كحد أقصى)
-            if (file.size > 5 * 1024 * 1024) {
-                showToast('حجم الصورة كبير جداً (الحد الأقصى 5MB)', true, 'error');
-                return;
-            }
+            console.log('📝 معالجة منتج:', product.name);
             
-            selectedImageFile = file;
+            const isNew = product.isNew === true;
+            const isSale = product.isSale === true;
+            const isBest = product.isBest === true;
+            const isActive = product.isActive !== false;
             
-            // عرض معاينة الصورة
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                imagePreviewUrl = e.target.result;
-                previewContainer.innerHTML = `
-                    <div class="image-preview">
-                        <img src="${imagePreviewUrl}" alt="معاينة الصورة">
-                        <button type="button" class="btn small-btn danger-btn remove-image-btn">
-                            <i class="fas fa-times"></i> حذف
+            productsHTML += `
+                <div class="admin-product-card" data-id="${productId}">
+                    <div class="admin-product-image">
+                        <img src="${product.image || 'https://via.placeholder.com/80x80'}" 
+                             alt="${product.name}"
+                             onerror="this.src='https://via.placeholder.com/80x80'">
+                    </div>
+                    <div class="admin-product-info">
+                        <h4>${product.name || 'بدون اسم'}</h4>
+                        <p><i class="fas fa-tag"></i> ${product.category || 'بدون فئة'}</p>
+                        <p><i class="fas fa-money-bill"></i> ${product.price || 0} ${siteCurrency}</p>
+                        <p><i class="fas fa-box"></i> المخزون: ${product.stock || 0}</p>
+                        <div class="product-status">
+                            <span class="status-badge ${isActive ? 'active' : 'inactive'}">
+                                ${isActive ? 'نشط' : 'غير نشط'}
+                            </span>
+                            ${isNew ? '<span class="status-badge new">جديد</span>' : ''}
+                            ${isSale ? '<span class="status-badge sale">عرض</span>' : ''}
+                            ${isBest ? '<span class="status-badge best">الأفضل</span>' : ''}
+                        </div>
+                    </div>
+                    <div class="admin-product-actions">
+                        <button class="action-icon-btn edit-btn" onclick="editProduct('${productId}')" title="تعديل">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-icon-btn delete-btn" onclick="confirmDeleteProduct('${productId}')" title="تعطيل">
+                            <i class="fas fa-trash"></i>
                         </button>
                     </div>
-                `;
-                
-                // إضافة حدث لحذف المعاينة
-                previewContainer.querySelector('.remove-image-btn').addEventListener('click', removeImagePreview);
-            };
-            reader.readAsDataURL(file);
-            
-            // تفريغ حقل الرابط
-            if (imageUrlInput) {
-                imageUrlInput.value = '';
-            }
-        }
-    });
-    
-    // زر رفع الصورة
-    if (uploadBtn) {
-        uploadBtn.addEventListener('click', () => {
-            imageInput.click();
+                </div>
+            `;
         });
-    }
-    
-    // تفريغ معاينة الصورة
-    function removeImagePreview() {
-        selectedImageFile = null;
-        imagePreviewUrl = null;
-        previewContainer.innerHTML = `
-            <div class="upload-placeholder">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p>انقر لرفع صورة</p>
-                <p class="small">الحجم الأقصى: 5MB</p>
-            </div>
-        `;
-        if (imageUrlInput) {
-            imageUrlInput.value = '';
-        }
-    }
-}
-
-// رفع الصورة إلى Firebase Storage
-async function uploadProductImage(file) {
-    try {
-        if (!window.storage) {
-            throw new Error('Firebase Storage غير متاح');
-        }
         
-        const user = window.auth.currentUser;
-        if (!user) {
-            throw new Error('يجب تسجيل الدخول أولاً');
-        }
-        
-        // إنشاء اسم فريد للملف
-        const timestamp = Date.now();
-        const randomString = Math.random().toString(36).substring(2, 15);
-        const fileName = `products/${user.uid}_${timestamp}_${randomString}.jpg`;
-        
-        // رفع الملف
-        const storageRef = window.storage.ref();
-        const fileRef = storageRef.child(fileName);
-        
-        showToast('جاري رفع الصورة...', false, 'info');
-        
-        // رفع الملف مع تحديد نوع المحتوى
-        const metadata = {
-            contentType: file.type || 'image/jpeg'
-        };
-        
-        const uploadTask = await fileRef.put(file, metadata);
-        const downloadURL = await uploadTask.ref.getDownloadURL();
-        
-        showToast('تم رفع الصورة بنجاح', false, 'success');
-        return downloadURL;
+        productsList.innerHTML = productsHTML;
+        console.log('✅ تم تحميل المنتجات بنجاح');
         
     } catch (error) {
-        console.error('❌ خطأ في رفع الصورة:', error);
-        showToast('فشل رفع الصورة: ' + error.message, true, 'error');
-        throw error;
-    }
-}
-
-// حفظ المنتج
-async function saveProduct() {
-    try {
-        const productId = document.getElementById('editProductId').value;
-        const productName = document.getElementById('productName').value.trim();
-        const productPrice = parseFloat(document.getElementById('productPrice').value);
-        const productStock = parseInt(document.getElementById('productStock').value);
-        
-        // التحقق من الحقول المطلوبة
-        if (!productName || !productPrice || isNaN(productPrice) || isNaN(productStock)) {
-            showToast('الرجاء ملء جميع الحقول المطلوبة بشكل صحيح', true, 'error');
-            return;
-        }
-        
-        if (productPrice <= 0) {
-            showToast('السعر يجب أن يكون أكبر من صفر', true, 'error');
-            return;
-        }
-        
-        if (productStock < 0) {
-            showToast('الكمية لا يمكن أن تكون سالبة', true, 'error');
-            return;
-        }
-        
-        let imageUrl = document.getElementById('productImageUrl').value.trim();
-        
-        // إذا كان هناك ملف صورة مرفوع
-        if (selectedImageFile) {
-            showToast('جاري رفع الصورة وحفظ المنتج...', false, 'info');
-            imageUrl = await uploadProductImage(selectedImageFile);
-        }
-        
-        // إذا لم يكن هناك رابط صورة ولا ملف مرفوع
-        if (!imageUrl) {
-            imageUrl = 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=300&h=300&fit=crop';
-        }
-        
-        const productData = {
-            name: productName,
-            price: productPrice,
-            image: imageUrl,
-            description: document.getElementById('productDescription').value.trim() || '',
-            category: document.getElementById('productCategory').value || 'perfume',
-            stock: productStock,
-            isNew: document.getElementById('isNew').checked,
-            isSale: document.getElementById('isSale').checked,
-            isBest: document.getElementById('isBest').checked,
-            isActive: document.getElementById('isActive').checked,
-            views: productId ? undefined : 0,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        // إضافة createdAt للمنتجات الجديدة فقط
-        if (!productId) {
-            productData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-        }
-        
-        if (window.db) {
-            let productRef;
-            if (productId) {
-                // تحديث منتج موجود
-                productRef = window.db.collection("products").doc(productId);
-                await productRef.set(productData, { merge: true });
-                showToast('✅ تم تحديث المنتج بنجاح', false, 'success');
-            } else {
-                // إضافة منتج جديد
-                productRef = await window.db.collection("products").add(productData);
-                showToast('✅ تم إضافة المنتج بنجاح', false, 'success');
-                console.log('📝 المنتج أُضيف مع ID:', productRef.id);
-            }
-            
-            // تفريغ الحقول وإعادة التعيين
-            resetProductForm();
-            
-            // تحديث القائمة في الإدارة
-            const products = await loadAllProducts();
-            renderAdminProducts(products);
-            
-            // تحديث المنتجات في الواجهة الأمامية إذا كانت الدالة متاحة
-            if (typeof loadProducts === 'function') {
-                await loadProducts();
-            }
-            
-            // إغلاق المودال بعد تأخير بسيط
-            setTimeout(() => {
-                const modal = document.getElementById('productModal');
-                if (modal) modal.classList.add('hidden');
-            }, 1000);
-            
-        } else {
-            showToast('Firestore غير متاح، تعذر حفظ المنتج', true, 'error');
-        }
-    } catch (error) {
-        console.error('❌ خطأ في حفظ المنتج:', error);
-        showToast('حدث خطأ أثناء حفظ المنتج: ' + error.message, true, 'error');
-    }
-}
-
-// تفريغ نموذج المنتج
-function resetProductForm() {
-    selectedImageFile = null;
-    imagePreviewUrl = null;
-    document.getElementById('productForm').reset();
-    document.getElementById('editProductId').value = '';
-    const previewContainer = document.getElementById('imagePreviewContainer');
-    if (previewContainer) {
-        previewContainer.innerHTML = `
-            <div class="upload-placeholder">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p>انقر لرفع صورة</p>
-                <p class="small">الحجم الأقصى: 5MB</p>
-            </div>
-        `;
-    }
-    document.getElementById('productStock').value = 10;
-    document.getElementById('isActive').checked = true;
-}
-
-// جلب جميع المنتجات
-async function loadAllProducts() {
-    try {
-        if (!window.db) {
-            console.warn('Firestore غير متاح، استخدام منتجات افتراضية');
-            return getDefaultProducts();
-        }
-        
-        const snapshot = await window.db.collection("products").orderBy("createdAt", "desc").get();
-        const products = [];
-        
-        snapshot.forEach((doc) => {
-            const product = doc.data();
-            product.id = doc.id;
-            products.push(product);
-        });
-        
-        console.log(`📦 تم جلب ${products.length} منتج للإدارة`);
-        return products;
-    } catch (error) {
-        console.error("❌ خطأ في جلب المنتجات:", error);
-        return getDefaultProducts();
-    }
-}
-
-// جلب إعدادات الموقع
-async function getSiteSettings() {
-    try {
-        if (!window.db) {
-            console.warn('Firestore غير متاح، إرجاع إعدادات افتراضية');
-            return {
-                storeName: "QB",
-                email: "yxr.249@gmail.com",
-                phone1: "+249933002015",
-                phone2: "",
-                shippingCost: 15,
-                freeShippingLimit: 200,
-                address: "السعودية - الرياض",
-                workingHours: "من الأحد إلى الخميس: 9 صباحاً - 10 مساءً",
-                storeDescription: "متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية"
-            };
-        }
-        
-        const docRef = window.db.collection("settings").doc("site_config");
-        const docSnap = await docRef.get();
-        
-        if (docSnap.exists()) {
-            return docSnap.data();
-        } else {
-            // إعدادات افتراضية
-            return {
-                storeName: "QB",
-                email: "yxr.249@gmail.com",
-                phone1: "+249933002015",
-                phone2: "",
-                shippingCost: 15,
-                freeShippingLimit: 200,
-                address: "السعودية - الرياض",
-                workingHours: "من الأحد إلى الخميس: 9 صباحاً - 10 مساءً",
-                storeDescription: "متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية"
-            };
-        }
-    } catch (error) {
-        console.error("❌ خطأ في جلب الإعدادات:", error);
-        return {};
-    }
-}
-
-// جلب إحصائيات المتجر
-async function getStoreStats() {
-    try {
-        if (!window.db) {
-            console.warn('Firestore غير متاح، إرجاع إحصائيات افتراضية');
-            return {
-                totalProducts: 0,
-                totalUsers: 0,
-                totalOrders: 0,
-                totalRevenue: 0
-            };
-        }
-        
-        const productsSnapshot = await window.db.collection("products").get();
-        const totalProducts = productsSnapshot.size;
-        
-        const usersSnapshot = await window.db.collection("users").get();
-        const totalUsers = usersSnapshot.size;
-        
-        const ordersSnapshot = await window.db.collection("orders").get();
-        const totalOrders = ordersSnapshot.size;
-        
-        let totalRevenue = 0;
-        ordersSnapshot.forEach(doc => {
-            const order = doc.data();
-            if (order.total) {
-                totalRevenue += order.total;
-            }
-        });
-        
-        return {
-            totalProducts,
-            totalUsers,
-            totalOrders,
-            totalRevenue
-        };
-    } catch (error) {
-        console.error("❌ خطأ في جلب الإحصائيات:", error);
-        return {
-            totalProducts: 0,
-            totalUsers: 0,
-            totalOrders: 0,
-            totalRevenue: 0
-        };
-    }
-}
-
-// حفظ إعدادات الموقع
-async function saveSiteSettings() {
-    try {
-        if (!window.db) {
-            showToast('Firestore غير متاح، تعذر حفظ الإعدادات', true, 'error');
-            return;
-        }
-        
-        const settings = {
-            storeName: document.getElementById('storeNameInput').value,
-            email: document.getElementById('settingsEmailInput').value,
-            phone1: document.getElementById('phone1Input').value,
-            phone2: document.getElementById('phone2Input').value || '',
-            address: document.getElementById('addressInput').value,
-            shippingCost: parseFloat(document.getElementById('shippingCost').value) || 15,
-            freeShippingLimit: parseFloat(document.getElementById('freeShippingLimit').value) || 200,
-            workingHours: "من الأحد إلى الخميس: 9 صباحاً - 10 مساءً",
-            storeDescription: "متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية",
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        await window.db.collection("settings").doc("site_config").set(settings, { merge: true });
-        showToast('✅ تم حفظ إعدادات الموقع بنجاح', false, 'success');
-    } catch (error) {
-        console.error('❌ خطأ في حفظ إعدادات الموقع:', error);
-        showToast('حدث خطأ أثناء حفظ الإعدادات: ' + error.message, true, 'error');
-    }
-}
-
-// حذف المنتج
-async function deleteProduct(productId) {
-    setupConfirmation(
-        'هل أنت متأكد من حذف هذا المنتج؟',
-        'هذا الإجراء لا يمكن التراجع عنه وسيتم حذف المنتج نهائياً',
-        async () => {
-            try {
-                if (window.db) {
-                    await window.db.collection("products").doc(productId).delete();
-                    showToast('✅ تم حذف المنتج بنجاح', false, 'success');
-                    
-                    const products = await loadAllProducts();
-                    renderAdminProducts(products);
-                } else {
-                    showToast('Firestore غير متاح، تعذر حذف المنتج', true, 'error');
-                }
-            } catch (error) {
-                console.error('❌ خطأ في حذف المنتج:', error);
-                showToast('حدث خطأ أثناء حذف المنتج: ' + error.message, true, 'error');
-            }
-        },
-        productId
-    );
-}
-
-// إعداد مستمعي الأحداث للإدارة
-function setupAdminEventListeners() {
-    // تحديث المنتجات عند فتح تبويب المنتجات
-    document.addEventListener('click', async (e) => {
-        if (e.target.closest('#productsTab') || e.target.closest('.admin-tab[data-tab="products"]')) {
-            const products = await loadAllProducts();
-            renderAdminProducts(products);
-        }
-        
-        if (e.target.closest('#usersTab') || e.target.closest('.admin-tab[data-tab="users"]')) {
-            const users = await getAllUsers();
-            renderAdminUsers(users);
-        }
-        
-        if (e.target.closest('#settingsTab') || e.target.closest('.admin-tab[data-tab="settings"]')) {
-            await loadSiteSettingsForAdmin();
-        }
-    });
-    
-    // زر إضافة منتج جديد
-    const addProductBtn = document.getElementById('addProductBtn');
-    if (addProductBtn) {
-        addProductBtn.addEventListener('click', () => {
-            showProductModal();
-        });
-    }
-    
-    // إغلاق المودال
-    document.querySelectorAll('.close-modal').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.getElementById('productModal').classList.add('hidden');
-        });
-    });
-    
-    // علامات التبويب
-    document.querySelectorAll('.admin-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            const tabId = tab.dataset.tab;
-            switchTab(tabId);
-        });
-    });
-    
-    // نموذج المنتج
-    const productForm = document.getElementById('productForm');
-    if (productForm) {
-        productForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await saveProduct();
-        });
-    }
-    
-    // نموذج إعدادات الموقع
-    const siteSettingsForm = document.getElementById('siteSettingsForm');
-    if (siteSettingsForm) {
-        siteSettingsForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await saveSiteSettings();
-        });
-    }
-    
-    // إعدادات زر التأكيد
-    const confirmBtn = document.getElementById('confirmBtn');
-    const cancelBtn = document.getElementById('cancelBtn');
-    
-    if (confirmBtn) confirmBtn.addEventListener('click', executePendingAction);
-    if (cancelBtn) cancelBtn.addEventListener('click', clearConfirmation);
-}
-
-// عرض منتجات الإدارة
-function renderAdminProducts(products) {
-    if (typeof UI !== 'undefined' && typeof UI.renderAdminProducts === 'function') {
-        UI.renderAdminProducts(products);
-    }
-}
-
-// تحميل إعدادات الموقع للإدارة
-async function loadSiteSettingsForAdmin() {
-    try {
-        const settings = await getSiteSettings();
-        
-        // تعبئة الحقول
-        if (document.getElementById('storeNameInput')) {
-            document.getElementById('storeNameInput').value = settings.storeName || 'QB';
-        }
-        if (document.getElementById('emailInput')) {
-            document.getElementById('emailInput').value = settings.email || 'yxr.249@gmail.com';
-        }
-        if (document.getElementById('phone1Input')) {
-            document.getElementById('phone1Input').value = settings.phone1 || '+249933002015';
-        }
-        if (document.getElementById('phone2Input')) {
-            document.getElementById('phone2Input').value = settings.phone2 || '';
-        }
-        if (document.getElementById('addressInput')) {
-            document.getElementById('addressInput').value = settings.address || 'السعودية - الرياض';
-        }
-        if (document.getElementById('shippingCost')) {
-            document.getElementById('shippingCost').value = settings.shippingCost || 15;
-        }
-        if (document.getElementById('freeShippingLimit')) {
-            document.getElementById('freeShippingLimit').value = settings.freeShippingLimit || 200;
-        }
-        
-        // تحديث حقل البريد في إعدادات الموقع
-        if (document.getElementById('settingsEmailInput')) {
-            document.getElementById('settingsEmailInput').value = settings.email || 'yxr.249@gmail.com';
-        }
-        
-        return settings;
-    } catch (error) {
-        console.error('❌ خطأ في تحميل إعدادات الموقع للإدارة:', error);
-        return null;
-    }
-}
-
-// عرض مودال المنتج
-function showProductModal() {
-    document.getElementById('modalTitle').textContent = 'إضافة منتج جديد';
-    resetProductForm();
-    document.getElementById('productModal').classList.remove('hidden');
-}
-
-// تعديل منتج في المودال
-function editProductModal(product) {
-    document.getElementById('modalTitle').textContent = 'تعديل المنتج';
-    document.getElementById('editProductId').value = product.id;
-    document.getElementById('productName').value = product.name || '';
-    document.getElementById('productPrice').value = product.price || '';
-    document.getElementById('productImageUrl').value = product.image || '';
-    document.getElementById('productDescription').value = product.description || '';
-    document.getElementById('productCategory').value = product.category || 'perfume';
-    document.getElementById('productStock').value = product.stock || 0;
-    document.getElementById('isNew').checked = product.isNew || false;
-    document.getElementById('isSale').checked = product.isSale || false;
-    document.getElementById('isBest').checked = product.isBest || false;
-    document.getElementById('isActive').checked = product.isActive !== false;
-    
-    // عرض معاينة الصورة الحالية
-    const previewContainer = document.getElementById('imagePreviewContainer');
-    if (product.image && product.image.startsWith('http')) {
-        previewContainer.innerHTML = `
-            <div class="image-preview">
-                <img src="${product.image}" alt="معاينة الصورة">
-                <button type="button" class="btn small-btn danger-btn remove-image-btn">
-                    <i class="fas fa-times"></i> حذف
+        console.error('❌ خطأ في تحميل المنتجات:', error);
+        document.getElementById('adminProductsList').innerHTML = `
+            <div style="text-align: center; padding: 40px 20px;">
+                <i class="fas fa-exclamation-triangle fa-3x" style="color: #e74c3c; margin-bottom: 20px;"></i>
+                <h3 style="color: #2c3e50; margin-bottom: 10px;">خطأ في تحميل المنتجات</h3>
+                <p style="color: #7f8c8d; margin-bottom: 20px;">${error.message}</p>
+                <button class="btn-primary" onclick="loadAdminProducts()" 
+                        style="padding: 12px 25px; background: #3498db; color: white; border: none; border-radius: 10px; font-family: 'Cairo'; cursor: pointer;">
+                    <i class="fas fa-redo"></i> إعادة المحاولة
                 </button>
             </div>
         `;
-        
-        previewContainer.querySelector('.remove-image-btn').addEventListener('click', removeImagePreview);
     }
-    
-    document.getElementById('productModal').classList.remove('hidden');
 }
 
-// جلب جميع المستخدمين
-async function getAllUsers() {
+// تحميل المستخدمين
+async function loadAdminUsers() {
     try {
-        if (!window.db) {
-            console.warn('Firestore غير متاح');
-            return [];
-        }
+        console.log('👥 جاري تحميل المستخدمين...');
         
-        const snapshot = await window.db.collection("users").orderBy("createdAt", "desc").get();
-        const users = [];
+        const usersList = document.getElementById('adminUsersList');
+        if (!usersList) return;
         
-        snapshot.forEach((doc) => {
-            const user = doc.data();
-            user.id = doc.id;
-            users.push(user);
-        });
+        const snapshot = await window.firebaseModules.getDocs(
+            window.firebaseModules.collection(adminDb, "users")
+        );
         
-        return users;
-    } catch (error) {
-        console.error("❌ خطأ في جلب المستخدمين:", error);
-        return [];
-    }
-}
-
-// تنسيق التاريخ
-function formatDate(timestamp) {
-    if (!timestamp) return 'غير محدد';
-    
-    try {
-        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-        return date.toLocaleDateString('ar-SA', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
-    } catch (error) {
-        return 'تاريخ غير صالح';
-    }
-}
-
-// إعداد التأكيد
-function setupConfirmation(message, details = '', callback, data = null) {
-    pendingAction = callback;
-    pendingActionData = data;
-    document.getElementById('confirmMessage').textContent = message;
-    document.getElementById('confirmDetails').textContent = details;
-    document.getElementById('confirmModal').classList.remove('hidden');
-}
-
-// تنظيف التأكيد
-function clearConfirmation() {
-    pendingAction = null;
-    pendingActionData = null;
-    document.getElementById('confirmModal').classList.add('hidden');
-}
-
-// تنفيذ الإجراء المؤكد
-function executePendingAction() {
-    if (pendingAction) {
-        pendingAction(pendingActionData);
-        clearConfirmation();
-    }
-}
-
-// تبديل علامات التبويب
-function switchTab(tabId) {
-    // إزالة النشاط من جميع التبويبات
-    document.querySelectorAll('.admin-tab').forEach(tab => {
-        tab.classList.remove('active');
-    });
-    
-    // إخفاء جميع المحتويات
-    document.querySelectorAll('.tab-pane').forEach(pane => {
-        pane.classList.add('hidden');
-    });
-    
-    // إضافة النشاط للتبويب المحدد
-    const activeTab = document.querySelector(`.admin-tab[data-tab="${tabId}"]`);
-    if (activeTab) {
-        activeTab.classList.add('active');
-    }
-    
-    // إظهار المحتوى المناسب
-    const tabContent = document.getElementById(`${tabId}Tab`);
-    if (tabContent) {
-        tabContent.classList.remove('hidden');
-    }
-}
-
-// عرض مستخدمي الإدارة
-function renderAdminUsers(users) {
-    const tableBody = document.getElementById('usersTableBody');
-    if (!tableBody) return;
-    
-    if (!users || users.length === 0) {
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="6" class="text-center">
-                    <div class="empty-state">
-                        <i class="fas fa-users"></i>
-                        <p>لا يوجد مستخدمين</p>
-                    </div>
-                </td>
-            </tr>
-        `;
-        return;
-    }
-    
-    tableBody.innerHTML = users.map(user => `
-        <tr>
-            <td>
-                <img src="${user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'مستخدم')}&background=C89B3C&color=fff`}" 
-                     alt="${user.displayName}" 
-                     class="product-thumb">
-            </td>
-            <td>
-                <strong>${user.displayName || 'مستخدم'}</strong>
-                ${user.isAdmin ? '<br><span class="badge admin-badge">مسؤول</span>' : ''}
-            </td>
-            <td>${user.email || 'غير محدد'}</td>
-            <td>
-                <span class="product-status ${user.isAdmin ? 'status-active' : 'status-inactive'}">
-                    ${user.isAdmin ? 'مسؤول' : 'مستخدم عادي'}
-                </span>
-            </td>
-            <td>${formatDate(user.createdAt)}</td>
-            <td>
-                <div class="action-buttons">
-                    <button class="btn small-btn edit-user" data-id="${user.uid}">
-                        <i class="fas fa-edit"></i>
-                    </button>
+        console.log('📥 عدد المستخدمين المستلم:', snapshot.size);
+        
+        if (snapshot.empty) {
+            usersList.innerHTML = `
+                <div style="text-align: center; padding: 60px 20px;">
+                    <i class="fas fa-users fa-3x" style="color: #95a5a6; margin-bottom: 20px;"></i>
+                    <h3 style="color: #2c3e50;">لا يوجد مستخدمين</h3>
                 </div>
-            </td>
-        </tr>
-    `).join('');
-    
-    // إضافة مستمعي الأحداث
-    tableBody.querySelectorAll('.edit-user').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const userId = btn.dataset.id;
-            const user = users.find(u => u.uid === userId);
-            showToast(`تعديل بيانات المستخدم ${user?.displayName || ''} ستكون متاحة قريباً`, false, 'info');
-        });
-    });
-}
-
-// منتجات افتراضية للإدارة
-function getDefaultProducts() {
-    return [
-        {
-            id: '1',
-            name: 'عطر فاخر للرجال',
-            description: 'عطر فاخر برائحة عطرية مميزة للرجال، يدوم طويلاً',
-            price: 150,
-            oldPrice: 200,
-            image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=300&h=300&fit=crop',
-            isNew: true,
-            isBest: true,
-            category: 'perfume',
-            stock: 25,
-            views: 150,
-            isActive: true,
-            createdAt: new Date('2024-01-15')
-        },
-        {
-            id: '2',
-            name: 'مكياج سائل عالي الجودة',
-            description: 'مكياج سائل عالي الجودة يمنحك مظهراً طبيعياً',
-            price: 85,
-            image: 'https://images.unsplash.com/photo-1526947425960-945c6e72858f?q=80&w=300&h=300&fit=crop',
-            isSale: true,
-            category: 'makeup',
-            stock: 40,
-            views: 120,
-            isActive: true,
-            createdAt: new Date('2024-01-10')
+            `;
+            return;
         }
-    ];
-}
-
-// دالة عرض التنبيهات
-function showToast(message, isPersistent = false, type = 'info') {
-    if (typeof showMessage === 'function') {
-        showMessage(type === 'error' ? 'خطأ' : 'تنبيه', message, type);
-    } else {
-        console.log(`Toast [${type}]: ${message}`);
-        alert(message);
+        
+        let usersHTML = '';
+        snapshot.forEach(doc => {
+            const user = doc.data();
+            const userId = doc.id;
+            
+            // تخطي الضيوف
+            if (user.isGuest) return;
+            
+            const joinDate = user.createdAt?.toDate ? 
+                user.createdAt.toDate().toLocaleDateString('ar-SA') : 'غير محدد';
+            
+            const userType = user.isAdmin ? '👑 مسؤول' : '👤 مستخدم عادي';
+            const userTypeClass = user.isAdmin ? 'admin-user' : 'regular-user';
+            
+            usersHTML += `
+                <div class="user-card ${userTypeClass}" data-id="${userId}" style="background: ${user.isAdmin ? '#e8f4fc' : '#f5f7fa'}; padding: 20px; border-radius: 15px; margin-bottom: 15px; display: flex; align-items: center; gap: 20px;">
+                    <img src="${user.photoURL || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'}" 
+                         alt="صورة المستخدم"
+                         style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 5px 0; color: #2c3e50;">${user.name || 'بدون اسم'}</h4>
+                        <p style="margin: 0 0 5px 0; color: #7f8c8d;"><i class="fas fa-envelope"></i> ${user.email || 'بدون بريد'}</p>
+                        <p style="margin: 0 0 10px 0; color: ${user.isAdmin ? '#e74c3c' : '#3498db'}; font-weight: bold;">
+                            ${userType}
+                        </p>
+                        <div style="display: flex; gap: 15px; margin: 10px 0;">
+                            <span style="color: #7f8c8d;"><i class="fas fa-shopping-cart"></i> ${user.totalOrders || 0} طلبات</span>
+                            <span style="color: #7f8c8d;"><i class="fas fa-money-bill-wave"></i> ${user.totalSpent || 0} ${siteCurrency}</span>
+                        </div>
+                        <p style="margin: 0; color: #95a5a6; font-size: 14px;"><i class="fas fa-calendar-alt"></i> ${joinDate}</p>
+                    </div>
+                </div>
+            `;
+        });
+        
+        usersList.innerHTML = usersHTML;
+        console.log('✅ تم تحميل المستخدمين بنجاح');
+        
+    } catch (error) {
+        console.error('❌ خطأ في تحميل المستخدمين:', error);
     }
 }
 
-// جعل الدوال متاحة عالمياً
-window.showToast = showToast;
-window.initAdmin = initAdmin;
-window.loadAllProducts = loadAllProducts;
-window.getSiteSettings = getSiteSettings;
-window.loadSiteSettingsForAdmin = loadSiteSettingsForAdmin;
-window.getStoreStats = getStoreStats;
-window.formatDate = formatDate;
-window.setupConfirmation = setupConfirmation;
-window.clearConfirmation = clearConfirmation;
-window.executePendingAction = executePendingAction;
-window.switchTab = switchTab;
-window.editProductModal = editProductModal;
-window.showProductModal = showProductModal;
-window.getDefaultProducts = getDefaultProducts;
-window.saveProduct = saveProduct;
-window.saveSiteSettings = saveSiteSettings;
-window.getAllUsers = getAllUsers;
+// تحميل الإعدادات
+async function loadAdminSettings() {
+    try {
+        console.log('⚙️ جاري تحميل الإعدادات...');
+        
+        const form = document.getElementById('settingsForm');
+        if (!form) return;
+        
+        // جلب الإعدادات
+        const configRef = window.firebaseModules.doc(adminDb, "settings", "site_config");
+        const configDoc = await window.firebaseModules.getDoc(configRef);
+        
+        let config = {};
+        if (configDoc.exists()) {
+            config = configDoc.data();
+            console.log('📄 الإعدادات المحملة:', config);
+        } else {
+            console.log('⚠️ الإعدادات غير موجودة');
+        }
+        
+        // إنشاء نموذج الإعدادات
+        form.innerHTML = `
+            <div style="margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #ddd;">
+                <h4 style="color: #2c3e50; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-store"></i> معلومات المتجر
+                </h4>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">اسم المتجر *</label>
+                    <input type="text" id="storeName" value="${config.storeName || 'Queen Beauty'}" required
+                           style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-family: 'Cairo'; font-size: 16px;">
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 15px 0;">
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">البريد الإلكتروني *</label>
+                        <input type="email" id="email" value="${config.email || 'yxr.249@gmail.com'}" required
+                               style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-family: 'Cairo'; font-size: 16px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">رقم الهاتف *</label>
+                        <input type="tel" id="phone" value="${config.phone || config.Phone || '+249933002015'}" required
+                               style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-family: 'Cairo'; font-size: 16px;">
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">العنوان *</label>
+                    <input type="text" id="address" value="${config.address || 'السودان - الخرطوم'}" required
+                           style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-family: 'Cairo'; font-size: 16px;">
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #ddd;">
+                <h4 style="color: #2c3e50; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-truck"></i> إعدادات الشحن
+                </h4>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">تكلفة الشحن (${siteCurrency})</label>
+                        <input type="number" id="shippingCost" value="${config.shippingCost || 15}" min="0"
+                               style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-family: 'Cairo'; font-size: 16px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">التوصيل المجاني من (${siteCurrency})</label>
+                        <input type="number" id="freeShippingLimit" value="${config.freeShippingLimit || 200}" min="0"
+                               style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-family: 'Cairo'; font-size: 16px;">
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 25px;">
+                <h4 style="color: #2c3e50; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-info-circle"></i> معلومات إضافية
+                </h4>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">ساعات العمل</label>
+                    <input type="text" id="workingHours" value="${config.workingHours || 'من الأحد إلى الخميس: 9 صباحاً - 10 مساءً'}"
+                           style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-family: 'Cairo'; font-size: 16px;">
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">وصف المتجر</label>
+                    <textarea id="aboutUs" rows="3" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-family: 'Cairo'; font-size: 16px; resize: vertical;">${config.aboutUs || 'متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية'}</textarea>
+                </div>
+            </div>
+            
+            <button type="button" id="saveSettingsBtn" 
+                    style="padding: 15px 30px; background: #3498db; color: white; border: none; border-radius: 10px; font-family: 'Cairo'; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%;">
+                <i class="fas fa-save"></i> حفظ الإعدادات
+            </button>
+        `;
+        
+        // إضافة حدث الحفظ
+        document.getElementById('saveSettingsBtn').addEventListener('click', saveSiteSettings);
+        console.log('✅ تم تحميل الإعدادات بنجاح');
+        
+    } catch (error) {
+        console.error('❌ خطأ في تحميل الإعدادات:', error);
+        document.getElementById('settingsForm').innerHTML = `
+            <div style="text-align: center; padding: 20px;">
+                <i class="fas fa-exclamation-triangle" style="color: #e74c3c; font-size: 40px; margin-bottom: 15px;"></i>
+                <h4 style="color: #2c3e50;">حدث خطأ في تحميل الإعدادات</h4>
+                <button class="btn-primary" onclick="loadAdminSettings()" 
+                        style="padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 8px; margin-top: 10px;">
+                    إعادة المحاولة
+                </button>
+            </div>
+        `;
+    }
+}
+
+// حفظ الإعدادات
+async function saveSiteSettings() {
+    try {
+        console.log('💾 جاري حفظ الإعدادات...');
+        
+        const settings = {
+            storeName: document.getElementById('storeName').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            phone: document.getElementById('phone').value.trim(),
+            address: document.getElementById('address').value.trim(),
+            shippingCost: parseFloat(document.getElementById('shippingCost').value) || 15,
+            freeShippingLimit: parseFloat(document.getElementById('freeShippingLimit').value) || 200,
+            workingHours: document.getElementById('workingHours').value.trim(),
+            aboutUs: document.getElementById('aboutUs').value.trim(),
+            updatedAt: window.firebaseModules.serverTimestamp()
+        };
+        
+        // التحقق من الحقول المطلوبة
+        if (!settings.storeName || !settings.email || !settings.phone) {
+            showToast('الرجاء ملء الحقول المطلوبة', 'warning');
+            return;
+        }
+        
+        const configRef = window.firebaseModules.doc(adminDb, "settings", "site_config");
+        await window.firebaseModules.setDoc(configRef, settings, { merge: true });
+        
+        showToast('تم حفظ الإعدادات بنجاح', 'success');
+        console.log('✅ تم حفظ الإعدادات:', settings);
+        
+    } catch (error) {
+        console.error('❌ خطأ في حفظ الإعدادات:', error);
+        showToast('حدث خطأ في حفظ الإعدادات: ' + error.message, 'error');
+    }
+}
+
+// إدارة المنتجات
+function openAddProductModal() {
+    currentEditingProductId = null;
+    document.getElementById('productModalTitle').textContent = 'إضافة منتج جديد';
+    clearProductForm();
+    document.getElementById('productModal').classList.add('active');
+}
+
+async function editProduct(productId) {
+    currentEditingProductId = productId;
+    document.getElementById('productModalTitle').textContent = 'تعديل المنتج';
+    
+    try {
+        const productRef = window.firebaseModules.doc(adminDb, "products", productId);
+        const productDoc = await window.firebaseModules.getDoc(productRef);
+        
+        if (productDoc.exists()) {
+            const product = productDoc.data();
+            document.getElementById('productName').value = product.name || '';
+            document.getElementById('productPrice').value = product.price || 0;
+            document.getElementById('productCategory').value = product.category || '';
+            document.getElementById('productStock').value = product.stock || 0;
+            document.getElementById('productDescription').value = product.description || '';
+            document.getElementById('productImage').value = product.image || '';
+            document.getElementById('productIsNew').checked = product.isNew || false;
+            document.getElementById('productIsSale').checked = product.isSale || false;
+            document.getElementById('productIsBest').checked = product.isBest || false;
+            document.getElementById('productIsActive').checked = product.isActive !== false;
+        }
+    } catch (error) {
+        console.error('❌ خطأ في تحميل المنتج:', error);
+        showToast('حدث خطأ في تحميل بيانات المنتج', 'error');
+    }
+    
+    document.getElementById('productModal').classList.add('active');
+}
+
+function clearProductForm() {
+    document.getElementById('productName').value = '';
+    document.getElementById('productPrice').value = '';
+    document.getElementById('productCategory').value = '';
+    document.getElementById('productStock').value = '';
+    document.getElementById('productDescription').value = '';
+    document.getElementById('productImage').value = '';
+    document.getElementById('productIsNew').checked = false;
+    document.getElementById('productIsSale').checked = false;
+    document.getElementById('productIsBest').checked = false;
+    document.getElementById('productIsActive').checked = true;
+}
+
+async function saveProduct() {
+    try {
+        const productData = {
+            name: document.getElementById('productName').value.trim(),
+            price: parseFloat(document.getElementById('productPrice').value) || 0,
+            category: document.getElementById('productCategory').value,
+            stock: parseInt(document.getElementById('productStock').value) || 0,
+            description: document.getElementById('productDescription').value.trim(),
+            image: document.getElementById('productImage').value.trim(),
+            isNew: document.getElementById('productIsNew').checked,
+            isSale: document.getElementById('productIsSale').checked,
+            isBest: document.getElementById('productIsBest').checked,
+            isActive: document.getElementById('productIsActive').checked,
+            updatedAt: window.firebaseModules.serverTimestamp()
+        };
+        
+        // التحقق من البيانات
+        if (!productData.name || !productData.price || !productData.category || !productData.image) {
+            showToast('الرجاء ملء جميع الحقول المطلوبة', 'warning');
+            return;
+        }
+        
+        if (currentEditingProductId) {
+            // تحديث
+            const productRef = window.firebaseModules.doc(adminDb, "products", currentEditingProductId);
+            await window.firebaseModules.updateDoc(productRef, productData);
+            showToast('تم تحديث المنتج بنجاح', 'success');
+        } else {
+            // إضافة
+            productData.createdAt = window.firebaseModules.serverTimestamp();
+            const productsRef = window.firebaseModules.collection(adminDb, "products");
+            await window.firebaseModules.addDoc(productsRef, productData);
+            showToast('تم إضافة المنتج بنجاح', 'success');
+        }
+        
+        closeModal();
+        await loadAdminProducts();
+        await loadAdminStats();
+        
+    } catch (error) {
+        console.error('❌ خطأ في حفظ المنتج:', error);
+        showToast('حدث خطأ في حفظ المنتج: ' + error.message, 'error');
+    }
+}
+
+function confirmDeleteProduct(productId) {
+    const modalHTML = `
+        <div class="modal active" id="confirmModal">
+            <div class="modal-content small-modal">
+                <div class="modal-header">
+                    <h3>تأكيد العملية</h3>
+                    <button class="close-modal" onclick="closeModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div style="text-align: center; padding: 20px;">
+                        <i class="fas fa-exclamation-triangle fa-3x" style="color: #f39c12;"></i>
+                        <h3 style="margin: 15px 0;">هل أنت متأكد؟</h3>
+                        <p>سيتم تعطيل المنتج وعدم عرضه في المتجر.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" onclick="closeModal()">إلغاء</button>
+                    <button class="btn-danger" onclick="deleteProduct('${productId}')">نعم، تعطيل</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+async function deleteProduct(productId) {
+    try {
+        const productRef = window.firebaseModules.doc(adminDb, "products", productId);
+        await window.firebaseModules.updateDoc(productRef, {
+            isActive: false,
+            updatedAt: window.firebaseModules.serverTimestamp()
+        });
+        
+        showToast('تم تعطيل المنتج بنجاح', 'success');
+        closeModal();
+        
+        await loadAdminProducts();
+        await loadAdminStats();
+        
+    } catch (error) {
+        console.error('❌ خطأ في تعطيل المنتج:', error);
+        showToast('حدث خطأ في تعطيل المنتج', 'error');
+    }
+}
+
+// إعداد الأحداث
+function setupAdminEventListeners() {
+    console.log('🔗 إعداد الأحداث...');
+    
+    // التبويبات
+    document.querySelectorAll('.admin-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const tabId = this.dataset.tab;
+            
+            // تحديث التبويبات
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            // تحديث المحتوى
+            document.querySelectorAll('.admin-tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            const targetTab = document.getElementById(tabId);
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
+        });
+    });
+    
+    // أزرار
+    document.getElementById('addProductBtn').addEventListener('click', openAddProductModal);
+    document.getElementById('saveProductBtn').addEventListener('click', saveProduct);
+    
+    // إغلاق النوافذ
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('close-modal') || 
+            e.target.classList.contains('modal') ||
+            (e.target.classList.contains('btn-secondary') && e.target.textContent.includes('إلغاء'))) {
+            closeModal();
+        }
+    });
+    
+    console.log('✅ الأحداث جاهزة');
+}
+
+function closeModal() {
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.classList.remove('active');
+    });
+    const confirmModal = document.getElementById('confirmModal');
+    if (confirmModal && confirmModal.parentNode) {
+        confirmModal.parentNode.removeChild(confirmModal);
+    }
+}
+
+function showToast(message, type = 'info') {
+    let toastContainer = document.getElementById('toastContainer');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toastContainer';
+        toastContainer.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        `;
+        document.body.appendChild(toastContainer);
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.style.cssText = `
+        background: white;
+        padding: 15px 25px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        animation: slideIn 0.3s ease;
+        max-width: 350px;
+        border-right: 5px solid ${type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : type === 'warning' ? '#f39c12' : '#3498db'};
+    `;
+    
+    let icon = 'info-circle';
+    if (type === 'success') icon = 'check-circle';
+    else if (type === 'error') icon = 'exclamation-circle';
+    else if (type === 'warning') icon = 'exclamation-triangle';
+    
+    toast.innerHTML = `
+        <i class="fas fa-${icon}" style="color: ${type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : type === 'warning' ? '#f39c12' : '#3498db'}"></i>
+        <span>${message}</span>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-100%)';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// بدء التطبيق
+document.addEventListener('DOMContentLoaded', initAdminApp);
+
+// تصدير الدوال
+window.openAddProductModal = openAddProductModal;
+window.editProduct = editProduct;
+window.confirmDeleteProduct = confirmDeleteProduct;
 window.deleteProduct = deleteProduct;
-window.uploadProductImage = uploadProductImage;
-window.setupImageUpload = setupImageUpload;
+window.saveProduct = saveProduct;
+window.loadAdminProducts = loadAdminProducts;
+window.loadAdminUsers = loadAdminUsers;
+window.loadAdminSettings = loadAdminSettings;
+window.closeModal = closeModal;
+window.logoutAdmin = function() {
+    localStorage.removeItem('currentUser');
+    window.location.href = 'index.html';
+};
