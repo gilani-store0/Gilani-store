@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم - Queen Beauty</title>
+    
+    <!-- Firebase Modular SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, collection, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        window.firebaseModules = {
+            initializeApp,
+            getFirestore,
+            doc,
+            collection,
+            getDoc,
+            getDocs,
+            setDoc,
+            updateDoc,
+            deleteDoc,
+            addDoc,
+            query,
+            where,
+            orderBy,
+            serverTimestamp
+        };
+    </script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --light-color: #f5f7fa;
+            --dark-color: #2c3e50;
+            --gray-color: #95a5a6;
+            --border-color: #ddd;
+            --shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--light-color);
+            color: var(--dark-color);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: var(--shadow);
+        }
+
+        .section-title {
+            font-size: 28px;
+            margin-bottom: 30px;
+            color: var(--primary-color);
+            position: relative;
+            padding-bottom: 15px;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 60px;
+            height: 3px;
+            background: var(--secondary-color);
+        }
+
+        /* الإحصائيات */
+        .admin-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .admin-stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 25px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: var(--transition);
+            color: white;
+        }
+
+        .admin-stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .admin-stat-card i {
+            font-size: 40px;
+            color: white;
+        }
+
+        .admin-stat-card h3 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .admin-stat-card p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        /* التبويبات */
+        .admin-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .admin-tab {
+            padding: 12px 25px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-family: 'Cairo', sans-serif;
+            font-size: 16px;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .admin-tab:hover {
+            color: var(--secondary-color);
+        }
+
+        .admin-tab.active {
+            color: var(--secondary-color);
+            border-bottom-color: var(--secondary-color);
+            font-weight: 600;
+        }
+
+        /* محتوى التبويبات */
+        .admin-tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .admin-tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .tab-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        /* أزرار */
+        .add-product-btn {
+            padding: 12px 25px;
+            background: var(--success-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+        }
+
+        .add-product-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        /* قائمة المنتجات */
+        .products-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .admin-product-card {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            background: var(--light-color);
+            border-radius: 15px;
+            transition: var(--transition);
+            border: 2px solid transparent;
+        }
+
+        .admin-product-card:hover {
+            background: #e8f4fc;
+            border-color: var(--secondary-color);
+            transform: translateY(-3px);
+        }
+
+        .admin-product-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .admin-product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .admin-product-info {
+            flex: 1;
+        }
+
+        .admin-product-info h4 {
+            font-size: 18px;
+            margin-bottom: 5px;
+            color: var(--primary-color);
+        }
+
+        .admin-product-info p {
+            color: var(--gray-color);
+            margin-bottom: 5px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .product-status {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-badge.active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-badge.new {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .status-badge.sale {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-badge.best {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .admin-product-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-icon-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        .edit-btn {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .edit-btn:hover {
+            background: #e0a800;
+            transform: scale(1.1);
+        }
+
+        .delete-btn {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+            transform: scale(1.1);
+        }
+
+        /* النوافذ المنبثقة */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .btn-primary {
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .btn-secondary {
+            background: var(--gray-color);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .form-checkboxes {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .checkbox-label input {
+            width: 18px;
+            height: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <h2 class="section-title">لوحة التحكم الإدارية - Queen Beauty</h2>
+        
+        <!-- إحصائيات -->
+        <div class="admin-stats">
+            <div class="admin-stat-card">
+                <i class="fas fa-users"></i>
+                <div>
+                    <h3 id="adminUsersCount">0</h3>
+                    <p>المستخدمين</p>
+                </div>
+            </div>
+            <div class="admin-stat-card">
+                <i class="fas fa-box"></i>
+                <div>
+                    <h3 id="adminProductsCount">0</h3>
+                    <p>المنتجات</p>
+                </div>
+            </div>
+            <!-- تم إزالة إحصائية الطلبات -->
+            <!-- تم إزالة إحصائية الإيرادات -->
+        </div>
+        
+        <!-- تبويبات لوحة التحكم -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div class="admin-tabs" style="margin-bottom: 0; border-bottom: none;">
+                <button class="admin-tab active" data-tab="dashboard">
+                    <i class="fas fa-chart-line"></i> الإحصائيات
+                </button>
+                <button class="admin-tab" data-tab="productsManagement">
+                    <i class="fas fa-box"></i> المنتجات
+                </button>
+                <button class="admin-tab" data-tab="usersManagement">
+                    <i class="fas fa-users"></i> المستخدمين
+                </button>
+                <button class="admin-tab" data-tab="settingsManagement">
+                    <i class="fas fa-cog"></i> الإعدادات
+                </button>
+            </div>
+            <button onclick="logoutAdmin()" class="btn-secondary" style="padding: 10px 20px; border-radius: 10px; cursor: pointer; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; font-family: 'Cairo';">
+                <i class="fas fa-sign-out-alt"></i> خروج
+            </button>
+        </div>
+        
+        <!-- محتوى التبويبات -->
+        <div class="admin-tab-content active" id="dashboard">
+            <div style="text-align: center; padding: 40px; background: #f9f9f9; border-radius: 15px;">
+                <i class="fas fa-tachometer-alt fa-3x" style="color: var(--secondary-color); margin-bottom: 20px;"></i>
+                <h3>مرحباً بك في لوحة التحكم</h3>
+                <p>استخدم التبويبات أعلاه لإدارة متجرك الإلكتروني</p>
+            </div>
+        </div>
+
+        <div class="admin-tab-content" id="productsManagement">
+            <div class="tab-header">
+                <h3>إدارة المنتجات</h3>
+                <button class="add-product-btn" id="addProductBtn">
+                    <i class="fas fa-plus"></i> إضافة منتج جديد
+                </button>
+            </div>
+            
+            <div class="products-list" id="adminProductsList">
+                <!-- سيتم تعبئتها بواسطة JavaScript -->
+            </div>
+        </div>
+        
+        <div class="admin-tab-content" id="usersManagement">
+            <h3>إدارة المستخدمين</h3>
+            <div class="users-list" id="adminUsersList">
+                <!-- سيتم تعبئتها بواسطة JavaScript -->
+            </div>
+        </div>
+        
+        <div class="admin-tab-content" id="settingsManagement">
+            <h3>إعدادات الموقع</h3>
+            <div class="settings-form" id="settingsForm">
+                <!-- سيتم تعبئتها بواسطة JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة إضافة/تعديل منتج -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="productModalTitle">إضافة منتج جديد</h3>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productName">اسم المنتج *</label>
+                        <input type="text" id="productName" required placeholder="أدخل اسم المنتج">
+                    </div>
+                    <div class="form-group">
+                        <label for="productPrice">السعر (ر.س) *</label>
+                        <input type="number" id="productPrice" min="0" step="0.01" required placeholder="0.00">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productCategory">الفئة *</label>
+                        <select id="productCategory" required>
+                            <option value="">اختر الفئة</option>
+                            <option value="perfume">عطور</option>
+                            <option value="makeup">مكياج</option>
+                            <option value="skincare">عناية بالبشة</option>
+                            <option value="haircare">عناية بالشعر</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="productStock">الكمية في المخزن *</label>
+                        <input type="number" id="productStock" min="0" required placeholder="0">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="productDescription">وصف المنتج</label>
+                    <textarea id="productDescription" rows="3" placeholder="أدخل وصف المنتج..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="productImage">رابط صورة المنتج *</label>
+                    <input type="text" id="productImage" placeholder="https://example.com/image.jpg" required>
+                </div>
+                
+                <div class="form-checkboxes">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="productIsNew">
+                        <span>منتج جديد</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="productIsSale">
+                        <span>في عرض خاص</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="productIsBest">
+                        <span>الأفضل مبيعاً</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="productIsActive" checked>
+                        <span>منتج نشط</span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal()">إلغاء</button>
+                <button class="btn-primary" id="saveProductBtn">حفظ المنتج</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/admin.js"></script>
+</body>
+</html>

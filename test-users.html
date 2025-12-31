@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>تحقق من المستخدمين في قاعدة البيانات</title>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB1vNmCapPK0MI4H_Q0ilO7OnOgZa02jx0",
+            authDomain: "queen-beauty-b811b.firebaseapp.com",
+            projectId: "queen-beauty-b811b",
+            storageBucket: "queen-beauty-b811b.firebasestorage.app",
+            messagingSenderId: "418964206430",
+            appId: "1:418964206430:web:8c9451fc56ca7f956bd5cf"
+        };
+
+        async function loadUsers() {
+            try {
+                const app = initializeApp(firebaseConfig);
+                const db = getFirestore(app);
+                
+                const usersRef = collection(db, "users");
+                const snapshot = await getDocs(usersRef);
+                
+                console.log(`👥 عدد المستخدمين في قاعدة البيانات: ${snapshot.size}`);
+                
+                const usersList = document.getElementById('usersList');
+                const statsInfo = document.getElementById('statsInfo');
+                
+                statsInfo.innerHTML = `تم العثور على ${snapshot.size} مستخدم في قاعدة البيانات`;
+                usersList.innerHTML = '';
+                
+                if (snapshot.empty) {
+                    usersList.innerHTML = '<p style="color: #dc3545; text-align: center; padding: 20px;">لا يوجد مستخدمين في قاعدة البيانات</p>';
+                    return;
+                }
+                
+                snapshot.forEach(doc => {
+                    const user = doc.data();
+                    const userCard = document.createElement('div');
+                    userCard.style.cssText = `
+                        background: white;
+                        border: 1px solid #ddd;
+                        border-radius: 10px;
+                        padding: 20px;
+                        margin: 15px 0;
+                        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                    `;
+                    
+                    userCard.innerHTML = `
+                        <h3 style="color: #2c3e50; margin: 0 0 10px 0;">
+                            ${user.name || 'بدون اسم'} 
+                            <span style="font-size: 12px; color: #7f8c8d;">(${doc.id})</span>
+                        </h3>
+                        <p style="margin: 5px 0;">
+                            <strong>📧 البريد:</strong> ${user.email || 'بدون بريد'}
+                        </p>
+                        <p style="margin: 5px 0;">
+                            <strong>📞 الهاتف:</strong> ${user.phone || 'بدون هاتف'}
+                        </p>
+                        <p style="margin: 5px 0;">
+                            <strong>👑 الصلاحية:</strong> 
+                            <span style="color: ${user.isAdmin ? '#e74c3c' : '#3498db'}; font-weight: bold;">
+                                ${user.isAdmin ? '🔴 مسؤول' : '🔵 مستخدم عادي'}
+                            </span>
+                        </p>
+                        <p style="margin: 5px 0;">
+                            <strong>🎭 الحالة:</strong> 
+                            <span style="color: ${user.isGuest ? '#f39c12' : '#27ae60'};">
+                                ${user.isGuest ? 'ضيف' : 'مستخدم مسجل'}
+                            </span>
+                        </p>
+                        <p style="margin: 5px 0;">
+                            <strong>📅 تاريخ الإنشاء:</strong> ${user.createdAt?.toDate ? user.createdAt.toDate().toLocaleString('ar-SA') : 'غير محدد'}
+                        </p>
+                        <p style="margin: 5px 0;">
+                            <strong>📊 الإحصائيات:</strong> ${user.totalOrders || 0} طلبات - ${user.totalSpent || 0} ر.س
+                        </p>
+                        ${user.address ? `<p style="margin: 5px 0;"><strong>📍 العنوان:</strong> ${user.address}</p>` : ''}
+                    `;
+                    
+                    usersList.appendChild(userCard);
+                });
+                
+            } catch (error) {
+                console.error('❌ خطأ في تحميل المستخدمين:', error);
+                document.getElementById('statsInfo').innerHTML = 
+                    `<span style="color: #dc3545;">خطأ في تحميل البيانات: ${error.message}</span>`;
+                document.getElementById('usersList').innerHTML = 
+                    `<p style="color: #dc3545; text-align: center; padding: 20px;">خطأ: ${error.message}</p>`;
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadUsers);
+        window.loadUsers = loadUsers;
+    </script>
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            padding: 20px;
+            background: #f5f7fa;
+            direction: rtl;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+        .stats {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            font-size: 18px;
+        }
+        .refresh-btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Cairo';
+            font-size: 16px;
+            margin: 20px auto;
+            display: block;
+            transition: all 0.3s ease;
+        }
+        .refresh-btn:hover {
+            background: linear-gradient(135deg, #2980b9 0%, #1f6394 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>👥 قائمة المستخدمين في قاعدة البيانات</h1>
+        
+        <div class="stats">
+            <p id="statsInfo">جاري تحميل البيانات...</p>
+        </div>
+        
+        <div id="usersList">
+            <!-- سيتم تعبئتها بواسطة JavaScript -->
+        </div>
+        
+        <button onclick="loadUsers()" class="refresh-btn">
+            <i class="fas fa-redo"></i> تحديث القائمة
+        </button>
+    </div>
+</body>
+</html>
