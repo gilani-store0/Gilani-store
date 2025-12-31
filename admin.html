@@ -8,7 +8,7 @@
     <!-- Firebase Modular SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, doc, collection, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, collection, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp, addDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         window.firebaseModules = {
             initializeApp,
@@ -24,7 +24,8 @@
             query,
             where,
             orderBy,
-            serverTimestamp
+            serverTimestamp,
+            increment
         };
     </script>
     
@@ -43,13 +44,13 @@
         }
 
         :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
+            --primary-color: #1C1C1C;
+            --secondary-color: #C9A24D;
             --success-color: #27ae60;
             --danger-color: #e74c3c;
             --warning-color: #f39c12;
-            --light-color: #f5f7fa;
-            --dark-color: #2c3e50;
+            --light-color: #F7F5F2;
+            --dark-color: #222222;
             --gray-color: #95a5a6;
             --border-color: #ddd;
             --shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
@@ -58,7 +59,7 @@
 
         body {
             font-family: 'Cairo', sans-serif;
-            background-color: var(--light-color);
+            background-color: #FFFFFF;
             color: var(--dark-color);
             line-height: 1.6;
             padding: 20px;
@@ -70,8 +71,9 @@
             margin: 0 auto;
             background: white;
             border-radius: 20px;
-            padding: 40px;
+            padding: 30px;
             box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
         }
 
         .section-title {
@@ -80,13 +82,15 @@
             color: var(--primary-color);
             position: relative;
             padding-bottom: 15px;
+            text-align: center;
         }
 
         .section-title::after {
             content: '';
             position: absolute;
             bottom: 0;
-            right: 0;
+            right: 50%;
+            transform: translateX(50%);
             width: 60px;
             height: 3px;
             background: var(--secondary-color);
@@ -101,7 +105,7 @@
         }
 
         .admin-stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #b8913d 100%);
             padding: 25px;
             border-radius: 15px;
             display: flex;
@@ -109,11 +113,12 @@
             gap: 20px;
             transition: var(--transition);
             color: white;
+            border: none;
         }
 
         .admin-stat-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 10px 20px rgba(201, 162, 77, 0.3);
         }
 
         .admin-stat-card i {
@@ -139,6 +144,7 @@
             border-bottom: 2px solid var(--border-color);
             padding-bottom: 10px;
             flex-wrap: wrap;
+            justify-content: center;
         }
 
         .admin-tab {
@@ -154,9 +160,11 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            border-radius: 8px;
         }
 
         .admin-tab:hover {
+            background: var(--light-color);
             color: var(--secondary-color);
         }
 
@@ -164,6 +172,7 @@
             color: var(--secondary-color);
             border-bottom-color: var(--secondary-color);
             font-weight: 600;
+            background: var(--light-color);
         }
 
         /* محتوى التبويبات */
@@ -177,8 +186,8 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .tab-header {
@@ -186,6 +195,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
         }
 
         /* أزرار */
@@ -202,11 +213,13 @@
             align-items: center;
             gap: 10px;
             transition: var(--transition);
+            font-weight: 600;
         }
 
         .add-product-btn:hover {
             background: #218838;
             transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
         }
 
         /* قائمة المنتجات */
@@ -225,10 +238,11 @@
             border-radius: 15px;
             transition: var(--transition);
             border: 2px solid transparent;
+            flex-wrap: wrap;
         }
 
         .admin-product-card:hover {
-            background: #e8f4fc;
+            background: #f0ede8;
             border-color: var(--secondary-color);
             transform: translateY(-3px);
         }
@@ -249,6 +263,7 @@
 
         .admin-product-info {
             flex: 1;
+            min-width: 200px;
         }
 
         .admin-product-info h4 {
@@ -350,12 +365,13 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.7);
             display: none;
             align-items: center;
             justify-content: center;
             z-index: 1000;
             padding: 20px;
+            backdrop-filter: blur(5px);
         }
 
         .modal.active {
@@ -370,6 +386,18 @@
             max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .modal-header {
@@ -378,6 +406,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background: var(--light-color);
+            border-radius: 15px 15px 0 0;
         }
 
         .modal-body {
@@ -390,6 +420,8 @@
             display: flex;
             justify-content: flex-end;
             gap: 10px;
+            background: var(--light-color);
+            border-radius: 0 0 15px 15px;
         }
 
         .form-group {
@@ -400,14 +432,24 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
+            color: var(--dark-color);
         }
 
         .form-group input, .form-group select, .form-group textarea {
             width: 100%;
             padding: 12px;
-            border: 1px solid var(--border-color);
+            border: 2px solid var(--border-color);
             border-radius: 8px;
             font-family: 'Cairo', sans-serif;
+            font-size: 16px;
+            background: white;
+            transition: var(--transition);
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(201, 162, 77, 0.1);
         }
 
         .form-row {
@@ -416,24 +458,46 @@
             gap: 20px;
         }
 
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .btn-primary {
             background: var(--secondary-color);
             color: white;
             border: none;
-            padding: 10px 25px;
+            padding: 12px 25px;
             border-radius: 8px;
             cursor: pointer;
             font-family: 'Cairo', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .btn-primary:hover {
+            background: #b8913d;
+            transform: translateY(-2px);
         }
 
         .btn-secondary {
-            background: var(--gray-color);
-            color: white;
-            border: none;
-            padding: 10px 25px;
+            background: var(--light-color);
+            color: var(--dark-color);
+            border: 2px solid var(--border-color);
+            padding: 12px 25px;
             border-radius: 8px;
             cursor: pointer;
             font-family: 'Cairo', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .btn-secondary:hover {
+            background: #e8e6e3;
+            transform: translateY(-2px);
         }
 
         .form-checkboxes {
@@ -448,11 +512,346 @@
             align-items: center;
             gap: 8px;
             cursor: pointer;
+            font-size: 14px;
         }
 
         .checkbox-label input {
             width: 18px;
             height: 18px;
+            accent-color: var(--secondary-color);
+        }
+
+        /* إدارة المستخدمين */
+        .users-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .user-card {
+            background: var(--light-color);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .user-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--secondary-color);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .user-card.admin-user {
+            border-right: 4px solid var(--secondary-color);
+        }
+
+        .user-card.regular-user {
+            border-right: 4px solid var(--primary-color);
+        }
+
+        /* إعدادات الموقع */
+        .settings-form {
+            background: var(--light-color);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        .settings-form h4 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .settings-form .form-group {
+            margin-bottom: 25px;
+        }
+
+        /* تبويب الألوان */
+        .color-input-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .color-preview {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .color-preview:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .color-inputs {
+            flex: 1;
+        }
+
+        .color-inputs label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+
+        .color-inputs input[type="color"] {
+            width: 50px;
+            height: 40px;
+            padding: 0;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .color-inputs input[type="text"] {
+            width: 120px;
+            padding: 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-family: 'Cairo';
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .color-info {
+            flex: 2;
+        }
+
+        .color-info h5 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+            color: var(--primary-color);
+        }
+
+        .color-info p {
+            margin: 0;
+            font-size: 13px;
+            color: var(--gray-color);
+        }
+
+        .preview-section {
+            background: var(--light-color);
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 30px;
+            border: 2px solid var(--border-color);
+        }
+
+        .preview-section h4 {
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            text-align: center;
+        }
+
+        .preview-elements {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .preview-element {
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .preview-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .preview-secondary {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .preview-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .preview-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .preview-warning {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .preview-light {
+            background: var(--light-color);
+            color: var(--dark-color);
+            border: 1px solid var(--border-color);
+        }
+
+        /* الإشعارات */
+        #toastContainer {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            animation: slideIn 0.3s ease;
+            max-width: 350px;
+            border-right: 5px solid;
+            transition: transform 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success {
+            border-right-color: var(--success-color);
+        }
+
+        .toast.error {
+            border-right-color: var(--danger-color);
+        }
+
+        .toast.warning {
+            border-right-color: var(--warning-color);
+        }
+
+        .toast.info {
+            border-right-color: var(--secondary-color);
+        }
+
+        /* زر الخروج */
+        .logout-admin-btn {
+            padding: 10px 20px;
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+            font-weight: 600;
+        }
+
+        .logout-admin-btn:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        /* الاستجابة */
+        @media (max-width: 768px) {
+            .admin-container {
+                padding: 20px;
+            }
+            
+            .admin-tabs {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .admin-tab {
+                justify-content: center;
+            }
+            
+            .tab-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .admin-product-card {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .admin-product-actions {
+                justify-content: center;
+                width: 100%;
+            }
+            
+            .form-checkboxes {
+                justify-content: center;
+            }
+            
+            .color-input-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .color-preview {
+                align-self: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .admin-container {
+                padding: 15px;
+            }
+            
+            .modal {
+                padding: 10px;
+            }
+            
+            .modal-content {
+                border-radius: 10px;
+            }
+        }
+
+        /* تخصيص شريط التمرير */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--light-color);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--secondary-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #b8913d;
         }
     </style>
 </head>
@@ -476,12 +875,10 @@
                     <p>المنتجات</p>
                 </div>
             </div>
-            <!-- تم إزالة إحصائية الطلبات -->
-            <!-- تم إزالة إحصائية الإيرادات -->
         </div>
         
         <!-- تبويبات لوحة التحكم -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 20px;">
             <div class="admin-tabs" style="margin-bottom: 0; border-bottom: none;">
                 <button class="admin-tab active" data-tab="dashboard">
                     <i class="fas fa-chart-line"></i> الإحصائيات
@@ -495,18 +892,21 @@
                 <button class="admin-tab" data-tab="settingsManagement">
                     <i class="fas fa-cog"></i> الإعدادات
                 </button>
+                <button class="admin-tab" data-tab="themeManagement">
+                    <i class="fas fa-palette"></i> الألوان والتصميم
+                </button>
             </div>
-            <button onclick="logoutAdmin()" class="btn-secondary" style="padding: 10px 20px; border-radius: 10px; cursor: pointer; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; font-family: 'Cairo';">
+            <button onclick="logoutAdmin()" class="logout-admin-btn">
                 <i class="fas fa-sign-out-alt"></i> خروج
             </button>
         </div>
         
         <!-- محتوى التبويبات -->
         <div class="admin-tab-content active" id="dashboard">
-            <div style="text-align: center; padding: 40px; background: #f9f9f9; border-radius: 15px;">
+            <div style="text-align: center; padding: 40px; background: var(--light-color); border-radius: 15px; border: 2px dashed var(--border-color);">
                 <i class="fas fa-tachometer-alt fa-3x" style="color: var(--secondary-color); margin-bottom: 20px;"></i>
                 <h3>مرحباً بك في لوحة التحكم</h3>
-                <p>استخدم التبويبات أعلاه لإدارة متجرك الإلكتروني</p>
+                <p style="color: var(--gray-color); margin-top: 10px;">استخدم التبويبات أعلاه لإدارة متجرك الإلكتروني</p>
             </div>
         </div>
 
@@ -534,6 +934,111 @@
             <h3>إعدادات الموقع</h3>
             <div class="settings-form" id="settingsForm">
                 <!-- سيتم تعبئتها بواسطة JavaScript -->
+            </div>
+        </div>
+        
+        <div class="admin-tab-content" id="themeManagement">
+            <h3>إدارة الألوان والتصميم</h3>
+            <div class="settings-form">
+                <h4><i class="fas fa-palette"></i> ألوان المتجر</h4>
+                
+                <div class="color-input-group">
+                    <div class="color-preview" style="background: var(--primary-color);"></div>
+                    <div class="color-inputs">
+                        <label>اللون الأساسي</label>
+                        <input type="color" id="primaryColor" value="#1C1C1C">
+                        <input type="text" id="primaryColorHex" value="#1C1C1C" placeholder="#1C1C1C" style="margin-top: 5px;">
+                    </div>
+                    <div class="color-info">
+                        <h5>اللون الأساسي</h5>
+                        <p>يستخدم في النصوص والعناوين الرئيسية</p>
+                    </div>
+                </div>
+                
+                <div class="color-input-group">
+                    <div class="color-preview" style="background: var(--secondary-color);"></div>
+                    <div class="color-inputs">
+                        <label>اللون الثانوي</label>
+                        <input type="color" id="secondaryColor" value="#C9A24D">
+                        <input type="text" id="secondaryColorHex" value="#C9A24D" placeholder="#C9A24D" style="margin-top: 5px;">
+                    </div>
+                    <div class="color-info">
+                        <h5>اللون الثانوي</h5>
+                        <p>يستخدم في الأزرار والعناصر التفاعلية</p>
+                    </div>
+                </div>
+                
+                <div class="color-input-group">
+                    <div class="color-preview" style="background: var(--success-color);"></div>
+                    <div class="color-inputs">
+                        <label>لون النجاح</label>
+                        <input type="color" id="successColor" value="#27ae60">
+                        <input type="text" id="successColorHex" value="#27ae60" placeholder="#27ae60" style="margin-top: 5px;">
+                    </div>
+                    <div class="color-info">
+                        <h5>لون النجاح</h5>
+                        <p>يستخدم للإشعارات الناجحة والعناصر الإيجابية</p>
+                    </div>
+                </div>
+                
+                <div class="color-input-group">
+                    <div class="color-preview" style="background: var(--danger-color);"></div>
+                    <div class="color-inputs">
+                        <label>لون الخطأ</label>
+                        <input type="color" id="dangerColor" value="#e74c3c">
+                        <input type="text" id="dangerColorHex" value="#e74c3c" placeholder="#e74c3c" style="margin-top: 5px;">
+                    </div>
+                    <div class="color-info">
+                        <h5>لون الخطأ</h5>
+                        <p>يستخدم للإشعارات الخطأ والأزرار الحمراء</p>
+                    </div>
+                </div>
+                
+                <div class="color-input-group">
+                    <div class="color-preview" style="background: var(--warning-color);"></div>
+                    <div class="color-inputs">
+                        <label>لون التحذير</label>
+                        <input type="color" id="warningColor" value="#f39c12">
+                        <input type="text" id="warningColorHex" value="#f39c12" placeholder="#f39c12" style="margin-top: 5px;">
+                    </div>
+                    <div class="color-info">
+                        <h5>لون التحذير</h5>
+                        <p>يستخدم للتحذيرات والعناصر التحذيرية</p>
+                    </div>
+                </div>
+                
+                <div class="color-input-group">
+                    <div class="color-preview" style="background: var(--light-color); border: 2px solid var(--border-color);"></div>
+                    <div class="color-inputs">
+                        <label>لون الخلفية</label>
+                        <input type="color" id="lightColor" value="#F7F5F2">
+                        <input type="text" id="lightColorHex" value="#F7F5F2" placeholder="#F7F5F2" style="margin-top: 5px;">
+                    </div>
+                    <div class="color-info">
+                        <h5>لون الخلفية</h5>
+                        <p>يستخدم في خلفيات العناصر والأقسام</p>
+                    </div>
+                </div>
+                
+                <button class="btn-primary" id="saveColorsBtn" style="width: 100%; padding: 15px; margin-top: 20px;">
+                    <i class="fas fa-save"></i> حفظ الألوان
+                </button>
+                
+                <button class="btn-secondary" id="resetColorsBtn" style="width: 100%; padding: 15px; margin-top: 10px;">
+                    <i class="fas fa-undo"></i> استعادة الألوان الافتراضية
+                </button>
+                
+                <div class="preview-section">
+                    <h4>معاينة الألوان</h4>
+                    <div class="preview-elements">
+                        <div class="preview-element preview-primary">أساسي</div>
+                        <div class="preview-element preview-secondary">ثانوي</div>
+                        <div class="preview-element preview-success">نجاح</div>
+                        <div class="preview-element preview-danger">خطأ</div>
+                        <div class="preview-element preview-warning">تحذير</div>
+                        <div class="preview-element preview-light">خلفية</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -564,7 +1069,7 @@
                             <option value="">اختر الفئة</option>
                             <option value="perfume">عطور</option>
                             <option value="makeup">مكياج</option>
-                            <option value="skincare">عناية بالبشة</option>
+                            <option value="skincare">عناية بالبشرة</option>
                             <option value="haircare">عناية بالشعر</option>
                         </select>
                     </div>
@@ -606,6 +1111,29 @@
             <div class="modal-footer">
                 <button class="btn-secondary" onclick="closeModal()">إلغاء</button>
                 <button class="btn-primary" id="saveProductBtn">حفظ المنتج</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة التأكيد -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>تأكيد العملية</h3>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="text-align: center; padding: 20px;">
+                    <i class="fas fa-exclamation-triangle fa-3x" style="color: var(--warning-color); margin-bottom: 20px;"></i>
+                    <h3 style="margin-bottom: 10px;" id="confirmTitle">هل أنت متأكد؟</h3>
+                    <p style="color: var(--gray-color);" id="confirmMessage">سيتم تعطيل المنتج وعدم عرضه في المتجر</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal()">إلغاء</button>
+                <button class="btn-danger" onclick="deleteProductConfirmed()" style="background: var(--danger-color); color: white; padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-family: 'Cairo';">
+                    نعم، تعطيل
+                </button>
             </div>
         </div>
     </div>

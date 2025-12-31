@@ -53,8 +53,6 @@
     <link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/512/3082/3082383.png">
 </head>
 <body>
-    <!-- شاشة التحميل -->
-   
     <!-- شاشة المصادقة -->
     <div id="authScreen" class="auth-screen">
         <div class="auth-container">
@@ -150,7 +148,7 @@
                         <label for="registerPhone">
                             <i class="fas fa-phone"></i> رقم الهاتف (اختياري)
                         </label>
-                        <input type="tel" id="registerPhone" placeholder="+249XXXXXXXXX">
+                        <input type="tel" id="registerPhone" placeholder="مثال: 0912345678">
                     </div>
                     
                     <div class="form-actions">
@@ -186,7 +184,7 @@
         <!-- الهيدر -->
         <header class="header">
             <div class="header-content">
-                <!-- زر القائمة للموبايل -->
+                <!-- زر القائمة -->
                 <button class="menu-toggle" id="menuToggle">
                     <i class="fas fa-bars"></i>
                 </button>
@@ -197,43 +195,24 @@
                     <h1 id="siteStoreName">Queen Beauty</h1>
                 </div>
                 
-                <!-- شريط البحث -->
-                <div class="search-container">
-                    <input type="text" id="searchInput" placeholder="ابحث عن منتج...">
-                    <button id="searchBtn"><i class="fas fa-search"></i></button>
-                </div>
-                
                 <!-- أيقونات التنقل -->
                 <div class="nav-icons">
-                    <button class="nav-icon" id="homeBtn" title="الصفحة الرئيسية">
-                        <i class="fas fa-home"></i>
-                    </button>
+                    <!-- شريط البحث -->
+                    <div class="search-container">
+                        <input type="text" id="searchInput" placeholder="ابحث عن منتج...">
+                        <button id="searchBtn"><i class="fas fa-search"></i></button>
+                    </div>
                     
+                    <!-- السلة -->
                     <button class="nav-icon cart-icon" id="cartBtn" title="سلة التسوق">
                         <i class="fas fa-shopping-cart"></i>
                         <span class="cart-count">0</span>
-                    </button>
-                    
-                    <button class="nav-icon" id="favoritesBtn" title="المفضلة">
-                        <i class="fas fa-heart"></i>
-                    </button>
-                    
-                    <button class="nav-icon" id="profileBtn" title="الملف الشخصي">
-                        <i class="fas fa-user"></i>
-                    </button>
-                    
-                    <button class="nav-icon" id="adminBtn" title="لوحة التحكم" style="display: none;">
-                        <i class="fas fa-cog"></i>
-                    </button>
-                    
-                    <button class="nav-icon" id="logoutBtn" title="تسجيل الخروج">
-                        <i class="fas fa-sign-out-alt"></i>
                     </button>
                 </div>
             </div>
         </header>
 
-        <!-- القائمة الجانبية للموبايل -->
+        <!-- القائمة الجانبية -->
         <nav class="mobile-nav" id="mobileNav">
             <div class="mobile-nav-header">
                 <div class="user-info">
@@ -270,14 +249,11 @@
         <main class="main-content">
             <!-- قسم البطل -->
             <section id="home" class="section active">
-                <div class="hero-section">
-                    <div class="hero-content">
-                        <h2>استمتع برائحة الجمال</h2>
-                        <p>اكتشف مجموعة العطور ومستحضرات التجميل الفاخرة لدينا</p>
-                        <button class="cta-btn" id="shopNowBtn">تسوق الآن</button>
-                    </div>
-                    <div class="hero-image">
-                        <img src="https://images.unsplash.com/photo-1522338242990-e1a0f6e39c13?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="عطور فاخرة">
+                <!-- المنتجات المميزة -->
+                <div class="featured-products">
+                    <h2 class="section-title">منتجاتنا المميزة</h2>
+                    <div class="products-grid" id="featuredProductsGrid">
+                        <!-- سيتم تعبئتها بواسطة JavaScript -->
                     </div>
                 </div>
                 
@@ -297,14 +273,6 @@
                         <i class="fas fa-headset"></i>
                         <h3>دعم فني</h3>
                         <p>خدمة عملاء 24/7</p>
-                    </div>
-                </div>
-                
-                <!-- قسم المنتجات المميزة -->
-                <div class="featured-products">
-                    <h2 class="section-title">المنتجات المميزة</h2>
-                    <div class="products-grid" id="featuredProductsGrid">
-                        <!-- سيتم تعبئتها بواسطة JavaScript -->
                     </div>
                 </div>
             </section>
@@ -384,12 +352,12 @@
                         </div>
                         
                         <button id="checkoutBtn" class="checkout-btn" disabled>
-                            <i class="fas fa-credit-card"></i> إتمام الشراء
+                            <i class="fab fa-whatsapp"></i> إتمام الشراء عبر واتساب
                         </button>
                         
                         <p class="cart-note">
                             <i class="fas fa-info-circle"></i>
-                            يمكنك متابعة التسوق أو إكمال عملية الشراء
+                            سيتم توجيهك لواتساب لإكمال عملية الشراء
                         </p>
                     </div>
                 </div>
@@ -563,137 +531,33 @@
         </div>
     </div>
 
-    <!-- نافذة إضافة/تعديل منتج -->
-    <div id="productModal" class="modal">
-        <div class="modal-content wide-modal">
+    <!-- نافذة تحديد الكمية -->
+    <div id="quantityModal" class="modal">
+        <div class="modal-content small-modal">
             <div class="modal-header">
-                <h3 id="productModalTitle">إضافة منتج جديد</h3>
+                <h3 id="quantityProductName">تحديد الكمية</h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="productName">اسم المنتج *</label>
-                        <input type="text" id="productName" required>
+                <div class="quantity-selector">
+                    <div class="quantity-controls">
+                        <button class="quantity-btn" id="decreaseQuantity">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <input type="number" id="selectedQuantity" value="1" min="1" max="99">
+                        <button class="quantity-btn" id="increaseQuantity">
+                            <i class="fas fa-plus"></i>
+                        </button>
                     </div>
-                    <div class="form-group">
-                        <label for="productPrice">السعر (ر.س) *</label>
-                        <input type="number" id="productPrice" min="0" step="0.01" required>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="productCategory">الفئة *</label>
-                        <select id="productCategory" required>
-                            <option value="">اختر الفئة</option>
-                            <option value="perfume">عطور</option>
-                            <option value="makeup">مكياج</option>
-                            <option value="skincare">عناية بالبشرة</option>
-                            <option value="haircare">عناية بالشعر</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="productStock">الكمية في المخزن *</label>
-                        <input type="number" id="productStock" min="0" required>
+                    <div class="quantity-actions">
+                        <button class="btn-secondary" id="addToCartFromModal">
+                            <i class="fas fa-cart-plus"></i> أضف للسلة
+                        </button>
+                        <button class="btn-primary" id="buyNowFromModal">
+                            <i class="fab fa-whatsapp"></i> شراء مباشر
+                        </button>
                     </div>
                 </div>
-                
-                <div class="form-group">
-                    <label for="productDescription">وصف المنتج</label>
-                    <textarea id="productDescription" rows="3"></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label for="productImage">رابط صورة المنتج *</label>
-                    <input type="text" id="productImage" placeholder="https://example.com/image.jpg" required>
-                </div>
-                
-                <div class="form-checkboxes">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="productIsNew">
-                        <span>منتج جديد</span>
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="productIsSale">
-                        <span>في عرض خاص</span>
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="productIsBest">
-                        <span>الأفضل مبيعاً</span>
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="productIsActive">
-                        <span>منتج نشط</span>
-                    </label>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary close-modal">إلغاء</button>
-                <button class="btn-primary" id="saveProductBtn">حفظ المنتج</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- نافذة إعدادات الموقع -->
-    <div id="settingsModal" class="modal">
-        <div class="modal-content wide-modal">
-            <div class="modal-header">
-                <h3>إعدادات الموقع</h3>
-                <button class="close-modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="settingStoreName">اسم المتجر *</label>
-                        <input type="text" id="settingStoreName" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="settingEmail">البريد الإلكتروني *</label>
-                        <input type="email" id="settingEmail" required>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="settingPhone1">رقم الهاتف 1 *</label>
-                        <input type="tel" id="settingPhone1" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="settingPhone2">رقم الهاتف 2</label>
-                        <input type="tel" id="settingPhone2">
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="settingAddress">العنوان *</label>
-                    <input type="text" id="settingAddress" required>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="settingShippingCost">تكلفة الشحن (ر.س) *</label>
-                        <input type="number" id="settingShippingCost" min="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="settingFreeShippingLimit">الحد الأدنى للتوصيل المجاني (ر.س)</label>
-                        <input type="number" id="settingFreeShippingLimit" min="0">
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="settingWorkingHours">ساعات العمل</label>
-                    <input type="text" id="settingWorkingHours">
-                </div>
-                
-                <div class="form-group">
-                    <label for="settingDescription">وصف المتجر</label>
-                    <textarea id="settingDescription" rows="3"></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary close-modal">إلغاء</button>
-                <button class="btn-primary" id="saveSettingsBtn">حفظ الإعدادات</button>
             </div>
         </div>
     </div>
@@ -702,22 +566,18 @@
     <div id="confirmModal" class="modal">
         <div class="modal-content small-modal">
             <div class="modal-body">
-                <i class="fas fa-exclamation-triangle warning-icon"></i>
-                <h3 id="confirmTitle">هل أنت متأكد؟</h3>
-                <p id="confirmMessage">هذا الإجراء لا يمكن التراجع عنه</p>
+                <i class="fas fa-check-circle success-icon"></i>
+                <h3 id="confirmTitle">تمت العملية</h3>
+                <p id="confirmMessage"></p>
             </div>
             <div class="modal-footer">
-                <button class="btn-secondary" id="confirmCancelBtn">إلغاء</button>
-                <button class="btn-danger" id="confirmActionBtn">نعم، قم بالإجراء</button>
+                <button class="btn-primary" id="confirmCloseBtn">حسناً</button>
             </div>
         </div>
     </div>
 
     <!-- الإشعارات -->
     <div id="toastContainer"></div>
-
-    <!-- إخفاء الإدخال -->
-    <input type="file" id="imageUpload" style="display: none;" accept="image/*">
     
     <!-- JavaScript -->
     <script src="js/main.js"></script>
